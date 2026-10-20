@@ -7,6 +7,26 @@
     const string AutoLoginUserName = "admin";
     static Guid autoUserId = Guid.Empty;
 
+    // TLS ends at Cloudflare; behind the tunnel the app sees plain HTTP, so tell browsers to stay on HTTPS
+    // and make redirects point to https:// instead of http://.
+    protected void Application_BeginRequest(Object sender, EventArgs e)
+    {
+        var req = HttpContext.Current.Request;
+        if (Tools.IsHttps(req))
+            HttpContext.Current.Response.AppendHeader("Strict-Transport-Security", "max-age=31536000");
+    }
+
+    protected void Application_EndRequest(Object sender, EventArgs e)
+    {
+        var ctx = HttpContext.Current;
+        if (ctx == null || !Tools.IsHttps(ctx.Request)) return;
+        if (ctx.Response.Headers["Strict-Transport-Security"] == null)   // redirects clear headers set earlier
+            ctx.Response.AppendHeader("Strict-Transport-Security", "max-age=31536000");
+        var loc = ctx.Response.Headers["Location"];
+        if (loc != null && loc.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            ctx.Response.Headers["Location"] = "https://" + loc.Substring(7);
+    }
+
     void Application_Start(object sender, EventArgs e) 
     {
         // Code that runs on application startup
@@ -40,7 +60,7 @@
         var session = HttpContext.Current.Session;
         if (session != null && session["UserId"] == null)
         {
-            if (!Tools.LoginEnabled)
+            if (Tools.AutoLogin(HttpContext.Current.Request))
             {
                 session["UserId"] = GetAutoUserId();
                 session["UserName"] = AutoLoginUserName;
@@ -60,7 +80,7 @@
 
     protected void Application_AuthenticateRequest(Object sender, EventArgs e)
     {
-        if (!Tools.LoginEnabled && (HttpContext.Current.User == null || !HttpContext.Current.User.Identity.IsAuthenticated))
+        if (Tools.AutoLogin(HttpContext.Current.Request) && (HttpContext.Current.User == null || !HttpContext.Current.User.Identity.IsAuthenticated))
         {
             HttpContext.Current.User = new System.Security.Principal.GenericPrincipal(
                 new System.Security.Principal.GenericIdentity(GetAutoUserId().ToString()), new[] { "admin" });

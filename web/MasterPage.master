@@ -6,6 +6,7 @@
 <head runat="server"><meta charset="utf-8" /><meta name="referrer" content="origin" />
 
     <link rel="SHORTCUT ICON" href="favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="img/syt-icon-192.png" />
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
     <meta name="theme-color" content="#225EAC" />
@@ -219,6 +220,7 @@
     <link rel="stylesheet" href="styles/ourTravel.common.css" />
     <link rel="stylesheet" href="styles/ourTravel.css" />
     <link rel="stylesheet" href="styles/modern.css" />
+    <link rel="stylesheet" href="styles/fonts.css" />
 
     <meta name="google-signin-client_id" content="179651162952-alrnetid5672ki6fqb7qh8b8ptu9aspk.apps.googleusercontent.com" />
 

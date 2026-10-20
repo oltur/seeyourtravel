@@ -16,6 +16,30 @@ public static class Tools
     }
     public static bool LoginEnabled { get { return GoogleClientId.Length > 0; } }
 
+    // True when the request came through a reverse proxy / Cloudflare tunnel.
+    public static bool IsProxied(HttpRequest r)
+    {
+        return r.Headers["X-Forwarded-For"] != null || r.Headers["CF-Connecting-IP"] != null || r.Headers["CF-Ray"] != null || r.Headers["X-Forwarded-Host"] != null;
+    }
+
+    // Local mode (everybody is signed in as the owner) is only for direct local access, never through a proxy/tunnel.
+    public static bool AutoLogin(HttpRequest r)
+    {
+        return !LoginEnabled && !IsProxied(r);
+    }
+
+    // The original request was HTTPS (TLS is terminated by Cloudflare, the app itself sees plain HTTP).
+    public static bool IsHttps(HttpRequest r)
+    {
+        return r.IsSecureConnection || string.Equals(r.Headers["X-Forwarded-Proto"], "https", StringComparison.OrdinalIgnoreCase)
+            || (r.Headers["CF-Visitor"] ?? "").Contains("\"scheme\":\"https\"");
+    }
+
+    public static string ClientIp(HttpRequest r)
+    {
+        return r.Headers["CF-Connecting-IP"] ?? r.UserHostAddress;
+    }
+
     // "email=UserName;email2=UserName2": Google accounts that are administrators, and the existing user each one maps to.
     public static Dictionary<string, string> GoogleAdmins()
     {

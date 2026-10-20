@@ -23,3 +23,6 @@
 *.prev[0-9]*
 *.orig-not-compiled
 /web/zz_test.html
+
+# local secrets
+/.env

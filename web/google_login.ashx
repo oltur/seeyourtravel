@@ -124,7 +124,7 @@ public class GoogleLoginHandler : IHttpHandler, IRequiresSessionState
         login.UserID = user.UserID;
         login.Time = DateTime.UtcNow;
         login.LoginType = "Google";
-        login.CallerIp = ctx.Request.UserHostAddress;
+        login.CallerIp = Tools.ClientIp(ctx.Request);
         login.CallerAgent = ctx.Request.UserAgent;
         login.CalledUrl = ctx.Request.Url.OriginalString;
         db.UserLogins.Add(login);
@@ -136,6 +136,7 @@ public class GoogleLoginHandler : IHttpHandler, IRequiresSessionState
         var ticket = new FormsAuthenticationTicket(2, user.UserID.ToString(), DateTime.Now, DateTime.Now.AddDays(30), true, admin ? "admin" : "");
         var cookie = new HttpCookie(FormsAuthentication.FormsCookieName, FormsAuthentication.Encrypt(ticket));
         cookie.HttpOnly = true;
+        cookie.Secure = Tools.IsHttps(ctx.Request);
         cookie.Expires = ticket.Expiration;
         ctx.Response.Cookies.Add(cookie);
         return user.UserName;

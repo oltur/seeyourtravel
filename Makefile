@@ -5,17 +5,24 @@
 #   make logs     follow web logs
 #   make status   show containers and HTTP check
 #   make clean    remove containers, network, DB volume and image (db/ source files are untouched)
+#   make tunnel   start the Cloudflare tunnel (needs CF_TUNNEL_TOKEN in .env; `make up` starts it automatically when set)
+#   make tunnel-logs / tunnel-down
+
+-include .env
+export
 
 PORT      ?= 8088
+CLOUDFLARED_IMAGE ?= cloudflare/cloudflared:latest
 SA_PW     ?= CHANGE_ME
 # app DB password: taken from web/Web.config (not committed; copy web/Web.config.example and set the password)
 APP_PW    ?= $(shell sed -n 's/.*LOCAL.SEEYOURTRAVEL.com;.*Password=\([^;"&]*\).*/\1/p' web/Web.config | head -1)
 SQL_IMAGE ?= mcr.microsoft.com/mssql/server:2022-latest
 SQLCMD     = docker exec syt-sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P '$(SA_PW)'
 
-.PHONY: up down restart logs status clean network image db-volume sql web wait-sql attach-db
+.PHONY: up down restart logs status clean network image db-volume sql web wait-sql attach-db tunnel tunnel-logs tunnel-down
 
 up: network image sql attach-db web
+	@if [ -n "$(CF_TUNNEL_TOKEN)" ]; then $(MAKE) --no-print-directory tunnel; else echo "(no CF_TUNNEL_TOKEN in .env: not published to the internet)"; fi
 	@echo "SeeYourTravel is running: http://localhost:$(PORT)/"
 
 network:
@@ -31,8 +38,8 @@ db-volume:
 	    bash -c 'cp /src/seeyourtravel.mdf /src/seeyourtravel_log.ldf /var/opt/mssql/data/ && chown -R mssql /var/opt/mssql/data'; }
 
 sql: network db-volume
-	@if docker inspect syt-sql >/dev/null 2>&1; then docker start syt-sql >/dev/null; else \
-	  docker run -d --name syt-sql --network syt --network-alias LOCAL.SEEYOURTRAVEL.com \
+	@if docker container inspect syt-sql >/dev/null 2>&1; then docker start syt-sql >/dev/null; else \
+	  docker run -d --name syt-sql --restart unless-stopped --network syt --network-alias LOCAL.SEEYOURTRAVEL.com \
 	    -e ACCEPT_EULA=Y -e 'MSSQL_SA_PASSWORD=$(SA_PW)' -v sytdb:/var/opt/mssql/data $(SQL_IMAGE) >/dev/null; fi
 	@$(MAKE) --no-print-directory wait-sql
 
@@ -50,14 +57,29 @@ attach-db:
 	@$(SQLCMD) -Q "IF SUSER_ID('SeeYourTravel') IS NULL CREATE LOGIN SeeYourTravel WITH PASSWORD='$(APP_PW)', CHECK_POLICY=OFF; ALTER AUTHORIZATION ON DATABASE::SeeYourTravel TO SeeYourTravel;" >/dev/null
 
 web: network image
-	@if docker inspect syt-web >/dev/null 2>&1; then docker start syt-web >/dev/null; else \
-	  docker run -d --name syt-web --network syt -p $(PORT):8080 -v "$(CURDIR)/web:/app" syt-web >/dev/null; fi
+	@if docker container inspect syt-web >/dev/null 2>&1; then docker start syt-web >/dev/null; else \
+	  docker run -d --name syt-web --restart unless-stopped --network syt -p 127.0.0.1:$(PORT):8080 -v "$(CURDIR)/web:/app" syt-web >/dev/null; fi
 	@echo -n "Waiting for web"; \
 	for i in $$(seq 1 30); do [ "$$(curl -s -o /dev/null -w '%{http_code}' http://localhost:$(PORT)/index.aspx)" = 200 ] && { echo " ok"; exit 0; }; echo -n .; sleep 2; done; \
 	echo " timed out (see: make logs)"; exit 1
 
+# Cloudflare terminates HTTPS and talks to the app over the private docker network: no ports are opened to the internet.
+# In Cloudflare Zero Trust: Tunnels -> your tunnel -> Public hostname: seeyourtravel.app -> Service HTTP -> syt-web:8080
+tunnel: network
+	@[ -n "$(CF_TUNNEL_TOKEN)" ] || { echo "Set CF_TUNNEL_TOKEN in .env (see .env.example)"; exit 1; }
+	@docker rm -f syt-tunnel >/dev/null 2>&1 || true
+	@docker run -d --name syt-tunnel --network syt --restart unless-stopped $(CLOUDFLARED_IMAGE) \
+	  tunnel --no-autoupdate run --token "$(CF_TUNNEL_TOKEN)" >/dev/null
+	@echo "Cloudflare tunnel started (make tunnel-logs to check)"
+
+tunnel-logs:
+	docker logs -f --tail 30 syt-tunnel
+
+tunnel-down:
+	-docker rm -f syt-tunnel
+
 down:
-	-docker stop syt-web syt-sql
+	-docker stop syt-web syt-sql syt-tunnel
 
 restart:
 	docker restart syt-web
@@ -70,7 +92,7 @@ status:
 	@curl -s -o /dev/null -w 'HTTP %{http_code}\n' http://localhost:$(PORT)/index.aspx || true
 
 clean:
-	-docker rm -f syt-web syt-sql
+	-docker rm -f syt-web syt-sql syt-tunnel
 	-docker network rm syt
 	-docker volume rm sytdb
 	-docker rmi syt-web
