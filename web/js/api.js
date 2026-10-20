@@ -190,7 +190,7 @@ syt.api.searchFlickrImages = function (track, p, tolerancy) {
             action: "query", format: "json", origin: "*",
             generator: "geosearch", ggscoord: p.lat + "|" + p.lng, ggsradius: radius,
             ggslimit: 30, ggsnamespace: 6,
-            prop: "imageinfo", iiprop: "url|size|mime|extmetadata", iiurlheight: Math.max(divHeight, 150) * 2
+            prop: "imageinfo|coordinates", colimit: 30, iiprop: "url|size|mime|extmetadata", iiurlheight: Math.max(divHeight, 150) * 2
         }
     }, function (data) {
         var result = { photos: [] };
@@ -201,13 +201,23 @@ syt.api.searchFlickrImages = function (track, p, tolerancy) {
                 return;
             var meta = info.extmetadata || {};
             var artist = meta.Artist ? $("<div>").html(meta.Artist.value).text() : "Wikimedia Commons";
+            var coord = page.coordinates && page.coordinates[0];
+            var title = page.title.replace(/^File:/, "");
             result.photos.push({
                 height: info.thumbheight,
                 width: info.thumbwidth,
                 photo_file_url: info.thumburl,
                 photo_url: info.descriptionurl,
-                photo_title: page.title.replace(/^File:/, ""),
-                owner_name: artist
+                photo_title: title,
+                owner_name: artist,
+                source: "commons",
+                rank: page.index || 0,                       // order of the geosearch = nearest first
+                license: meta.LicenseShortName ? $("<div>").html(meta.LicenseShortName.value).text() : "",
+                license_url: meta.LicenseUrl ? meta.LicenseUrl.value : "",
+                latitude: coord ? coord.lat : undefined,
+                longitude: coord ? coord.lon : undefined,
+                // larger version for the viewer
+                big_url: "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(title.replace(/ /g, "_")) + "?width=1600"
             });
         });
         return result;

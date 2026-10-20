@@ -398,59 +398,91 @@ function showPhotos(track, p, tolerancy) {
     tryPhotos(tolerancy, 0);
 }
 
+// ---- Photo strip -------------------------------------------------------------------------------
+var MAX_STRIP_PHOTOS = 30;
+var stripPhotos = [];   // the photos currently shown, in strip order (used by the viewer)
+
+function photoKey(ph) {
+    // the same picture can come from two sources; compare by file name
+    var t = (ph.source === "commons" ? ph.photo_title : (ph.photo_file_url || "")).toString().toLowerCase();
+    return t.replace(/^.*[\/\\]/, "").replace(/\?.*$/, "").replace(/[ _]/g, "");
+}
+
+function photoCredit(ph) {
+    if (ph.source === "commons") {
+        var c = ph.owner_name || "Wikimedia Commons";
+        return ph.license ? c + " · " + ph.license : c;
+    }
+    return $.t("Photo from the SeeYourTravel community");
+}
+
+function arrangePhotos(photos) {
+    var seen = {}, own = [], pub = [];
+    for (var i = 0; i < photos.length; i++) {
+        var ph = photos[i];
+        ph.source = ph.source || "own";
+        var k = photoKey(ph);
+        if (seen[k]) continue;
+        seen[k] = true;
+        (ph.source === "own" ? own : pub).push(ph);
+    }
+    pub.sort(function (a, b) { return (a.rank || 0) - (b.rank || 0); });   // nearest first
+    return own.concat(pub).slice(0, MAX_STRIP_PHOTOS);                    // yours first, then public ones
+}
+
 function get_photos_success(photos, p, tolerancy) {
-
-    // remove?
     var divHeight = $("#imageDiv").height();
-    var divWidth = $("#imageDiv").width();
 
-    shuffle(photos);
+    photos = arrangePhotos(photos);
+    stripPhotos = photos;
     count = photos.length;
     $("#lblCoord").text(p.lat + " " + p.lng);
     var imageUl = imageDiv.children();
     imageUl.fadeOut(100);
     imageUl.empty();
+    $("#photoEmpty").remove();
     for (var i = 0; i < photos.length; i++) {
+        var ph = photos[i];
         var nextLi = document.createElement("li");
         var nextLink = document.createElement("a");
         var nextImage = document.createElement("img");
-        nextLink.href = photos[i].photo_url;
+        nextLink.href = ph.photo_url;
         nextLink.target = "_blank";
+        nextLink.setAttribute("data-index", i);
+        nextLink.setAttribute("aria-label", ph.photo_title && ph.photo_title !== "TBD" ? ph.photo_title : "Photo " + (i + 1));
 
-        //var n = getNatural(nextImage);
-
-        nextImage.width = photos[i].width * divHeight / photos[i].height;
+        nextImage.width = ph.width * divHeight / ph.height;
         nextImage.height = divHeight;
-
-        //if (isPortrait()) {
-        //    nextImage.height = photos[i].height * ((divWidth + 0.0) / photos[i].width);
-        //    nextImage.width = divWidth;
-        //}
-        //else {
-        //    nextImage.width = photos[i].width * ((divHeight + 0.0) / photos[i].height);
-        //    nextImage.height = divHeight;
-        //}
+        nextImage.alt = ph.photo_title && ph.photo_title !== "TBD" ? ph.photo_title : "";
+        nextImage.loading = "lazy";
         if (cacheImages == true) {
-            getFromCacheOrServer(photos[i].photo_file_url, nextImage, function (obj, data) {
+            getFromCacheOrServer(ph.photo_file_url, nextImage, function (obj, data) {
                 obj.src = data;
             });
         }
         else {
-            nextImage.src = photos[i].photo_file_url;
+            nextImage.src = ph.photo_file_url;
         }
 
-        //nextImage.style.maxHeight = $("#pictureMaxHeight").val() + "px";
-        //TODO: translate
-        var template = $.t("Photo from {0} by {1}. Click to open the source.");
-        nextImage.title = (template).format([photos[i].photo_title, photos[i].owner_name]);
-        //nextImage.title = "Photo from: " + photos[i].photo_title + " by " + photos[i].owner_name + ". Click to open the source.";
+        nextImage.title = photoCredit(ph);
         nextImage.classList.add("photo");
-        // Own photos: the original file; public photos (Commons): the larger thumbnail.
-        nextImage.setAttribute("data-full", /^\.?\/?data\/images\//.test(photos[i].photo_url) ? photos[i].photo_url : photos[i].photo_file_url);
+        // Own photos: the original file; public photos (Commons): a large version.
+        var full = ph.source === "own" && /^\.?\/?data\/images\//.test(ph.photo_url) ? ph.photo_url : (ph.big_url || ph.photo_file_url);
+        nextImage.setAttribute("data-full", full);
+        nextImage.setAttribute("data-credit", photoCredit(ph));
         nextLink.appendChild(nextImage);
         nextLi.appendChild(nextLink);
+        var badge = document.createElement("span");
+        badge.className = "photoBadge " + (ph.source === "own" ? "own" : "pub");
+        badge.textContent = ph.source === "own" ? "📍" : "🌍";
+        badge.title = ph.source === "own" ? "Photo taken here" : "Public photo (Wikimedia Commons)";
+        nextLi.appendChild(badge);
 
         imageUl[0].appendChild(nextLi);
+    }
+
+    if (!photos.length) {
+        $('<div id="photoEmpty"></div>').text($.t("No photos here yet")).appendTo(scroller);
     }
 
     curX = 0;
@@ -458,13 +490,83 @@ function get_photos_success(photos, p, tolerancy) {
     scrollerContent.children().each(function () {
         var $this = $(this);
         $this.css('left', curX);
-        var img = $this.children().children()[0];
-        curX += img.width;//$this.outerWidth(true);
+        var img = $this.find("img")[0];
+        curX += img.width;
     });
     fullW = curX / 2;
     viewportW = scroller.width();
     imageUl.fadeIn(100);
 }
+
+//#region Photo viewer
+var photoViewer = (function () {
+    var $v, $img, $cap, idx = 0, open = false;
+
+    function build() {
+        $v = $(
+            '<div id="photoViewer" role="dialog" aria-modal="true" aria-label="Photo viewer">' +
+            '<button type="button" class="pv-btn pv-close" aria-label="Close" title="Close (Esc)">×</button>' +
+            '<button type="button" class="pv-btn pv-prev" aria-label="Previous" title="Previous (←)">‹</button>' +
+            '<button type="button" class="pv-btn pv-next" aria-label="Next" title="Next (→)">›</button>' +
+            '<figure><img alt=""/><figcaption></figcaption></figure></div>').appendTo('body');
+        $img = $v.find('img'); $cap = $v.find('figcaption');
+        $v.on('click', function (e) { if (e.target === this || $(e.target).is('figure')) close(); });
+        $v.find('.pv-close').on('click', close);
+        $v.find('.pv-prev').on('click', function () { go(-1); });
+        $v.find('.pv-next').on('click', function () { go(1); });
+        $(document).on('keydown.pv', function (e) {
+            if (!open) return;
+            if (e.key === 'Escape') close();
+            else if (e.key === 'ArrowLeft') go(-1);
+            else if (e.key === 'ArrowRight') go(1);
+        });
+        var sx = null;   // swipe
+        $v.on('touchstart', function (e) { sx = e.originalEvent.touches[0].clientX; })
+          .on('touchend', function (e) {
+              if (sx === null) return;
+              var dx = e.originalEvent.changedTouches[0].clientX - sx; sx = null;
+              if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+          });
+    }
+
+    function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
+
+    function show() {
+        var ph = stripPhotos[idx];
+        if (!ph) return;
+        var full = ph.source === "own" && /^\.?\/?data\/images\//.test(ph.photo_url) ? ph.photo_url : (ph.big_url || ph.photo_file_url);
+        $img.attr('src', ph.photo_file_url);                         // instantly show the strip thumbnail ...
+        var big = new Image();
+        big.onload = function () { if (stripPhotos[idx] === ph) $img.attr('src', full); };   // ... then the large one
+        big.src = full;
+        var title = ph.photo_title && ph.photo_title !== "TBD" ? ph.photo_title.replace(/\.[a-z]{3,4}$/i, "") : "";
+        var html = (title ? '<strong>' + esc(title) + '</strong><br>' : '') + esc(photoCredit(ph));
+        if (ph.source === "commons") {
+            if (ph.license_url) html = html.replace(esc(ph.license), '<a href="' + esc(ph.license_url) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a>');
+            html += ' · <a href="' + esc(ph.photo_url) + '" target="_blank" rel="noopener">Source: Wikimedia Commons</a>';
+        }
+        if (typeof ph.latitude === "number" && typeof ph.longitude === "number" && typeof map !== "undefined")
+            html += ' · <a href="#" class="pv-map">Show on map</a>';
+        html += '<span class="pv-count">' + (idx + 1) + ' / ' + stripPhotos.length + '</span>';
+        $cap.html(html);
+        $cap.find('.pv-map').on('click', function (e) {
+            e.preventDefault(); close();
+            map.setView([ph.latitude, ph.longitude], Math.max(map.getZoom(), 14));
+        });
+    }
+
+    function go(d) { if (!stripPhotos.length) return; idx = (idx + d + stripPhotos.length) % stripPhotos.length; show(); }
+    function close() { open = false; if ($v) $v.removeClass('open'); setTimeout(function () { if (!open && $v) $v.hide(); }, 180); }
+    return {
+        open: function (i) {
+            if (!$v) build();
+            idx = i; open = true; $('#photoPreview').hide();
+            $v.show(); setTimeout(function () { $v.addClass('open'); }, 0); show();
+            $v.find('.pv-close').focus();
+        }
+    };
+})();
+//#endregion
 
 function GPXtoLatLng(urlGPX) {
     var result = "";
@@ -1131,12 +1233,13 @@ function compactTrackData(trackData) {
 
 //#region Photo hover preview
 $(function () {
-    var $preview = $('<div id="photoPreview"><img alt="" /></div>').css({
+    var $preview = $('<div id="photoPreview"><img alt="" /><div class="pp-cap"></div></div>').css({
         position: 'fixed', display: 'none', zIndex: 5000, pointerEvents: 'none',
         background: '#fff', padding: '4px', border: '1px solid #888', borderRadius: '4px',
         boxShadow: '0 4px 16px rgba(0,0,0,0.5)'
     }).appendTo('body');
-    var $previewImg = $preview.find('img').css({ display: 'block', maxWidth: '70vw', maxHeight: '65vh' });
+    var $previewImg = $preview.find('img').css({ display: 'block', maxWidth: '70vw', maxHeight: '60vh' });
+    var $previewCap = $preview.find('.pp-cap');
 
     function place(e) {
         var w = $preview.outerWidth(), h = $preview.outerHeight();
@@ -1148,9 +1251,11 @@ $(function () {
     }
 
     $(document).on('mouseenter', 'img.photo', function (e) {
+        if (dragMoved) return;
         var src = this.getAttribute('data-full');
         if (!src)
             return;
+        $previewCap.text(this.getAttribute('data-credit') || '');
         $previewImg.off('load').one('load', function () { place(e); $preview.show(); });
         $previewImg.attr('src', src);
         if ($previewImg[0].complete)
@@ -1161,6 +1266,61 @@ $(function () {
     }).on('mouseleave', 'img.photo', function () {
         $preview.hide();
     });
+
+    // Click opens the viewer (middle click / ctrl+click still open the source page)
+    $(document).on('click', '#imageDiv0 a[data-index]', function (e) {
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2) return;
+        e.preventDefault();
+        if (dragMoved) return;
+        photoViewer.open(parseInt(this.getAttribute('data-index'), 10));
+    });
+});
+
+// Drag / swipe the strip by hand
+var dragMoved = false;
+$(function () {
+    var el = document.querySelector('#imageDiv0 .innerScrollArea');
+    if (!el) return;
+    var down = false, startX = 0, startLeft = 0, pid = null;
+    el.style.touchAction = 'pan-y';
+    el.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        down = true; dragMoved = false; startX = e.clientX; startLeft = el.scrollLeft; pid = e.pointerId;
+    });
+    el.addEventListener('pointermove', function (e) {
+        if (!down) return;
+        var dx = e.clientX - startX;
+        if (!dragMoved && Math.abs(dx) > 6) { dragMoved = true; $('#photoPreview').hide(); try { el.setPointerCapture(pid); } catch (x) { } }
+        if (dragMoved) {
+            var max = (fullW * 2) - el.clientWidth;
+            var v = startLeft - dx;
+            if (fullW > 0) { if (v < 0) v += fullW; if (v > max) v -= fullW; }
+            el.scrollLeft = v;
+        }
+    });
+    function end() { down = false; setTimeout(function () { dragMoved = false; }, 0); }
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('wheel', function (e) {       // horizontal wheel / shift+wheel scrolls too
+        var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+        if (d) { el.scrollLeft += d; e.preventDefault(); }
+    }, { passive: false });
+});
+
+// Show / hide handle for the strip
+$(function () {
+    var $strip = $('#imageDiv0');
+    if (!$strip.length) return;
+    var key = 'sytStripHidden';
+    var $btn = $('<button type="button" id="photoToggle" aria-label="Show or hide photos"><span class="chev">▾</span> <span class="lbl">Photos</span></button>').appendTo('body');
+    function apply(hidden, animate) {
+        $btn.toggleClass('collapsed', hidden).attr('aria-expanded', !hidden);
+        if (animate) $strip.stop(true, true)[hidden ? 'slideUp' : 'slideDown'](200); else $strip.toggle(!hidden);
+        try { localStorage.setItem(key, hidden ? '1' : '0'); } catch (e) { }
+    }
+    var hidden = false; try { hidden = localStorage.getItem(key) === '1'; } catch (e) { }
+    if (hidden) apply(true, false);
+    $btn.on('click', function () { apply(!$btn.hasClass('collapsed'), true); });
 });
 //#endregion
 

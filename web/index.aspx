@@ -204,15 +204,7 @@
                     <span id="lblCoord" style="vertical-align: super; text-shadow: 1px 1px #ffffff;"></span>
                 </div>
             </div>
-            <div style="position: absolute; right: 5px; bottom: 15px; z-index: 1001">
-                <div class="fb-like" data-width="50" data-layout="button" data-action="like" data-show-faces="false" data-share="false" style="top: 4px;"></div>
-                <%--<div class="fb-save" data-uri="<%=Request.Url.ToString()%>" data-size="small"></div>--%>
-                <a href="https://twitter.com/share" class="twitter-share-button" data-via="turevskiy" data-lang="en">Tweet</a>
-                <script>$(".twitter-share-button").attr("data-lang", getTwitterLanguage());</script>
-	                <script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + '://platform.twitter.com/widgets.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'twitter-wjs');</script>
-            </div>
-
-            <div id="menuPanel" class="menuPanel">
+                        <div id="menuPanel" class="menuPanel">
                 <div>
                     <div class="searchBox"><input type="text" id="searchForPlace" data-i18n="[placeholder]Search for places" class="i" autocomplete="off" aria-label="Search for place"  placeholder="Search for place" onkeydown="if(event.keyCode == 13) {search($(this)); return false;} return true;" /><button type="button" onclick="search($('#searchForPlace'));return false;" data-i18n="Go" id="searchButton" title="Search" class="i" >Go</button></div>
                     <button type="button" data-i18n="[title]New;New" id="newTrackButton" title="New" class="i headerButton" style="background-image: url(img/new.png );" onclick="clickNew()">New</button>

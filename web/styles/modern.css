@@ -143,3 +143,32 @@ img.photo:hover { filter: brightness(1.08) saturate(1.08); transform: scale(1.03
 
 /* Disabled menu items (e.g. New/Edit/Profile for guests): clearly muted, but solid rather than see-through */
 button.headerButton:disabled { background-color: #b9c3d0 !important; color: #fff !important; opacity: 1 !important; cursor: not-allowed; box-shadow: 2px 2px 1px rgba(0,0,0,.25); }
+
+/* ---- Photo strip: badges, empty state, handle, preview caption, viewer ---- */
+#imageDiv0 li { overflow: visible; }
+#imageDiv0 li > a { display: block; }
+#imageDiv0 img.photo { cursor: zoom-in; user-select: none; -webkit-user-drag: none; }
+#imageDiv0 .innerScrollArea { cursor: grab; }
+.photoBadge { position: absolute; left: 6px; bottom: 6px; z-index: 3; font-size: 13px; line-height: 1; padding: 3px 5px; border-radius: 10px; background: rgba(255,255,255,.88); box-shadow: 0 1px 4px rgba(0,0,0,.35); pointer-events: auto; }
+#photoEmpty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #1d2733; font-size: 16px; background: rgba(255,255,255,.55); pointer-events: none; }
+#photoPreview .pp-cap { max-width: 70vw; padding: 5px 4px 1px; font-size: 12px; color: #44505e; text-align: center; }
+#photoPreview .pp-cap:empty { display: none; }
+
+#photoToggle { position: fixed; left: 50%; bottom: var(--syt-strip-h, 0px); transform: translateX(-50%); z-index: 1002; padding: 3px 14px 2px; border: 0; border-radius: 12px 12px 0 0; background: rgba(34,94,172,.92); color: #fff; font-size: 12px; cursor: pointer; transition: bottom .2s, background-color .15s; box-shadow: 0 -2px 8px rgba(0,0,0,.25); }
+#photoToggle:hover { background: #1b4d8e; }
+#photoToggle .chev { display: inline-block; transition: transform .2s; }
+#photoToggle.collapsed .chev { transform: rotate(180deg); }
+
+#photoViewer { display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(8, 18, 34, .92); opacity: 0; transition: opacity .18s; }
+#photoViewer.open { opacity: 1; }
+#photoViewer figure { position: absolute; inset: 56px 70px 0; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#photoViewer img { max-width: 100%; max-height: calc(100vh - 56px - 96px); border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,.6); background: #0b1626; }
+#photoViewer figcaption { margin-top: 12px; max-width: 900px; color: #e8eef7; font-size: 14px; text-align: center; line-height: 1.5; }
+#photoViewer figcaption a { color: #ffd84a; }
+#photoViewer .pv-count { display: block; margin-top: 4px; color: #9fb2cc; font-size: 12px; }
+#photoViewer .pv-btn { position: absolute; border: 0; background: rgba(255,255,255,.12); color: #fff; width: 48px; height: 48px; border-radius: 50%; font-size: 30px; line-height: 44px; cursor: pointer; transition: background-color .15s; }
+#photoViewer .pv-btn:hover { background: rgba(255,255,255,.26); }
+#photoViewer .pv-close { top: 10px; right: 14px; }
+#photoViewer .pv-prev { left: 12px; top: 50%; margin-top: -24px; }
+#photoViewer .pv-next { right: 12px; top: 50%; margin-top: -24px; }
+@media (max-width: 600px) { #photoViewer figure { inset: 56px 8px 0; } #photoViewer .pv-prev, #photoViewer .pv-next { top: auto; bottom: 14px; margin: 0; } }
