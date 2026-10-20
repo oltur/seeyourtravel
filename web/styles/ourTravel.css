@@ -1,0 +1,253 @@
+.mycluster {
+    width: 50px;
+    height: 30px;
+    background-color: white;
+    text-align: center;
+    font-size: 16px;
+    color: black;
+}
+
+.mapheader {
+    min-height: 100%;
+    height: 100%;
+    background: url('../img/ua.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+/*#map {
+            height: 900px;
+        }*/
+
+.nullphoto {
+    height: 1px;
+    width: 1px;
+}
+
+.visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.hidden {
+    visibility: hidden;
+    opacity: 0;
+}
+
+html, body, form {
+    height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+
+.sideButton {
+    width: 38px;
+    height: 36px;
+    background-color: rgba(85,150,230,1);
+    background-repeat: no-repeat;
+    background-size: 24px 24px;
+    background-position: left;
+    background-position-x: 10px;
+    margin: 2px 0px 2px 2px;
+    border-radius: 20px 0 0 20px;
+    border-width: 0;
+    padding-left: 50px;
+    text-align: left;
+    color: rgba(255,255,255,0.9);
+    box-shadow: 3px 3px 1px grey;
+}
+
+.menuPanel {
+    display: none; position: absolute; z-index: 1000; top: 10px; left: 0; width: 265px; height: 570px; background: rgba(255,255,255,0); border: 0 solid #000;
+}
+
+.menuPanel>div {
+    position: absolute; left: 0px; top: 50px;
+}
+
+.menu3lines {
+    height: 30px; width: 30px; vertical-align: middle;
+    color: rgba(85,150,230,1);
+}
+
+.menu3lines i {
+    font-size: 30px;
+    text-shadow: 2px 2px 1px grey;
+}
+
+.headerButton {
+    width: 240px;
+    height: 36px;
+    background-color: rgba(85,150,230,1);
+    background-repeat: no-repeat;
+    background-size: 24px 24px;
+    background-position: left;
+    background-position-x: 10px;
+    margin: 2px 2px 2px 0;
+    border-radius: 0 12px 12px 0;
+    border-width: 0;
+    padding-left: 50px;
+    text-align: left;
+    color: rgba(255,255,255,0.9);
+    box-shadow: 3px 3px 1px grey;
+}
+
+.langButton {
+    position: absolute; right: 40px; top: -2px; z-index: 1003;
+}
+
+input, select, #map, .headerButton, html, body, form {
+    font-family: Arial, Helvetica, sans-serif;
+/*
+    font-family: 'seeyourtravel', 'Georgia', serif;
+*/
+}
+
+#wrapper #lblCoord {
+    position: relative;
+    top: 0;
+    left: 0;
+    visibility: hidden;
+}
+
+#wrapper:hover #lblCoord {
+    visibility: visible;
+}
+
+.graySelect {
+    background: rgba(85,150,230,1);
+    color: rgba(255,255,255,0.9);
+    border-radius: 0 0 12px 12px;
+}
+
+    .graySelect option {
+        color: rgba(255,255,255,0.9);
+        border-radius: 12px;
+    }
+
+        .graySelect option:nth-child(odd) {
+            background: rgba(85,150,230,0.8);
+        }
+
+        .graySelect option:nth-child(even) {
+            background: rgba(85,150,230,1);
+        }
+
+p.big {
+    line-height: 150%;
+    padding: 0;
+    margin: 0;
+}
+
+button.headerButton:disabled {
+    background-color: rgba(150,150,150,0.8);
+    color: rgba(255,255,255,0.6);
+}
+
+input.glow {
+    padding: 5px;
+    border: solid 1px #dcdcdc;
+    transition: box-shadow 0.3s, border 0.3s;
+}
+
+    input.glow:focus,
+    input.glow.focus {
+        border: solid 1px #707070;
+        box-shadow: 0 0 5px 1px #969696;
+    }
+
+@media screen and (max-height: 599px) {
+    #imageDiv0 {
+        background: rgba(85,150,230,0.2);
+        border-width: 0px;
+        margin: 0 auto;
+        z-index: 100;
+        border-width: 2px;
+        height: 25%;
+        position: absolute;
+        right: 5px;
+        left: 5px;
+        bottom: 5px;
+        overflow-x: hidden;
+        overflow-y: hidden;
+    }
+    /*
+            .photo {
+            width: 100%;
+            margin-top: 1px;
+            margin-bottom: 1px;
+            margin-right: 1px;
+            margin-left: 1px;
+        }
+*/
+}
+
+@media screen and (min-height: 600px) {
+    #imageDiv0 {
+        background: rgba(85,150,230,0.2);
+        border-width: 0px;
+        margin: 0 auto;
+        z-index: 100;
+        border-width: 2px;
+        height: 150px;
+        position: absolute;
+        right: 5px;
+        left: 5px;
+        bottom: 5px;
+        overflow-x: hidden;
+        overflow-y: hidden;
+    }
+}
+
+#imageDiv0 .innerScrollArea {
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+#imageDiv0 ul {
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+#imageDiv0 li {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+    position: absolute;
+}
+
+.photo {
+    /*height: 100%;*/
+    margin: 0 0 0 0;
+}
+
+.no-title .ui-dialog-title {
+    display:none;
+}
+
+.no-title .ui-dialog-titlebar {
+    background:transparent;
+    border:none;
+}
+
+.no-title .ui-dialog .ui-dialog-titlebar-close {
+    right:0;
+}
+
+.ui-tabs-nav li.ui-tabs-close-button {
+    float: right;
+    margin-top: 3px;
+}
+
+#imgComments {
+    width: 36px;
+    height: 36px;
+    box-shadow: 3px 3px 1px grey;
+    border-radius: 20px 0 0 20px;
+}

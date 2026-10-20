@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seeyourtravel.com feedback form</title>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+<body>
+
+<form action="gdform.php" method="post">
+    <label for="name">Specify your name please:</label>
+    <input name="name" id="name" type="text" />
+    <br />
+    <label for="email">Specify your email please:</label>
+    <input name="email" id="email" type="email" />
+    <br />
+    <label for="feedback">Please write down your feedback:</label>
+    <br/>
+    <textarea name="feedback" id="Feedback" cols="40" rows="20"></textarea>
+    <br />
+    <label for="needanswer">Do you expect answer for your request? </label>
+    <input name="needanswer" id="needanswer" type="checkbox" />
+    <br />
+    <br />
+    <input name="redirect" value="thankyou.aspx" type="hidden" />
+    <input id="Submit1" type="submit" value="submit" />&nbsp;<input id="Reset1" type="reset" value="reset" />
+</form>
+
+</body>
+</html>

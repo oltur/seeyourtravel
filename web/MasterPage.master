@@ -1,0 +1,309 @@
+﻿<%@ Master Language="C#" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!--manifest="manifest.appcache"-->
+<head runat="server"><meta charset="utf-8" /><meta name="referrer" content="origin" />
+
+    <link rel="SHORTCUT ICON" href="favicon.ico" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <meta property="og:image" content="//seeyourtravel.com/img/SiteLogo.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="741" />
+    <meta property="og:image:height" content="555" />
+
+    <script src="libs/Chart.bundle.js"></script>
+    <%--    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.bundle.js"></script>--%>
+
+    <script src="libs/jquery.js"></script>
+    <script src="libs/jquery-ui.js"></script>
+    <script src="libs/jquery.cookie.js"></script>
+    <script src="libs/jquery.tinycarousel.js"></script>
+    <script src="libs/toastr.min.js"></script>
+    <script src="libs/leaflet-src.js"></script>
+    <script src="libs/leaflet.markercluster-src.js"></script>
+    <%--<script src="libs/leaflet-routing-machine.js"></script>--%>
+    <script src="libs/i18next.js"></script>
+    <script src="js/facebook.js"></script>
+    <script>window.initFacebook = function () { }; window.fbAsyncInit = function () { };</script>
+    
+    <script src="libs//jquery.tour.js"></script>
+        <style>
+            .tour_item.active {
+                z-index: 9998;
+                position: relative;
+            }
+            #tour_mask {
+                background-color: #fff;
+                display: block;
+                height: 100%;
+                left: 0;
+                opacity: 0.7;
+                position: fixed;
+                top: 0;
+                width: 100%;
+                z-index: 20;
+            }
+            #tour_dialog {
+                background-color: #363636;
+                border: 1px solid #000000;
+                border-radius: 5px 5px 5px 5px;
+                box-shadow: 0 0 10px 2px #367ABB, 0 2px 0 0 rgba(255, 255, 255, 0.3) inset;
+                color: #FFFFFF;
+                display: none;
+                line-height: 20px;
+                padding: 15px;
+                position: absolute !important;
+                text-shadow: 0 1px 0 #000000;
+                z-index: 9999;
+                text-align: left;
+                max-width: 380px;
+                font-size: 14px
+            }
+            #tour_dialog:hover a {
+                opacity: 1;
+                transition: opacity 1s;
+                -moz-transition: opacity 1s;
+                -webkit-transition: opacity 1s;
+                -o-transition: opacity 1s;
+            }
+            #tour_dialog hr {
+                background-color: rgba(255, 255, 255, 0.2);
+                border: medium none;
+                border-top: 1px solid #000;
+                height: 2px;
+                margin: 15px 0;
+            }
+            #tour_dialog .button {
+                border-radius: 4px;
+                -webkit-border-radius: 4px;
+                -moz-border-radius: 4px;
+                border: 1px solid #000;
+                background: #3f9abc;
+                background: -moz-linear-gradient(top, #3f9abc 0%, #1f32b3 100%);
+                background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3f9abc), color-stop(100%, #1f32b3));
+                background: -webkit-linear-gradient(top, #3f9abc 0%, #1f32b3 100%);
+                background: -o-linear-gradient(top, #3f9abc 0%, #1f32b3 100%);
+                background: -ms-linear-gradient(top, #3f9abc 0%, #1f32b3 100%);
+                background: linear-gradient(top, #3f9abc 0%, #1f32b3 100%);
+                filter: progid:dximagetransform.microsoft.gradient(startColorstr='@start', endColorstr='@end', GradientType=0);
+                -moz-box-shadow: 0 0 1px 1px rgba(255, 255, 255, 0.1), 0 1px 0 0 #99DBF8 inset;
+                -webkit-box-shadow: 0 0 1px 1px rgba(255, 255, 255, 0.1), 0 1px 0 0 #99DBF8 inset;
+                box-shadow: 0 0 1px 1px rgba(255, 255, 255, 0.1), 0 1px 0 0 #99DBF8 inset;
+                color: #eee;
+                display: inline-block;
+                font-size: 14px;
+                padding: 6px 14px;
+                position: relative;
+                text-decoration: none;
+                vertical-align: top;
+                text-shadow: 0 -1px 1px #000000;
+                cursor: pointer;
+                float: right;
+            }
+            #tour_dialog .button:hover {
+                background: -moz-linear-gradient(top, #44a4c7 0%, #2136bf 100%);
+                background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #44a4c7), color-stop(100%, #2136bf));
+                background: -webkit-linear-gradient(top, #44a4c7 0%, #2136bf 100%);
+                background: -o-linear-gradient(top, #44a4c7 0%, #2136bf 100%);
+                background: -ms-linear-gradient(top, #44a4c7 0%, #2136bf 100%);
+                background: linear-gradient(top, #44a4c7 0%, #2136bf 100%);
+                filter: progid:dximagetransform.microsoft.gradient(startColorstr='44a4c7', endColorstr='2136bf', GradientType=0);
+                color: #fff !important;
+            }
+            #tour_dialog .arrow {
+                position: absolute;
+                width: 0;
+                height: 0;
+            }
+            #tour_dialog .arrow.top {
+                border-left: 10px solid transparent;
+                border-right: 10px solid transparent;
+                border-top: 10px solid #363636;
+                bottom: -10px;
+                left: 48%;
+            }
+            #tour_dialog .arrow.bottom {
+                border-bottom: 10px solid #363636;
+                border-left: 10px solid transparent;
+                border-right: 10px solid transparent;
+                left: 48%;
+                top: -8px;
+            }
+            #tour_dialog .arrow.right {
+                border-bottom: 10px solid transparent;
+                border-right: 10px solid #363636;
+                border-top: 10px solid transparent;
+                left: -10px;
+                top: 8px;
+            }
+            #tour_dialog .arrow.left {
+                border-bottom: 10px solid transparent;
+                border-left: 10px solid #363636;
+                border-top: 10px solid transparent;
+                right: -10px;
+                top: 8px;
+            }
+            body {
+                font-family: helvetica;
+                background: #cedce7;
+                /* Old browsers */
+                background: -moz-radial-gradient(center, ellipse cover, #fff 0%, #dbdbdb 100%);
+                /* FF3.6+ */
+                background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, #fff), color-stop(100%, #dbdbdb));
+                /* Chrome,Safari4+ */
+                background: -webkit-radial-gradient(center, ellipse cover, #fff 0%, #dbdbdb 100%);
+                /* Chrome10+,Safari5.1+ */
+                background: -o-radial-gradient(center, ellipse cover, #fff 0%, #dbdbdb 100%);
+                /* Opera 12+ */
+                background: -ms-radial-gradient(center, ellipse cover, #fff 0%, #dbdbdb 100%);
+                /* IE10+ */
+                background: radial-gradient(center, ellipse cover, #fff 0%, #dbdbdb 100%);
+                /* W3C */
+                filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff', endColorstr='#dbdbdb', GradientType=1);
+                /* IE6-9 fallback on horizontal gradient */
+            }
+            .demo_container {
+                margin: auto;
+                text-align: center;
+                width: 330px;
+            }
+            .demo_item {
+                background-color: #fff;
+                border: 1px solid #B1B1B1;
+                border-radius: 10px;
+                box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.2);
+                display: inline-block;
+                margin: 75px;
+                padding: 15px;
+            }
+        </style>   
+    <%-- Google Maps/Platform replaced by free services (OSM tiles, Nominatim, OSRM, Open-Meteo) --%>
+    <script src="js/compat.js"></script>
+    <style>#logout { display: none !important; }</style>
+    <script src="libs/json2.js"></script>
+    <script src="libs/jstorage.js"></script>
+
+    <link href="corporate/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="styles/leaflet.css" />
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="styles/leaflet.ie.css"/>
+    <![endif]-->
+    <link rel="stylesheet" href="styles/jquery-ui.css" />
+    <link rel="stylesheet" href="styles/tinycarousel.css" />
+    <link rel="stylesheet" href="styles/toastr.min.css" />
+
+    <script>
+        var IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; 
+        var IS_ANDROID = /android/i.test(navigator.userAgent);
+        var IS_MOBILE_LIGHTWEIGHT = IS_IOS || IS_ANDROID;
+        var IS_ANDROID_WEBVIEW = !!window.JSInterface;
+    </script>
+
+    <script src="js/OurTravel.Common.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/OurTravel.js"></script>
+    <script src="js/AnimatedMarker.js"></script>
+    <script src="js/get_text.js"></script>
+
+    <%--<link rel="stylesheet" href="styles/leaflet-routing-machine.css" />--%>
+
+    <link rel="stylesheet" href="styles/ourTravel.common.css" />
+    <link rel="stylesheet" href="styles/ourTravel.css" />
+    <link rel="stylesheet" href="styles/modern.css" />
+
+    <meta name="google-signin-client_id" content="179651162952-alrnetid5672ki6fqb7qh8b8ptu9aspk.apps.googleusercontent.com" />
+
+    <script>
+        // Analytics (Google Analytics, Clicky) removed; keep a no-op so existing ga(...) calls still work.
+        window.ga = function () { };
+    </script>
+
+    <script>
+        var globalUserId = '<%=Context.User.Identity.Name%>';
+
+        if (IS_ANDROID_WEBVIEW) {
+            $.cookie("AndroidWebView", "1");
+        }
+        else {
+            $.cookie("AndroidWebView", "0");
+        }
+
+        if (window.JSInterface && window.JSInterface.setUserId)
+            window.JSInterface.setUserId(globalUserId);
+
+       
+        var globalUserName = '<%=string.IsNullOrWhiteSpace((string)Session["UserName"])?"Guest":Session["UserName"].ToString()%>';
+        var globalFacebookLanguage = "en_US";
+        var facebookAPIIsLoaded = false;
+
+        ga('set', '&uid', globalUserId); // Set the user ID using signed-in user_id.
+
+        $(function () {
+            var sel = $("#langList");
+            sel.empty();
+            sel.append('<option value="en-US" >En</option>');
+            sel.append('<option value="de-DE" >De</option>');
+            sel.append('<option value="he" >עברית</option>');
+            sel.append('<option value="uk-UA" >Укр</option>');
+
+            var c = $.cookie("i18next");
+            if (typeof c != "undefined" && c != null && c != "") {
+                sel.val(c);
+            }
+            globalFacebookLanguage = getFacebookLanguage();
+
+            initFacebook();
+        });
+    </script>
+
+    <script>
+        window.___gcfg = {
+            lang: getTwitterLanguage(),
+            parsetags: 'onload'
+        };
+    </script>
+
+    <asp:ContentPlaceHolder ID="HeadPlaceholder" runat="server">
+    </asp:ContentPlaceHolder>
+
+    <script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Organization",
+  "url": "https://www.seeyourtravel.com/corporate",
+  "contactPoint": [{
+    "@type": "ContactPoint",
+    "telephone": "+972-58-7786365",
+    "contactType": "sales"
+  }]
+}
+    </script>
+</head>
+<body onresize="onBodyResize()" style="background-size: cover">
+    <form id="form1" method="POST" enctype="multipart/form-data" runat="server">
+        <div>
+            <asp:ContentPlaceHolder ID="BodyPlaceholder" runat="server">
+            </asp:ContentPlaceHolder>
+        </div>
+        <script>
+            $(function () {
+                $.i18n.init({
+                    fallbackLng: "en"
+                    , debug: true
+                    //,useLocalStorage: true | false
+                    //,localStorageExpirationTime: 86400000 // in ms, default 1 week
+                }, function () { if (typeof translateAll != "undefined") translateAll(); }
+                );
+            });
+        </script>
+
+
+
+        <audio id="audio" loop="loop">
+            <source type="audio/mpeg" />
+            Your browser does not support the audio element.
+        </audio>
+    </form>
+</body>
+</html>

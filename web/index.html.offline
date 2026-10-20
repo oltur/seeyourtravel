@@ -1,0 +1,24 @@
+<!--
+SeeYourTravel.com - Travel Experience Site
+Copyright (c) 2014-2015, Oleksandr Turevskiy
+All rights reserved.
+<html manifest="manifest.appcache">
+GNU GENERAL PUBLIC LICENSE. Version 3, 29 June 2007.
+Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
+-->
+<head>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Organization",
+  "url": "https://www.seeyourtravel.com/corporate",
+  "contactPoint": [{
+    "@type": "ContactPoint",
+    "telephone": "+972-58-7786365",
+    "contactType": "sales"
+  }]
+}
+</script>
+</head>
+Hi! We are improving the site and will be back online soon. See you!
+</html>

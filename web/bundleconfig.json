@@ -1,0 +1,44 @@
+[
+  {
+    "outputFileName": "js/OurTravel.min.js",
+    "inputFiles": [
+      "js/OurTravel.js"
+    ]
+  },
+  {
+    "outputFileName": "js/OurTravel.Common.min.js",
+    "inputFiles": [
+      "js/OurTravel.Common.js"
+    ]
+  },
+  {
+    "outputFileName": "js/AnimatedMarker.min.js",
+    "inputFiles": [
+      "js/AnimatedMarker.js"
+    ]
+  },
+  {
+    "outputFileName": "js/Facebook.min.js",
+    "inputFiles": [
+      "js/Facebook.js"
+    ]
+  },
+  {
+    "outputFileName": "js/get_text.min.js",
+    "inputFiles": [
+      "js/get_text.js"
+    ]
+  },
+  {
+    "outputFileName": "js/jquery.infinite-carousel.min.js",
+    "inputFiles": [
+      "js/jquery.infinite-carousel.js"
+    ]
+  },
+  {
+    "outputFileName": "js/toastr.min.js",
+    "inputFiles": [
+      "js/toastr.js"
+    ]
+  }
+]

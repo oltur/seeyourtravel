@@ -1,0 +1,127 @@
+/* Visual refresh: loaded after ourTravel.css, only overrides looks (no layout changes). */
+:root {
+    --syt-blue: #4a90e2;
+    --syt-blue-dark: #3a78c2;
+    --syt-radius: 14px;
+    --syt-shadow: 0 6px 20px rgba(20, 40, 80, 0.22);
+    --syt-ease: cubic-bezier(.2, .7, .2, 1);
+}
+
+html, body, form, input, select, button, .headerButton {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Buttons */
+.headerButton, .sideButton {
+    background-color: var(--syt-blue);
+    box-shadow: 0 3px 10px rgba(20, 40, 80, 0.28);
+    transition: transform .18s var(--syt-ease), box-shadow .18s var(--syt-ease), background-color .18s;
+    cursor: pointer;
+    font-size: 14px;
+    letter-spacing: .2px;
+}
+.headerButton:hover, .sideButton:hover {
+    background-color: var(--syt-blue-dark);
+    transform: translateX(3px);
+    box-shadow: 0 5px 14px rgba(20, 40, 80, 0.35);
+}
+.sideButton:hover { transform: translateX(-3px); }
+.headerButton:active, .sideButton:active { transform: scale(.97); }
+.headerButton:focus-visible, .sideButton:focus-visible, .graySelect:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Selects */
+.graySelect {
+    background: var(--syt-blue);
+    border: 0;
+    border-radius: 0 0 var(--syt-radius) var(--syt-radius);
+    box-shadow: 0 3px 10px rgba(20, 40, 80, 0.28);
+    transition: background-color .18s;
+    cursor: pointer;
+    padding: 0 6px;
+}
+.graySelect:hover { background: var(--syt-blue-dark); }
+
+/* Floating panels */
+#helpPanel, #settingsPanel, #textToReadArea0 {
+    border-radius: var(--syt-radius) !important;
+    box-shadow: var(--syt-shadow);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+#helpPanel, #settingsPanel { background: rgba(255, 255, 255, 0.9) !important; }
+#textToReadArea { border-radius: calc(var(--syt-radius) - 2px); }
+
+/* jQuery UI tabs */
+.ui-tabs { border: 0; background: transparent; padding: 0; }
+.ui-tabs .ui-tabs-nav { background: transparent; border: 0; padding: 0 0 4px; }
+.ui-tabs .ui-tabs-nav li { border-radius: 10px 10px 0 0; border: 0; margin-right: 4px; background: #e8eef7; transition: background-color .15s; }
+.ui-tabs .ui-tabs-nav li a { outline: 0; }
+.ui-tabs .ui-tabs-nav li:hover { background: #d6e3f5; }
+.ui-tabs .ui-tabs-nav li.ui-tabs-active { background: #fff; }
+.ui-tabs .ui-tabs-panel { background: transparent; }
+
+/* Buttons inside panels (e.g. "Take a tour!") */
+#helpPanel button {
+    border: 0; border-radius: 10px; background: var(--syt-blue); color: #fff;
+    box-shadow: 0 3px 8px rgba(20, 40, 80, 0.25); transition: background-color .18s, transform .18s var(--syt-ease);
+    cursor: pointer;
+}
+#helpPanel button:hover { background: var(--syt-blue-dark); transform: translateY(-1px); }
+
+/* Photo strip */
+#imageDiv0 {
+    border-radius: var(--syt-radius);
+    box-shadow: var(--syt-shadow);
+    background: rgba(255, 255, 255, 0.35) !important;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border: 0 !important;
+}
+#imageDiv0 .innerScrollArea { border-radius: var(--syt-radius); }
+img.photo {
+    transition: filter .2s, transform .25s var(--syt-ease);
+    cursor: zoom-in;
+}
+#imageDiv0 li:hover { z-index: 2; }
+img.photo:hover { filter: brightness(1.08) saturate(1.08); transform: scale(1.03); }
+
+/* Enlarged preview on hover */
+#photoPreview {
+    border-radius: 10px !important;
+    animation: syt-pop .16s var(--syt-ease);
+}
+@keyframes syt-pop { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* Map controls and markers */
+.leaflet-bar { border: 0 !important; border-radius: 12px !important; box-shadow: var(--syt-shadow) !important; overflow: hidden; }
+.leaflet-bar a { transition: background-color .15s; }
+.leaflet-control-scale-line { border-radius: 0 6px 6px 0; background: rgba(255, 255, 255, 0.85); }
+.leaflet-control-attribution { border-radius: 8px 0 0 0; }
+.leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: var(--syt-shadow); }
+.leaflet-marker-icon { transition: opacity .25s; }
+.leaflet-container { background: #dfe6ee; }
+
+/* Notifications */
+#toast-container > div {
+    border-radius: 12px; box-shadow: var(--syt-shadow); opacity: .96;
+}
+
+/* Smooth page scrolling inside panels */
+#textToReadArea, #helpPanel { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+}
+
+/* Zoom +/- buttons: bigger, bottom-right, clear of the language selector and panels */
+.leaflet-control-zoom a { width: 40px !important; height: 40px !important; line-height: 40px !important; font-size: 24px !important; }
+.leaflet-bottom.leaflet-right .leaflet-control-zoom { margin-bottom: 10px; margin-right: 14px; }
+
+/* Leaflet 1.x panes use z-index 400+; keep them inside the map's own stacking context so UI panels (photo strip etc.) stay on top */
+.leaflet-container { isolation: isolate; z-index: 0; }
+
+/* Keep bottom map controls (attribution, scale, zoom) above the photo strip; --syt-strip-h is set from JS */
+.leaflet-bottom { bottom: var(--syt-strip-h, 0px); transition: bottom .2s; }

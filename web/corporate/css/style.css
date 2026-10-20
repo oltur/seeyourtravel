@@ -1,0 +1,667 @@
+/*
+Author:Vijayan PP
+Template:Jasm- Coming Soon Website
+*/
+
+/*Basic Styles*/
+
+html,body
+{
+height:100%;
+}
+
+body
+{
+background:#222;
+color:#222;
+font-weight:200;
+font: 18px/1.5 Lato, "Century Gothic", "Trebuchet MS", Helvetica, sans-serif;
+-webkit-font-smoothing:antialiased;
+
+}
+a
+{
+color:#05B8FF;
+text-decoration:none;
+transition:all 0.125 ease-in-out 0s;
+-webkit-transition:all 0.125s ease-in-out 0s;
+-moz-transition:all 0.125s ease-in-out 0s;
+-ms-transition:all 0.125s ease-in-out 0s;
+-o-transition:all 0.125s ease-in-out 0s;
+}
+
+
+a:hover
+{
+color:#05B8FF;
+}
+
+a,a:hover,a:focus,a:active
+{
+border:0;
+outline:0;
+text-decoration:none;
+}
+
+
+
+.jasm-float-right
+{
+float:right;
+}
+.jasm-float-left
+{
+float:left;
+}
+
+.jasm-center
+{
+display:block;
+margin-left:auto;
+margin-right:auto;
+}
+.jasm-hide
+{
+display:none !important;
+visibility:hidden !important;
+}
+.jasm-show
+{
+display:block !important; 
+}
+
+.jasm-preloader
+{
+width:100%;
+height:100%;
+position:fixed;
+left:0;
+top:0;
+bottom:0;
+right:0;
+z-index:9999;
+background:#fff url('../img/preloader.gif') no-repeat center center;
+}
+
+/*Typography*/
+.jasm-text-center
+{
+text-align:center;
+}
+.jasm-text-uppercase
+{
+text-transform:uppercase;
+}
+.jasm-text-right
+{
+text-align:right;
+}
+.jasm-text-left
+{
+text-align:left;
+}
+.jasm-text-justify
+{
+text-align:justify;
+}
+
+/*Header*/
+header
+{
+width:100%;
+height:100%;
+background:#000 !important;
+position:relative;
+overflow:hidden;
+z-index:0;
+}
+header>.container
+{
+height:100%;
+position:relative;
+}
+.wrapper
+{
+width:100%;
+height:auto;
+position:relative;
+top:50%;
+}
+.jasm-ovrelays
+{
+width:100%;
+height:100%;
+position:absolute;
+top:0;
+left:0;
+}
+.jasm-background-repeat
+{
+background-repeat:repeat;
+}
+.jasm-background-norepeat
+{
+background-repeat:no-repeat;
+}
+
+.lj-overlay-image {
+		background-image: url('../img/lines.png');
+		background-repeat: repeat;
+	}
+.jasm-overlay-hidden
+{
+display:none !important;
+visibility:hidden !important;
+}
+.jasm-overlays-color
+{
+background:rgba(0,0,0,0.5);
+}
+/*Logo*/
+.jasm-logo a,
+	.jasm-logo img {
+		width: 300px;
+		height: 235px;
+	}
+	
+	.jasm-logo a {
+		display: block;
+		margin: 0 auto;
+	}
+	
+	.jasm-logo img {
+	    vertical-align: bottom;
+	}
+	
+	.jasm-logo-1x {
+		display: block;
+	}
+	
+	.jasm-logo-2x {
+		display: none;
+	}
+	
+	
+	/*title*/
+	.jasm-title {
+        margin-top: 30px;
+    }
+    
+    .jasm-title h1 {
+    	font-family: 'Raleway';
+    	font-size: 3.5em;
+    	font-weight: 300;
+        color: #fff;
+        margin: 0;
+        word-wrap: break-word;
+    }
+    
+    .jasm-title span {
+        color: #fff;
+        font-weight: 700;
+    }
+
+	
+	.jasm-line {
+		margin-top: 20px;
+	}
+
+    .jasm-line > div {
+    	width: 200px;
+    	height: 1px;
+    	background-color: #fff;
+    	margin: 0 auto;
+    }
+
+    .jasm-title-paragraph {
+    	margin-top: 20px;
+    }
+
+    .jasm-title-paragraph p {
+    	color: #fff;
+    	margin: 0;
+    }
+/*Countdown*/
+    .jasm-countdown {
+    	color: #fff;
+    	margin-top: 40px;
+    	text-align: center;
+    }
+
+    .jasm-countdown > * {
+    	text-align: center;
+    }
+
+    .jasm-countdown div {
+    	display: inline-block;
+    }
+
+    .jasm-countdown div span {
+    	width: 150px;
+    	display: block;    	
+    }
+
+    .jasm-countdown div span:first-child {
+    	height: 64px;
+    	font-family: Lato, "Century Gothic", "Trebuchet MS", Helvetica, sans-serif;
+    	font-weight: 300;
+    	font-size: 4em;
+    	line-height: 64px;
+    }
+
+    .jasm-countdown div span:last-child {
+    	height: 20px;
+    	font-family: Lato, "Century Gothic", "Trebuchet MS", Helvetica, sans-serif;
+    	font-weight: 300;
+    	font-size: 1em;
+    	line-height: 20px;
+    }
+
+	.jasm-scroll-down {
+		width: 40px;
+		height: 40px;
+		margin-left: -20px;
+		position: absolute;
+		bottom: 10px;
+		left: 50%;
+	}
+
+	.jasm-scroll-down a,
+	.jasm-scroll-down a:focus {
+		width: 40px;
+		height: 40px;
+		display: block;
+    	-webkit-border-radius: 2px;
+		-moz-border-radius: 2px;
+		border-radius: 2px;
+		text-align: center;
+		line-height: 36px;
+		color: #fff;
+		background-color: transparent;
+    	border: 1px solid #fff;
+	}
+
+	.jasm-scroll-down a:hover {
+		color: #fff;
+    	background-color: #005BBB;;
+    	border: 1px solid #05B8FF;
+	}
+
+	.description
+       {
+	   overflow:hidden;
+	   background:#005BBB;
+	   }
+	   .description>.container
+	   {
+	   padding-top:50px;
+	   padding-bottom:50px;  
+	  }
+	  
+	  
+	  .jasm-icon-container {
+		padding: 0 20px;
+		text-align:center;
+	}
+
+	.jasm-icon-container span {
+		display: inline-block;
+		font-size: 2em;
+		border-radius: 50%;
+		text-align: center;
+		color: #ccc;
+		margin-left:auto;
+		
+        		
+		}
+
+	.jasm-icon-container h3 {
+		font-family: 'Raleway';
+		font-weight: 700;
+		font-size: 1em;
+		word-wrap: break-word;
+		color: #fff;
+		
+	}
+
+	.jasm-icon-container p {
+		font-size: 0.9em;
+		color: #fff;
+		text-align:justify;
+	}
+
+	.jasm-icon-container > a {
+		font-family: 'Raleway';
+		font-weight: 700;
+		font-size: 0.85em;
+		color: #fff;
+		display: inline-block;
+	}
+
+	.jasm-icon-container > a:hover {
+		color: #000;	
+	}
+
+	.jasm-icon-container h3,
+	.jasm-icon-container p,
+	.jasm-icon-container > a {
+		margin: 20px 0 0;
+	}
+
+	.jasm-icon-container p a {
+		font-weight: 700;
+	}
+
+	  /*Recent Works*/
+.recent-works {
+  padding: 40px 0;
+  background:#fff;
+}
+.recent-works .item-inner {
+  position: relative;
+  margin: 0;
+}
+.center h2
+{
+color:#fff;
+
+}
+.centers
+{
+padding-bottom:50px;
+text-align:center;
+}
+.jasm-fadeInDown
+{
+-webkit-animation-name:fadeInDown;
+animation-name:fadeInDown;
+}
+.jasm-recent-work-wrap
+{
+position:relative;
+cursor:pointer;
+}
+
+.jasm-recent-work-wrap .jasm-overlay
+{
+position:absolute;
+top:0px;
+left:0px;
+width:100%;
+height:100%;
+opacity:0;
+border-radius:0;
+background:#000;
+color:#fff;
+vertical-align:middle;
+-wekbit-transition:all 1s;
+-ms-transition:all 1s;
+-moz-transition:all 1s;
+-o-transition:all 1s;
+transition:all 1s;
+padding:5px;
+cursor:pointer;
+transform:scale(0,0);
+-webkit-transform:scale(0,0);
+-moz-transform:scale(0,0);
+-ms-transform:scale(0,0);
+-o-transform:scale(0,0);
+display:none;
+
+}
+.jasm-recent-work-inner
+{
+top:0;
+bakckground:#000;
+opacity:.8;
+width:100%;
+border-radius:0;
+margin-bottom:0;
+color:#ccc;
+}
+.jasm-recent-work-inner a
+{
+color:#fff;
+}
+.jasm-recent-work-inner h3
+{
+font-size:9px;
+
+}
+.jasm-recent-work-inner  p
+{
+text-align:justify;
+font-size:8px;
+}
+@media(min-width:600px)
+{
+.jasm-recent-work-inner  p
+{
+font-size:11px;
+
+}
+.jasm-recent-work-inner h3
+{
+font-size:14px;
+
+}
+.jasm-recent-work-wrap .jasm-overlay
+{
+padding:30px;
+display:block;
+
+}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.jasm-parallax-back
+{
+background:#000;
+
+}
+.jasm-opacity
+{
+background:rgba(0,0,0,0.89);
+}
+	  
+.jasm-lead
+{
+
+margin:0 auto 30px;
+font-size:18px;
+color:#222;
+width:90%;
+font-family:Helvitica;
+font-weight:bold;
+}
+
+/*Subscribe*/
+.subscribe {
+		width: 100%;
+		background-color: #000;
+		position: relative;
+		overflow: hidden;
+	}
+	  
+.subscribe > .container {
+		padding-top: 150px;
+		padding-bottom: 116px;
+	}
+
+	.jasm-subscribe-title h2 {
+		font-family: 'Raleway';
+		font-weight: 300;
+		font-size: 3em;
+		color: #ccc;
+		margin: 0;
+	}
+
+	.jasm-subscribe-title h2 span {
+		font-weight: 700;
+	}
+
+    .jasm-subscribe-form {
+    	margin-top: 6px;
+    }
+
+    .jasm-subscribe-form input[type=text] {
+    	width: 65%;
+    	height: 60px;
+    	display: block;
+    	padding: 0 20px;    	
+    	background-color: #fff;
+        border: 1px solid #fff;
+		-webkit-border-top-left-radius: 2px;
+		-webkit-border-bottom-left-radius: 2px;
+		-moz-border-radius-topleft: 2px;
+		-moz-border-radius-bottomleft: 2px;
+		border-top-left-radius: 2px;
+		border-bottom-left-radius: 2px;
+		line-height: 60px;
+		color: #262626;
+		float: left;
+    }
+
+    .jasm-subscribe-form input:focus {
+    	outline: 0;
+    }
+    
+    .jasm-subscribe-form input[type=submit] {
+    	width: 35%;
+    	height: 60px;
+    	display: block;
+    	padding: 0 10px; 
+    	background-color: #005BBB;
+        border: 1px solid #fff;
+        color: #fff;
+		-webkit-border-top-right-radius: 3px;
+		-webkit-border-bottom-right-radius: 3px;
+		-moz-border-radius-topright: 3px;
+		-moz-border-radius-bottomright: 3px;
+		border-top-right-radius: 3px;
+		border-bottom-right-radius: 3px;        
+		font-family: 'Raleway';
+		font-weight: 700;	
+		transition: all 0.125s ease-in-out 0s;
+		-moz-transition: all 0.125s ease-in-out 0s;
+		-webkit-transition: all 0.125s ease-in-out 0s;
+		-o-transition: all 0.125s ease-in-out 0s;
+		-ms-transition: all 0.125s ease-in-out 0s;
+		float: right;
+    }
+
+    .jasm-subscribe-form input[type=submit]:hover {
+    	background-color: transparent;
+    	border: 1px solid #262626;
+    	color: #262626;
+    }
+
+    .jasm-subscribe-message {
+			display: block;
+    	height: 2.5em;
+    	padding: 10px 20px;
+    	color: #262626;
+    	font-size: 0.9em;
+    }
+
+    .jasm-subscribe-message i {
+    	margin-right: 5px;
+    }
+
+	.jasm-subscribe-message .fa-warning {
+    	color: #ff5c5c;
+    }
+
+    .lj-subscribe-message .fa-check {
+    	color: #05B8FF;
+    }    
+/*footer*/
+.parallax-back
+{
+background:#000;
+border-top:1px solid #222;
+
+}
+.opacity
+{
+background:rgba(0,0,0,0.89);
+}
+.wrap
+{
+padding:34px 0 43px;
+}
+.social-footer
+{
+padding:1.5em;
+}
+.w-form
+{
+margin:0 0 15px;
+}
+h1.underline
+{
+background:url(../img/underline-headline.png) bottom center no-repeat;
+font-size:3.5em;
+padding-bottom:15px;
+letter-spacing:.075em;
+margin:10px 0;
+}
+.contact
+{
+background:#000;
+color:#ccc;
+}
+.social-footter a
+{
+color:#ccc;
+}
+.social-footter a:hover
+{
+color:#68b505;
+}
+
+.lj-text-center
+{
+text-align: center;
+}
+
+@media (max-width: 767px) {
+
+		/* 5. HEADER */
+
+		header,
+		header > .container {
+			height: auto;
+		}
+
+		.wrapper {
+			width: 100%;
+			position: static;
+			top: 0;
+			margin-top: 50px !important;
+			margin-bottom: 50px;
+		}
+		}
+
+	  

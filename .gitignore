@@ -1,0 +1,25 @@
+# personal data / large binaries
+/db/
+/video/
+/web/data/
+*.mp3
+*.mp4
+/web/packages/
+
+# secrets / local config (see web/Web.config.example)
+/web/Web.config
+/web/Web.config.*
+!/web/Web.config.example
+/web/App_Data/PublishProfiles/
+*.pubxml
+
+# editor / backups
+.vs/
+*.suo
+*.user
+*.orig
+*.bak
+*.prev
+*.prev[0-9]*
+*.orig-not-compiled
+/web/zz_test.html

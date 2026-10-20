@@ -1,0 +1,628 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Schema xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl" xmlns:ns1="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" Namespace="SeeYourTravelModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self">
+        <EntityType Name="Image">
+          <Key>
+            <PropertyRef Name="ImageID" />
+          </Key>
+          <Property Name="ImageID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="FileName" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="IsPublic" Type="bit" Nullable="false" />
+          <Property Name="Lat" Type="float" />
+          <Property Name="Lng" Type="float" />
+          <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Created" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="ImageUser">
+          <Key>
+            <PropertyRef Name="ImageUserID" />
+          </Key>
+          <Property Name="ImageUserID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="ImageID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Place">
+          <Key>
+            <PropertyRef Name="PlaceID" />
+          </Key>
+          <Property Name="PlaceID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Lat" Type="float" Nullable="false" />
+          <Property Name="Lng" Type="float" Nullable="false" />
+          <Property Name="Name" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Vicinity" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Rating" Type="float" Nullable="false" />
+          <Property Name="IsPublic" Type="bit" Nullable="false" />
+          <Property Name="Created" Type="datetime" Nullable="false" />
+          <Property Name="Link" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+        </EntityType>
+        <EntityType Name="PlaceImage">
+          <Key>
+            <PropertyRef Name="PlaceImageID" />
+          </Key>
+          <Property Name="PlaceImageID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="PlaceID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="ImageID" Type="uniqueidentifier" Nullable="false" />
+        </EntityType>
+        <EntityType Name="PlaceType">
+          <Key>
+            <PropertyRef Name="PlaceTypeID" />
+          </Key>
+          <Property Name="PlaceTypeID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Name" Type="nvarchar" MaxLength="200" Nullable="false" />
+        </EntityType>
+        <EntityType Name="PlaceTypePlace">
+          <Key>
+            <PropertyRef Name="PlaceTypePlaceID" />
+          </Key>
+          <Property Name="PlaceTypePlaceID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="PlaceTypeID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="PlaceID" Type="uniqueidentifier" Nullable="false" />
+        </EntityType>
+        <EntityType Name="PlaceUser">
+          <Key>
+            <PropertyRef Name="PlaceUserID" />
+          </Key>
+          <Property Name="PlaceUserID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="PlaceID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Role">
+          <Key>
+            <PropertyRef Name="RoleID" />
+          </Key>
+          <Property Name="RoleID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="RoleName" Type="nvarchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Track">
+          <Key>
+            <PropertyRef Name="TrackID" />
+          </Key>
+          <Property Name="TrackID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="FileName" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="IsPublic" Type="bit" Nullable="false" />
+          <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Category" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="ImageUrl" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Created" Type="datetime" Nullable="false" />
+          <Property Name="CreatedBy" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Location" Type="nvarchar" MaxLength="200" Nullable="false" />
+        </EntityType>
+        <EntityType Name="TrackLocalization">
+          <Key>
+            <PropertyRef Name="TrackLocalizationID" />
+          </Key>
+          <Property Name="TrackLocalizationID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="TrackID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Locale" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+        </EntityType>
+        <EntityType Name="TrackUser">
+          <Key>
+            <PropertyRef Name="TrackUserID" />
+          </Key>
+          <Property Name="TrackUserID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="TrackID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
+        </EntityType>
+        <EntityType Name="User">
+          <Key>
+            <PropertyRef Name="UserID" />
+          </Key>
+          <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserName" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="UserPassword" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="FacebookId" Type="nvarchar" MaxLength="100" />
+          <Property Name="Disabled" Type="bit" />
+        </EntityType>
+        <EntityType Name="UserLocation">
+          <Key>
+            <PropertyRef Name="UserLocationID" />
+          </Key>
+          <Property Name="UserLocationID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Lat" Type="float" Nullable="false" />
+          <Property Name="Lng" Type="float" Nullable="false" />
+          <Property Name="Time" Type="datetime" Nullable="false" />
+          <Property Name="Source" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="UserLogin">
+          <Key>
+            <PropertyRef Name="UserLoginID" />
+          </Key>
+          <Property Name="UserLoginID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Time" Type="datetime" Nullable="false" />
+          <Property Name="LoginType" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="CallerIp" Type="nvarchar(max)" />
+          <Property Name="CallerAgent" Type="nvarchar(max)" />
+          <Property Name="CalledUrl" Type="nvarchar(max)" />
+        </EntityType>
+        <EntityType Name="UserRole">
+          <Key>
+            <PropertyRef Name="UserRoleID" />
+          </Key>
+          <Property Name="UserRoleID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="RoleID" Type="uniqueidentifier" Nullable="false" />
+        </EntityType>
+        
+        <EntityType Name="Version">
+          <Key>
+            <PropertyRef Name="VersionHigh" />
+            <PropertyRef Name="VersionLow" />
+            <PropertyRef Name="Created" />
+          </Key>
+          <Property Name="VersionHigh" Type="int" Nullable="false" />
+          <Property Name="VersionLow" Type="int" Nullable="false" />
+          <Property Name="Created" Type="datetime" Nullable="false" />
+        </EntityType>
+        
+        <EntityType Name="GetAllRoughUserLocations">
+          <Key>
+            <PropertyRef Name="userid" />
+            <PropertyRef Name="username" />
+            <PropertyRef Name="lat" />
+            <PropertyRef Name="lng" />
+          </Key>
+          <Property Name="userid" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="username" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="lat" Type="float" Nullable="false" />
+          <Property Name="lng" Type="float" Nullable="false" />
+          <Property Name="Expr1" Type="datetime" />
+        </EntityType>
+        <Association Name="FK_ImageUser_Image">
+          <End Role="Image" Type="Self.Image" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ImageUser" Type="Self.ImageUser" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Image">
+              <PropertyRef Name="ImageID" />
+            </Principal>
+            <Dependent Role="ImageUser">
+              <PropertyRef Name="ImageID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_ImageUser_User">
+          <End Role="User" Type="Self.User" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="ImageUser" Type="Self.ImageUser" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="UserID" />
+            </Principal>
+            <Dependent Role="ImageUser">
+              <PropertyRef Name="UserID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PlaceImage_Image">
+          <End Role="Image" Type="Self.Image" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PlaceImage" Type="Self.PlaceImage" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Image">
+              <PropertyRef Name="ImageID" />
+            </Principal>
+            <Dependent Role="PlaceImage">
+              <PropertyRef Name="ImageID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PlaceImage_Place">
+          <End Role="Place" Type="Self.Place" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PlaceImage" Type="Self.PlaceImage" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Place">
+              <PropertyRef Name="PlaceID" />
+            </Principal>
+            <Dependent Role="PlaceImage">
+              <PropertyRef Name="PlaceID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PlaceTypePlace_Place">
+          <End Role="Place" Type="Self.Place" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PlaceTypePlace" Type="Self.PlaceTypePlace" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Place">
+              <PropertyRef Name="PlaceID" />
+            </Principal>
+            <Dependent Role="PlaceTypePlace">
+              <PropertyRef Name="PlaceID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PlaceTypePlace_PlaceType">
+          <End Role="PlaceType" Type="Self.PlaceType" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PlaceTypePlace" Type="Self.PlaceTypePlace" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="PlaceType">
+              <PropertyRef Name="PlaceTypeID" />
+            </Principal>
+            <Dependent Role="PlaceTypePlace">
+              <PropertyRef Name="PlaceTypeID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PlaceUser_Place">
+          <End Role="Place" Type="Self.Place" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PlaceUser" Type="Self.PlaceUser" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Place">
+              <PropertyRef Name="PlaceID" />
+            </Principal>
+            <Dependent Role="PlaceUser">
+              <PropertyRef Name="PlaceID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PlaceUser_User">
+          <End Role="User" Type="Self.User" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="PlaceUser" Type="Self.PlaceUser" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="UserID" />
+            </Principal>
+            <Dependent Role="PlaceUser">
+              <PropertyRef Name="UserID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_TrackUser_Track">
+          <End Role="Track" Type="Self.Track" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="TrackUser" Type="Self.TrackUser" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Track">
+              <PropertyRef Name="TrackID" />
+            </Principal>
+            <Dependent Role="TrackUser">
+              <PropertyRef Name="TrackID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_TrackUser_User">
+          <End Role="User" Type="Self.User" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="TrackUser" Type="Self.TrackUser" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="UserID" />
+            </Principal>
+            <Dependent Role="TrackUser">
+              <PropertyRef Name="UserID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_UserLocation_User">
+          <End Role="User" Type="Self.User" Multiplicity="1" />
+          <End Role="UserLocation" Type="Self.UserLocation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="UserID" />
+            </Principal>
+            <Dependent Role="UserLocation">
+              <PropertyRef Name="UserID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_UserLogin_User">
+          <End Role="User" Type="Self.User" Multiplicity="1" />
+          <End Role="UserLogin" Type="Self.UserLogin" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="UserID" />
+            </Principal>
+            <Dependent Role="UserLogin">
+              <PropertyRef Name="UserID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_UserRole_Role">
+          <End Role="Role" Type="Self.Role" Multiplicity="1" />
+          <End Role="UserRole" Type="Self.UserRole" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Role">
+              <PropertyRef Name="RoleID" />
+            </Principal>
+            <Dependent Role="UserRole">
+              <PropertyRef Name="RoleID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_UserRole_User">
+          <End Role="User" Type="Self.User" Multiplicity="1" />
+          <End Role="UserRole" Type="Self.UserRole" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="UserID" />
+            </Principal>
+            <Dependent Role="UserRole">
+              <PropertyRef Name="UserID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Function Name="GetAllTracks" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="TrackID" Type="uniqueidentifier" Nullable="false" />
+                <Property Name="FileName" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="IsPublic" Type="bit" Nullable="false" />
+                <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Category" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="ImageUrl" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Created" Type="datetime" Nullable="false" />
+                <Property Name="CreatedBy" Type="nvarchar" MaxLength="100" Nullable="false" />
+                <Property Name="Location" Type="nvarchar" MaxLength="200" Nullable="false" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="GetFriendsLocations" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+        </Function>
+        <Function Name="GetTrackForUserByIdOrName" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <Parameter Name="TrackId" Type="uniqueidentifier" Mode="In" />
+          <Parameter Name="Name" Type="nvarchar" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="TrackID" Type="uniqueidentifier" Nullable="false" />
+                <Property Name="FileName" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="IsPublic" Type="bit" Nullable="false" />
+                <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Category" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="ImageUrl" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Created" Type="datetime" Nullable="false" />
+                <Property Name="CreatedBy" Type="nvarchar" MaxLength="100" Nullable="false" />
+                <Property Name="Location" Type="nvarchar" MaxLength="200" Nullable="false" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="GetUserAndPublicImagesByLocation" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <Parameter Name="MinLat" Type="float" Mode="In" />
+          <Parameter Name="MinLng" Type="float" Mode="In" />
+          <Parameter Name="MaxLat" Type="float" Mode="In" />
+          <Parameter Name="MaxLng" Type="float" Mode="In" />
+          <Parameter Name="From" Type="int" Mode="In" />
+          <Parameter Name="To" Type="int" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="ImageID" Type="uniqueidentifier" Nullable="false" />
+                <Property Name="FileName" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="IsPublic" Type="bit" Nullable="false" />
+                <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Lat" Type="float" />
+                <Property Name="Lng" Type="float" />
+                <Property Name="UserID" Type="uniqueidentifier" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="GetUserAndPublicPlacesByLocation" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <Parameter Name="Types" Type="nvarchar(max)" Mode="In" />
+          <Parameter Name="MinLat" Type="float" Mode="In" />
+          <Parameter Name="MinLng" Type="float" Mode="In" />
+          <Parameter Name="MaxLat" Type="float" Mode="In" />
+          <Parameter Name="MaxLng" Type="float" Mode="In" />
+          <Parameter Name="From" Type="int" Mode="In" />
+          <Parameter Name="To" Type="int" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="PlaceID" Type="uniqueidentifier" Nullable="false" />
+                <Property Name="Name" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="IsPublic" Type="bit" Nullable="false" />
+                <Property Name="Lat" Type="float" Nullable="false" />
+                <Property Name="Lng" Type="float" Nullable="false" />
+                <Property Name="Rating" Type="float" Nullable="false" />
+                <Property Name="Vicinity" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="PlaceTypeName" Type="nvarchar" MaxLength="200" />
+                <Property Name="UserID" Type="uniqueidentifier" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="GetUserandPublicTracks" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <Parameter Name="Locale" Type="nvarchar" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="TrackID" Type="uniqueidentifier" Nullable="false" />
+                <Property Name="IsPublic" Type="bit" Nullable="false" />
+                <Property Name="Category" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Description" Type="nvarchar(max)" />
+                <Property Name="FileName" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="ImageUrl" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Location" Type="nvarchar" MaxLength="200" Nullable="false" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="GetUserImages" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="ImageID" Type="uniqueidentifier" Nullable="false" />
+                <Property Name="FileName" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="IsPublic" Type="bit" Nullable="false" />
+                <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Lat" Type="float" />
+                <Property Name="Lng" Type="float" />
+                <Property Name="Created" Type="datetime" Nullable="false" />
+                <Property Name="UserID" Type="uniqueidentifier" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="GetUserPlaces" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="PlaceID" Type="uniqueidentifier" Nullable="false" />
+                <Property Name="Rating" Type="float" Nullable="false" />
+                <Property Name="Vicinity" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="IsPublic" Type="bit" Nullable="false" />
+                <Property Name="Name" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Lat" Type="float" Nullable="false" />
+                <Property Name="Lng" Type="float" Nullable="false" />
+                <Property Name="Created" Type="datetime" Nullable="false" />
+                <Property Name="UserID" Type="uniqueidentifier" />
+                <Property Name="FileName" Type="nvarchar(max)" />
+                <Property Name="Link" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="GetUserTracks" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="TrackID" Type="uniqueidentifier" Nullable="false" />
+                <Property Name="FileName" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="IsPublic" Type="bit" Nullable="false" />
+                <Property Name="Description" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Category" Type="nvarchar(max)" Nullable="false" />
+                <Property Name="Location" Type="nvarchar" MaxLength="200" Nullable="false" />
+                <Property Name="UserID" Type="uniqueidentifier" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="IsAdmin" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="Result" Type="int" Nullable="false" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="IsGuest" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="UserID" Type="uniqueidentifier" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="Result" Type="int" Nullable="false" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <EntityContainer Name="SeeYourTravelModelStoreContainer">
+          <EntitySet Name="Image" EntityType="Self.Image" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="ImageUser" EntityType="Self.ImageUser" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="Place" EntityType="Self.Place" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="PlaceImage" EntityType="Self.PlaceImage" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="PlaceType" EntityType="Self.PlaceType" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="PlaceTypePlace" EntityType="Self.PlaceTypePlace" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="PlaceUser" EntityType="Self.PlaceUser" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="Role" EntityType="Self.Role" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="Track" EntityType="Self.Track" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="TrackLocalization" EntityType="Self.TrackLocalization" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="TrackUser" EntityType="Self.TrackUser" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="User" EntityType="Self.User" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="UserLocation" EntityType="Self.UserLocation" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="UserLogin" EntityType="Self.UserLogin" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="UserRole" EntityType="Self.UserRole" Schema="dbo" ns1:Type="Tables" />
+          <EntitySet Name="Version" EntityType="Self.Version" ns1:Type="Tables" ns1:Schema="dbo">
+            <DefiningQuery>SELECT 
+    [Version].[VersionHigh] AS [VersionHigh], 
+    [Version].[VersionLow] AS [VersionLow], 
+    [Version].[Created] AS [Created]
+    FROM [dbo].[Version] AS [Version]</DefiningQuery>
+          </EntitySet>
+          <EntitySet Name="GetAllRoughUserLocations" EntityType="Self.GetAllRoughUserLocations" ns1:Type="Views" ns1:Schema="dbo">
+            <DefiningQuery>SELECT 
+    [GetAllRoughUserLocations].[userid] AS [userid], 
+    [GetAllRoughUserLocations].[username] AS [username], 
+    [GetAllRoughUserLocations].[lat] AS [lat], 
+    [GetAllRoughUserLocations].[lng] AS [lng], 
+    [GetAllRoughUserLocations].[Expr1] AS [Expr1]
+    FROM [dbo].[GetAllRoughUserLocations] AS [GetAllRoughUserLocations]</DefiningQuery>
+          </EntitySet>
+          <AssociationSet Name="FK_ImageUser_Image" Association="Self.FK_ImageUser_Image">
+            <End Role="Image" EntitySet="Image" />
+            <End Role="ImageUser" EntitySet="ImageUser" />
+          </AssociationSet>
+          <AssociationSet Name="FK_ImageUser_User" Association="Self.FK_ImageUser_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="ImageUser" EntitySet="ImageUser" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PlaceImage_Image" Association="Self.FK_PlaceImage_Image">
+            <End Role="Image" EntitySet="Image" />
+            <End Role="PlaceImage" EntitySet="PlaceImage" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PlaceImage_Place" Association="Self.FK_PlaceImage_Place">
+            <End Role="Place" EntitySet="Place" />
+            <End Role="PlaceImage" EntitySet="PlaceImage" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PlaceTypePlace_Place" Association="Self.FK_PlaceTypePlace_Place">
+            <End Role="Place" EntitySet="Place" />
+            <End Role="PlaceTypePlace" EntitySet="PlaceTypePlace" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PlaceTypePlace_PlaceType" Association="Self.FK_PlaceTypePlace_PlaceType">
+            <End Role="PlaceType" EntitySet="PlaceType" />
+            <End Role="PlaceTypePlace" EntitySet="PlaceTypePlace" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PlaceUser_Place" Association="Self.FK_PlaceUser_Place">
+            <End Role="Place" EntitySet="Place" />
+            <End Role="PlaceUser" EntitySet="PlaceUser" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PlaceUser_User" Association="Self.FK_PlaceUser_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="PlaceUser" EntitySet="PlaceUser" />
+          </AssociationSet>
+          <AssociationSet Name="FK_TrackUser_Track" Association="Self.FK_TrackUser_Track">
+            <End Role="Track" EntitySet="Track" />
+            <End Role="TrackUser" EntitySet="TrackUser" />
+          </AssociationSet>
+          <AssociationSet Name="FK_TrackUser_User" Association="Self.FK_TrackUser_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="TrackUser" EntitySet="TrackUser" />
+          </AssociationSet>
+          <AssociationSet Name="FK_UserLocation_User" Association="Self.FK_UserLocation_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="UserLocation" EntitySet="UserLocation" />
+          </AssociationSet>
+          <AssociationSet Name="FK_UserLogin_User" Association="Self.FK_UserLogin_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="UserLogin" EntitySet="UserLogin" />
+          </AssociationSet>
+          <AssociationSet Name="FK_UserRole_Role" Association="Self.FK_UserRole_Role">
+            <End Role="Role" EntitySet="Role" />
+            <End Role="UserRole" EntitySet="UserRole" />
+          </AssociationSet>
+          <AssociationSet Name="FK_UserRole_User" Association="Self.FK_UserRole_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="UserRole" EntitySet="UserRole" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
