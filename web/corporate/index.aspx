@@ -309,6 +309,7 @@
                             <a target="_blank" href="https://facebook.com/seeyourtravel"><i class="fa fa-2x fa-facebook"></i></a>
                             <a target="_blank" href="https://www.youtube.com/channel/UCfSj_WKVFx0DrI5qmhLjo_A"><i class="fa fa-2x fa-youtube"></i></a>
                         </div>
+                        <p style="margin-top:14px"><a href="../press/">Press kit</a></p>
 
                         <!-- (removed: commented-out sponsor banner) -->
 

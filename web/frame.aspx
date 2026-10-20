@@ -28,7 +28,7 @@
     <div id='pageContent' style='height: 100%'>
         <div style="position: absolute; left: 5px; top: 15px; z-index: 1001">
             <a id="alogo" href="javascript:window.open('./corporate','_blank')">
-                <img src="img/See Your Travels-small.png" style="height: 50px; width: 50px; vertical-align: middle;" /></a>
+                <img src="img/syt-icon-192.png" style="height: 50px; width: 50px; vertical-align: middle;" /></a>
             <span id="lblCoord" style="visibility: hidden; vertical-align: super; text-shadow: 1px 1px #ffffff;"></span>
         </div>
         <script>

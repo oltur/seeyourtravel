@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SeeYourTravel.app flyer</title>
+<link rel="stylesheet" href="../styles/fonts.css">
+<style>
+ @page { size: A4; margin: 0; }
+ :root { --blue:#225EAC; --dark:#12305c; --yellow:#FCD600; }
+ * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+ html, body { margin:0; padding:0; background:#fff; }
+ .page { width:210mm; height:297mm; position:relative; overflow:hidden; color:#1d2733; background:#fff; }
+ header { height:104mm; background: linear-gradient(180deg, var(--dark), var(--blue)); color:#fff; text-align:center; padding-top:8mm; position:relative; }
+ header img.logo { height:44mm; }
+ header h1 { margin:3mm 0 0; font-size:10.5mm; font-weight:700; letter-spacing:.2mm; }
+ header h1 span { color:var(--yellow); }
+ header p { margin:2mm 0 0; font-size:4.4mm; opacity:.92; }
+ .shot { position:absolute; left:50%; top:86mm; width:126mm; transform:translateX(-50%); border-radius:4mm; box-shadow:0 3mm 9mm rgba(0,0,0,.35); border:1.2mm solid #fff; background:#fff; }
+ .shot img { display:block; width:100%; border-radius:2.6mm; }
+ main { position:absolute; top:171mm; left:0; right:0; padding:0 16mm; }
+ .steps { display:flex; gap:6mm; margin-top:2mm; }
+ .step { flex:1; text-align:center; }
+ .step b { display:inline-block; width:9mm; height:9mm; line-height:9mm; border-radius:50%; background:var(--yellow); color:var(--dark); font-size:5mm; }
+ .step h3 { margin:2mm 0 1mm; font-size:4.6mm; color:var(--blue); }
+ .step p { margin:0; font-size:3.6mm; line-height:1.45; color:#44505e; }
+ .feat { display:flex; gap:5mm; margin-top:6mm; padding-top:5mm; border-top:.4mm solid #dbe4f0; }
+ .feat div { flex:1; text-align:center; font-size:3.5mm; color:#44505e; }
+ .feat strong { display:block; color:var(--dark); font-size:4.2mm; text-transform:uppercase; letter-spacing:.3mm; margin-bottom:1mm; }
+ footer { position:absolute; left:0; right:0; bottom:0; height:44mm; background:var(--dark); color:#fff; display:flex; align-items:center; justify-content:center; gap:12mm; }
+ footer .qr { background:#fff; border-radius:3mm; padding:2.5mm; }
+ footer .qr img { display:block; width:30mm; height:30mm; image-rendering: pixelated; }
+ footer .t h2 { margin:0; font-size:8mm; color:var(--yellow); }
+ footer .t p { margin:1.5mm 0 0; font-size:4.2mm; line-height:1.5; }
+ footer .t small { display:block; margin-top:2mm; font-size:3.6mm; opacity:.85; }
+</style></head>
+<body><div class="page">
+ <header>
+  <img class="logo" src="../img/syt-logo.png" alt="SeeYourTravel.app">
+  <h1>Replay your journey <span>on the map</span></h1>
+  <p>Create, share and relive your travels with photos, places and music.</p>
+ </header>
+ <div class="shot"><img src="screenshots/app-norway.jpg" alt=""></div>
+ <main>
+  <div class="steps">
+   <div class="step"><b>1</b><h3>Draw or import</h3><p>Click a route on the map, search two places, or import a GPX file.</p></div>
+   <div class="step"><b>2</b><h3>Add memories</h3><p>Photos, places, descriptions and your favourite music along the way.</p></div>
+   <div class="step"><b>3</b><h3>Replay &amp; share</h3><p>Watch the trip play back and send the link to friends and family.</p></div>
+  </div>
+  <div class="feat">
+   <div><strong>Global</strong>Global coverage with no extra effort</div>
+   <div><strong>Configurable</strong>Adjustable for your needs</div>
+   <div><strong>Friendly</strong>Easy to use and pleasant to come back</div>
+  </div>
+ </main>
+ <footer>
+  <div class="qr"><img src="../img/qr.png" alt="QR code"></div>
+  <div class="t"><h2>seeyourtravel.app</h2><p>Scan the code or visit the address<br>and start your first trip today.</p><small>info@seeyourtravel.app</small></div>
+ </footer>
+</div></body></html>
