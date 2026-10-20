@@ -14,6 +14,10 @@
   </configSections>
   <appSettings>
     <add key="vs:EnableBrowserLink" value="false" />
+    <!-- Google sign-in: set GoogleClientId to your OAuth "Web application" client ID (empty = local mode, everyone is signed in automatically) -->
+    <add key="GoogleClientId" value="" />
+    <!-- Google accounts that are administrators: email=existing UserName;... -->
+    <add key="GoogleAdmins" value="admin@example.org=admin;friend@example.org=Friend Name" />
   </appSettings>
   <connectionStrings>
 <add name="Default" connectionString="Data Source=LOCAL.SEEYOURTRAVEL.com; Initial Catalog=SeeYourTravel; User ID=SeeYourTravel; Password=CHANGE_ME" />

@@ -3,7 +3,7 @@
 
 <script runat="server">
 
-    // Login is disabled: every visitor is signed in as this user (owner of the data).
+    // Local mode (no GoogleClientId in Web.config): every visitor is signed in as this user (owner of the data).
     const string AutoLoginUserName = "admin";
     static Guid autoUserId = Guid.Empty;
 
@@ -40,14 +40,27 @@
         var session = HttpContext.Current.Session;
         if (session != null && session["UserId"] == null)
         {
-            session["UserId"] = GetAutoUserId();
-            session["UserName"] = AutoLoginUserName;
+            if (!Tools.LoginEnabled)
+            {
+                session["UserId"] = GetAutoUserId();
+                session["UserName"] = AutoLoginUserName;
+            }
+            else if (HttpContext.Current.User != null && HttpContext.Current.User.Identity.IsAuthenticated)
+            {
+                // session expired but the sign-in cookie is still valid: restore the session
+                Guid id;
+                if (Guid.TryParse(HttpContext.Current.User.Identity.Name, out id))
+                {
+                    var user = new SeeYourTravelEntities().Users.FirstOrDefault(u => u.UserID == id && u.Disabled != true);
+                    if (user != null) { session["UserId"] = user.UserID; session["UserName"] = user.UserName; }
+                }
+            }
         }
     }
 
     protected void Application_AuthenticateRequest(Object sender, EventArgs e)
     {
-        if (HttpContext.Current.User == null || !HttpContext.Current.User.Identity.IsAuthenticated)
+        if (!Tools.LoginEnabled && (HttpContext.Current.User == null || !HttpContext.Current.User.Identity.IsAuthenticated))
         {
             HttpContext.Current.User = new System.Security.Principal.GenericPrincipal(
                 new System.Security.Principal.GenericIdentity(GetAutoUserId().ToString()), new[] { "admin" });

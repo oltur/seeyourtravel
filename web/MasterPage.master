@@ -1,4 +1,4 @@
-﻿<%@ Master Language="C#" %>
+<%@ Master Language="C#" %>
 
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -180,7 +180,7 @@
         </style>   
     <%-- Google Maps/Platform replaced by free services (OSM tiles, Nominatim, OSRM, Open-Meteo) --%>
     <script src="js/compat.js"></script>
-    <style>#logout { display: none !important; }</style>
+    <% if (!Tools.LoginEnabled) { %><style>#logout { display: none !important; }</style><% } %>
     <script src="libs/json2.js"></script>
     <script src="libs/jstorage.js"></script>
 
