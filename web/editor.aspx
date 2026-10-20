@@ -126,13 +126,13 @@
                         <tr>
                             <td>From:</td>
                             <td>
-                                <input id="fromLocation" type="text" value="Champs Elysee 1 Paris" style="width: 200px" />
+                                <input id="fromLocation" type="text" value="Champs-Élysées, Paris" placeholder="Start address or place" style="width: 200px" />
                             </td>
                         </tr>
                         <tr>
                             <td>To:</td>
                             <td>
-                                <input id="toLocation" type="text" value="Bukingham Palace London" style="width: 200px" />
+                                <input id="toLocation" type="text" value="Buckingham Palace, London" placeholder="Destination address or place" style="width: 200px" />
                             </td>
                         </tr>
                     </table>
@@ -255,6 +255,11 @@
                 OnClientClick="beforeSubmit()" />
             &nbsp;
     <input type="button" value="Cancel" class="i" data-i18n="[title]Cancel;[value]Cancel" id="gotoMain" onclick="window.location = 'index.aspx?trackname=' + trackname" />
+            <% if (IsExisting) { %>
+            &nbsp;
+            <input type="button" value="Delete track" id="deleteTrack" class="i" data-i18n="[title]DeleteTrack;[value]DeleteTrack" style="color: #b00020"
+                onclick="deleteThisTrack()" />
+            <% } %>
         </p>
     </div>
 
@@ -334,11 +339,29 @@
                 unitSystem: google.maps.UnitSystem.METRIC
             };
 
+            var btn = $("#createByRoute").prop("disabled", true);
+            toastr.info("Searching for a route…");
             directionsService.route(request, function (result, status) {
+                btn.prop("disabled", false);
                 if (status == 'OK') {
                     setDirections(result);
+                    toastr.success("Route created: " + $("#points option").length + " points");
+                } else if (status == 'ZERO_RESULTS' || status == 'NOT_FOUND') {
+                    toastr.error("Could not find one of the places or a route between them. Try a more general name, e.g. a city.");
+                } else {
+                    toastr.error("Route service is not available right now (" + status + "). Please try again.");
                 }
             });
+        }
+
+        function deleteThisTrack() {
+            if (!confirm("Delete this track permanently? This cannot be undone.")) return;
+            $.post("services/delete_trackbyfilename.aspx", { fileName: $("#trackFileName").val() })
+                .done(function (r) {
+                    if (String(r).indexOf("OK") === 0) window.location = "index.aspx";
+                    else toastr.error("Could not delete the track: " + r);
+                })
+                .fail(function () { toastr.error("Could not delete the track."); });
         }
 
         $(function () {
@@ -650,44 +673,44 @@
     </script>
 
     <script>
+        // Import a GPX file: uses the track points (or route points / waypoints if there is no track),
+        // replaces the current points and thins very long tracks.
         function handleFileSelect(evt) {
-            var files = evt.target.files; // FileList object
+            var input = evt.target, f = input.files && input.files[0];
+            if (!f) return;
 
-            // Loop through the FileList and render image files as thumbnails.
-            for (var i = 0; i < files.length; i++) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var xml;
+                try { xml = $.parseXML(reader.result); }
+                catch (e) { toastr.error("This does not look like a valid GPX file."); input.value = ""; return; }
 
-                var f = files[i];
+                var nodes = $(xml).find("trkpt");
+                if (!nodes.length) nodes = $(xml).find("rtept");
+                if (!nodes.length) nodes = $(xml).find("wpt");
+                var pts = [];
+                nodes.each(function () {
+                    var lat = parseFloat($(this).attr("lat")), lon = parseFloat($(this).attr("lon"));
+                    if (isFinite(lat) && isFinite(lon)) pts.push([lat, lon]);
+                });
+                if (!pts.length) { toastr.error("No track points found in this file."); input.value = ""; return; }
 
-                //// Only process image files.
-                //if (!f.type.match('image.*')) {
-                //    continue;
-                //}
+                var total = pts.length;
+                if (total > 1000) pts = window.sytSimplifyPath(pts, 1000);
 
-                var reader = new FileReader();
-
-                reader.onload = function () {
-                    var text = reader.result;
-                    //alert(reader.result);
-
-                    $xmlDoc = $.parseXML(text);
-                    $features = $('trkpt', $xmlDoc);
-
-                    var s = "";
-                    var t = 0;
-                    $features.each(function () {
-                        var $this = $(this);
-                        var point = [$this.attr('lat'), $this.attr('lon')];
-                        $(points)
-                            .append($("<option></option>")
-                            .attr("value", "[" + point[0] + "," + point[1] + "]")
-                            .text("[" + point[0] + "," + point[1] + "]"));
-                        //                        console.log(t);
-                        t = t + 1;
-                    });
-                    onMapClick(s);
-                };
-                reader.readAsText(f);
-            }
+                points.empty();
+                $.each(pts, function (i, p) {
+                    var v = JSON.stringify([+p[0].toFixed(6), +p[1].toFixed(6)]);
+                    points.append($("<option></option>").attr("value", v).text(v));
+                });
+                points[0].selectedIndex = 0;
+                points.change();
+                updateMap();
+                toastr.success("Imported " + pts.length + " points" + (total > pts.length ? " (reduced from " + total + ")" : ""));
+                input.value = "";   // allow importing the same file again
+            };
+            reader.onerror = function () { toastr.error("Could not read the file."); };
+            reader.readAsText(f);
         }
     </script>
 

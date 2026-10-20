@@ -1,0 +1,20 @@
+{
+"name":"New track 2026-10-20 21:25:57"
+,"isPublic":"Yes"
+,"travelWith":"Car"
+,"copyright":"(c)"
+,"defaultScale":8
+,"photoLocationTolerancy":100
+,"numOfPhotos":20
+,"velocityMetersPerSec":100
+,"icon":"mycar.png"
+,"useFlickrImages":"Yes"
+,"useSYTImagesTrack":"Yes"
+,"useGooglePlaces":"Yes"
+,"useSYTPlaces":"Yes"
+,"trackImage":""
+,"audioSrc":""
+,"textToRead":""
+,"trackData":[]
+,"category":"Other"
+}

@@ -6,6 +6,7 @@ public partial class Editor : System.Web.UI.Page
 {
     protected Guid TrackId = Guid.Empty;
     protected string TrackFileName = "";
+    protected bool IsExisting = false;   // the track is already saved (so it can be deleted)
     protected Guid UserId;
 
     SeeYourTravelEntities db;
@@ -25,12 +26,14 @@ public partial class Editor : System.Web.UI.Page
                     var t = db.GetTrackForUserByIdOrName(UserId, null, TrackFileName);
                     var track = t.FirstOrDefault();
                     TrackId = track.TrackID;
+                    IsExisting = true;
                 }
                 else if (Request["trackid"] != null)
                 {
                     TrackId = Guid.Parse(Request["trackid"]);
                     var track = db.GetTrackForUserByIdOrName(UserId, TrackId, null).FirstOrDefault();
                     TrackFileName = track.FileName;
+                    IsExisting = true;
                 }
                 else
                 {

@@ -125,3 +125,21 @@ img.photo:hover { filter: brightness(1.08) saturate(1.08); transform: scale(1.03
 
 /* Keep bottom map controls (attribution, scale, zoom) above the photo strip; --syt-strip-h is set from JS */
 .leaflet-bottom { bottom: var(--syt-strip-h, 0px); transition: bottom .2s; }
+
+/* Search box in the menu */
+.searchBox {
+    display: flex; align-items: center; gap: 4px; box-sizing: border-box;
+    width: 250px; height: 42px; margin: 2px 2px 8px 0; padding: 4px 4px 4px 12px;
+    background: #fff url(../img/search.png) no-repeat 10px center / 20px 20px;
+    border-radius: 0 21px 21px 0; box-shadow: var(--syt-shadow);
+    transition: box-shadow .2s, transform .2s;
+}
+.searchBox:focus-within { box-shadow: 0 0 0 3px rgba(85, 150, 230, .55), var(--syt-shadow); transform: translateX(2px); }
+.searchBox input { flex: 1; min-width: 0; height: 100%; margin: 0; padding: 0 6px 0 30px; border: 0; outline: 0; background: transparent; font-size: 15px; color: #1d2733; }
+.searchBox input::placeholder { color: #8a95a3; }
+.searchBox button { height: 100%; padding: 0 16px; border: 0; border-radius: 17px; background: rgba(85, 150, 230, 1); color: #fff; font-weight: 600; cursor: pointer; transition: background-color .15s, transform .1s; }
+.searchBox button:hover { background: #3f82d6; }
+.searchBox button:active { transform: scale(.95); }
+
+/* Disabled menu items (e.g. New/Edit/Profile for guests): clearly muted, but solid rather than see-through */
+button.headerButton:disabled { background-color: #b9c3d0 !important; color: #fff !important; opacity: 1 !important; cursor: not-allowed; box-shadow: 2px 2px 1px rgba(0,0,0,.25); }

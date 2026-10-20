@@ -28,7 +28,7 @@ public partial class SaveTrack : System.Web.UI.Page
 
             string trackFileName = Request.Form["trackFileName"];
             string trackDescription = Request.Form["name"];
-            string path = Server.MapPath(".") + "\\tracks\\" + trackId.ToString() + ".js";
+            string path = Server.MapPath("~/tracks/" + trackId.ToString() + ".js");
             string category = "Other";
             if (!string.IsNullOrEmpty(Request.Form["category"]))
                 category = Request.Form["category"];

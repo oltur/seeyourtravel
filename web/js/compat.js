@@ -14,12 +14,60 @@
         return new LatLng(p.lat, p.lng !== undefined ? p.lng : p.lon);
     }
 
+    // Nominatim allows ~1 request/second, so geocoding requests are queued with a gap.
+    var geoQueue = $.Deferred().resolve().promise();
+    function nominatim(q) {
+        var d = $.Deferred();
+        geoQueue = geoQueue.then(function () {
+            var gap = $.Deferred();
+            $.getJSON("https://nominatim.openstreetmap.org/search", { q: q, format: "json", limit: 1 })
+                .always(function () { setTimeout(gap.resolve, 1100); })
+                .then(d.resolve, function () { d.reject("UNKNOWN_ERROR"); });
+            return gap.promise();
+        });
+        return d.promise();
+    }
+
     function geocodeOne(address) {
-        return $.getJSON("https://nominatim.openstreetmap.org/search", { q: address, format: "json", limit: 1 })
-            .then(function (r) {
-                if (!r.length) return $.Deferred().reject("ZERO_RESULTS").promise();
+        var tries = [address];
+        var simple = address.replace(/[0-9]+/g, " ").replace(/\s+/g, " ").trim();    // house numbers often confuse the search
+        if (simple && simple !== address) tries.push(simple);
+        var i = 0;
+        function next() {
+            return nominatim(tries[i]).then(function (r) {
+                if (!r.length) {
+                    if (++i < tries.length) return next();
+                    return $.Deferred().reject("ZERO_RESULTS").promise();
+                }
                 return { loc: new LatLng(r[0].lat, r[0].lon), name: r[0].display_name };
             });
+        }
+        return next();
+    }
+
+    // Reduce a path to at most `max` points (Ramer-Douglas-Peucker with a growing tolerance).
+    function simplifyPath(path, max) {
+        if (path.length <= max) return path;
+        function dist(p, a, b) {   // approx. distance in degrees, good enough for thinning
+            var x = p.lng(), y = p.lat(), x1 = a.lng(), y1 = a.lat(), x2 = b.lng(), y2 = b.lat();
+            var dx = x2 - x1, dy = y2 - y1, t = dx * dx + dy * dy ? ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy) : 0;
+            t = Math.max(0, Math.min(1, t));
+            var ex = x1 + t * dx - x, ey = y1 + t * dy - y;
+            return Math.sqrt(ex * ex + ey * ey);
+        }
+        function rdp(eps) {
+            var keep = new Array(path.length), stack = [[0, path.length - 1]];
+            keep[0] = keep[path.length - 1] = true;
+            while (stack.length) {
+                var s = stack.pop(), idx = -1, md = 0;
+                for (var i = s[0] + 1; i < s[1]; i++) { var d = dist(path[i], path[s[0]], path[s[1]]); if (d > md) { md = d; idx = i; } }
+                if (idx > -1 && md > eps) { keep[idx] = true; stack.push([s[0], idx], [idx, s[1]]); }
+            }
+            return path.filter(function (p, i) { return keep[i]; });
+        }
+        var eps = 0.0001, out = rdp(eps);
+        while (out.length > max) { eps *= 1.5; out = rdp(eps); }
+        return out;
     }
 
     function Geocoder() { }
@@ -55,7 +103,7 @@
                 "?overview=full&geometries=geojson";
             $.getJSON(url).then(function (r) {
                 if (!r.routes || !r.routes.length) return cb(null, "ZERO_RESULTS");
-                var path = r.routes[0].geometry.coordinates.map(function (c) { return new LatLng(c[1], c[0]); });
+                var path = simplifyPath(r.routes[0].geometry.coordinates.map(function (c) { return new LatLng(c[1], c[0]); }), 400);
                 cb({ routes: [{ overview_path: path }] }, "OK");
             }, function () { cb(null, "UNKNOWN_ERROR"); });
         }, function (e) { cb(null, typeof e === "string" ? e : "NOT_FOUND"); });
@@ -63,6 +111,12 @@
 
     function PlacesService() { }
     PlacesService.prototype.nearbySearch = function (req, cb) { cb([], "ZERO_RESULTS"); };
+
+    window.sytSimplifyPath = function (pairs, max) {   // [[lat,lng],...] -> thinned [[lat,lng],...]
+        var path = pairs.map(function (p) { return new LatLng(p[0], p[1]); });
+        path.forEach(function (p, i) { p._src = pairs[i]; });
+        return simplifyPath(path, max).map(function (p) { return p._src; });
+    };
 
     window.google = { maps: {
         LatLng: LatLng, Geocoder: Geocoder, ElevationService: ElevationService,

@@ -1,4 +1,4 @@
-<%@ Page Title="See Your Travel" Language="C#" MasterPageFile="MasterPage.master" CodeFile="Index.aspx.cs" Inherits="Index" %>
+﻿<%@ Page Title="See Your Travel" Language="C#" MasterPageFile="MasterPage.master" CodeFile="Index.aspx.cs" Inherits="Index" %>
 
 <%@ Import Namespace="System.IO" %>
 
@@ -214,10 +214,7 @@
 
             <div id="menuPanel" class="menuPanel">
                 <div>
-                    <div style="background-image: url(img/search.png); white-space: nowrap; width: 190px" class="headerButton">
-                        <input type="text" id="searchForPlace" data-i18n="[placeholder]Search for places" class="i" style="width: 130px; margin-top: 10px" placeholder="Search for place" onkeydown="if(event.keyCode == 13) {search($(this)); return false;} return true;" />
-                        <button type="button" onclick="search($('#searchForPlace'));return false;" data-i18n="Go" id="searchButton" title="Search" class="i" style="margin-left: 10px;">Go</button>
-                    </div>
+                    <div class="searchBox"><input type="text" id="searchForPlace" data-i18n="[placeholder]Search for places" class="i" autocomplete="off" aria-label="Search for place"  placeholder="Search for place" onkeydown="if(event.keyCode == 13) {search($(this)); return false;} return true;" /><button type="button" onclick="search($('#searchForPlace'));return false;" data-i18n="Go" id="searchButton" title="Search" class="i" >Go</button></div>
                     <button type="button" data-i18n="[title]New;New" id="newTrackButton" title="New" class="i headerButton" style="background-image: url(img/new.png );" onclick="clickNew()">New</button>
                     <button type="button" data-i18n="[title]Edit;Edit" id="editTrackButton" title="Edit" class="i headerButton" style="background-image: url(img/edit.png );" onclick="clickEdit()">Edit</button>
                     <button type="button" data-i18n="[title]Settings;Settings" id="settingsCheckBox" title="Settings" class="i headerButton" style="background-image: url(img/settings1.png );" onclick="clickSettings()">Settings</button>
