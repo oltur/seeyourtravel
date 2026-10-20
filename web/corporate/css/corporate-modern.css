@@ -1,0 +1,51 @@
+/* Modern touches for the corporate page */
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+html { scroll-behavior: smooth; }
+
+/* centered text everywhere (lj-text-center was never defined) */
+.jasm-text-center, .lj-text-center,
+.jasm-title, .jasm-title-paragraph, .jasm-logo, .jasm-line, .jasm-cta,
+.description, .recent-works .jasm-text-center, .recent-works [align="center"], footer.contact, footer.contact * { text-align: center; }
+.jasm-title-paragraph p { font-size: 1.25em; line-height: 1.6; max-width: 46em; margin-left: auto; margin-right: auto; }
+.jasm-icon-container p { text-align: center; max-width: 22em; margin-left: auto; margin-right: auto; }
+.jasm-icon-container { margin-bottom: 30px; }
+.jasm-line > div { margin-left: auto; margin-right: auto; }
+
+/* hero: vertically centered content on top of the photo */
+header { min-height: 100vh; }
+header > .container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+header .wrapper { padding-bottom: 60px; }
+header::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,.15), rgba(0,0,0,.55)); z-index: 0; pointer-events: none; }
+header > .container { z-index: 1; }
+
+.jasm-cta { margin-top: 28px; }
+.btn-open-app {
+    display: inline-block; padding: 14px 38px; border-radius: 999px;
+    background: #5596e6; color: #fff !important; font-size: 20px; font-weight: 600; text-decoration: none !important;
+    box-shadow: 0 6px 20px rgba(85, 150, 230, .45); transition: transform .15s, box-shadow .15s, background-color .15s;
+}
+.btn-open-app:hover { background: #3f82d6; transform: translateY(-2px); box-shadow: 0 10px 26px rgba(85, 150, 230, .6); }
+.btn-open-app:active { transform: scale(.97); }
+
+/* gallery cards */
+.recent-works .row { display: flex; flex-wrap: wrap; justify-content: center; }
+.jasm-recent-work-wrap { border-radius: 14px; overflow: hidden; margin-bottom: 24px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.jasm-recent-work-wrap img { width: 100%; height: auto; display: block; transition: transform .4s; }
+.jasm-recent-work-wrap:hover img { transform: scale(1.06); }
+.recent-works [align="center"] { width: 100%; }
+.recent-works iframe { display: block; margin: 0 auto; max-width: 100%; border: 0; border-radius: 12px; }
+.recent-works .fb-page { display: inline-block; margin-top: 10px; }
+
+/* footer */
+footer.contact .social-footter a { display: inline-block; margin: 0 10px; transition: transform .15s; }
+footer.contact .social-footter a:hover { transform: translateY(-3px); }
+
+a:focus-visible, .btn-open-app:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@media (max-width: 600px) { header h1 a { font-size: 34px !important; } .jasm-title-paragraph p { font-size: 1.05em; } }
+
+/* hero layout: the old template positioned .wrapper with top:50% + a JS negative margin; flex does it better */
+header { height: 100vh !important; min-height: 620px; }
+header .wrapper { top: 0 !important; margin-top: 0 !important; height: auto; }
+.jasm-logo a, .jasm-logo img { width: auto; height: auto; max-height: 24vh; max-width: 70vw; margin: 0 auto; }
+.jasm-title { margin-top: 18px; }
+.jasm-scroll-down { bottom: 18px; }

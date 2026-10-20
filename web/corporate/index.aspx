@@ -1,11 +1,10 @@
 ﻿<%@ Page Language="C#" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SeeYourTravel.com Corporate Site - Your travel planning community
-    </title>
-    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <title>SeeYourTravel.com – Your travel planning community</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'>
     <link rel="stylesheet" href="../styles/jquery-ui.css" />
     <script src="../libs/jquery.js"></script>
     <script src="../libs/jquery-ui.js"></script>
@@ -16,34 +15,18 @@
     <link href="css/animate.min.css" rel="stylesheet">
     <link href="font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="../styles/ourTravel.css" />
+    <link href="css/corporate-modern.css" rel="stylesheet">
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
      <![endif]-->
 
-    <script>
-        (function (i, s, o, g, r, a, m) {
-            i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
-                (i[r].q = i[r].q || []).push(arguments)
-            }, i[r].l = 1 * new Date(); a = s.createElement(o),
-                m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
-        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
-
-        ga('create', 'UA-66626682-1', 'auto');
-        ga('send', 'pageview');
-    </script>
+    
 
     <script src="../libs/i18next.js"></script>
     <script src="../js/OurTravel.Common.js"></script>
 
-    <!-- Start Alexa Certify Javascript -->
-    <script type="text/javascript">
-        _atrk_opts = { atrk_acct: "va3Jo1IWhe10mh", domain: "seeyourtravel.com", dynamic: true };
-        (function () { var as = document.createElement('script'); as.type = 'text/javascript'; as.async = true; as.src = "https://d31qbv1cthcecs.cloudfront.net/atrk.js"; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(as, s); })();
-    </script>
-    <noscript>
-        <img src="https://d5nxst8fruw4z.cloudfront.net/atrk.gif?account=va3Jo1IWhe10mh" style="display: none" height="1" width="1" alt="" /></noscript>
-    <!-- End Alexa Certify Javascript -->
+    
 
     <script type="application/ld+json">
 {
@@ -91,28 +74,8 @@
         function translateAll(err, t) {
             $(".i").i18n();
             $("option.i").i18n();
-            $("#vengage-feedback-btn").text($.t("Feedback"));
+            
         }
-
-        var _vengage = _vengage || [];
-        (function () {
-            var a, b, c;
-            a = function (f) {
-                return function () {
-                    _vengage.push([f].concat(Array.prototype.slice.call(arguments, 0)));
-                };
-            };
-            b = ['load', 'addRule', 'addVariable', 'getURLParam', 'addRuleByParam', 'addVariableByParam', 'trackAction', 'submitFeedback', 'submitResponse', 'close', 'minimize', 'openModal', 'helpers'];
-            for (c = 0; c < b.length; c++) {
-                _vengage[b[c]] = a(b[c]);
-            }
-            var t = document.createElement('script'),
-                s = document.getElementsByTagName('script')[0];
-            t.async = true;
-            t.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://s3.amazonaws.com/vetrack/init.min.js';
-            s.parentNode.insertBefore(t, s);
-            _vengage.push(['pubkey', '4b55d135-83d5-47be-bd15-183b4b09bc21']);
-        })();
 
     </script>
 
@@ -132,7 +95,6 @@
                 <!-- LOGO STARTS HERE -->
                 <div class="row">
                     <div class="col-xs-12 jasm-logo" data-scroll-reveal="wait 0.25s, then enter top and move 40px over 1s">
-                        <div class="i lj-text-center" style="color: white; font-size: 24px; align: center; text-shadow: 1px 1px #005BBB;" data-i18n="Demo">Try it now!</div>
                         <a href="https://seeyourtravel.com/" title="">
                             <img src="../img/See Your Travels-01.png" class="jasm-logo-1x" alt="">
                         </a>
@@ -156,14 +118,19 @@
                 <!-- TITLE PARAGRAPH STARTS HERE -->
                 <div class="row">
                     <div class="col-xs-12 col-sm-8 col-sm-offset-2 jasm-title-paragraph" data-scroll-reveal="wait 1s, then enter right and move 40px over 1s">
-                        <p class="i lj-text-center" style="text-shadow: 1px 1px #005BBB;" data-i18n="[html]Corporate_Text1">
+                        <p class="i jasm-text-center" style="text-shadow: 1px 1px #005BBB;" data-i18n="[html]Corporate_Text1">
                             Experience the travels yourself from past, today and future!
                             <br />
-                            We are eager to be with you. Our site is coming in...
+                            We are happy to be with you.
                         </p>
                     </div>
                 </div>
                 <!-- /TITLE PARAGRAPH ENDS HERE-->
+                <div class="row">
+                    <div class="col-xs-12 jasm-cta" data-scroll-reveal="wait 1.25s, then enter bottom and move 30px over 1s">
+                        <a class="btn-open-app i" href="../index.aspx" data-i18n="Demo">Try it now</a>
+                    </div>
+                </div>
                 <!-- COUNTDOWN STARTS HERE-->
                 <!--
 		<div class="row">
@@ -191,7 +158,7 @@
     </header>
     <!-- /HEADER ENDS HERE-->
 
-    <section class='description jasm-s'>
+    <section class='description jasm-s' id='features'>
         <div class='container'>
             <!-- COLUMNS STARTS HERE -->
             <div class="row">
@@ -234,9 +201,9 @@
                         <img class="img-responsive" src="../img/norway1.jpg" alt="">
                         <div class="jasm-overlay">
                             <div class="jasm-recent-work-inner">
-                                <h3><a href="#" class="i" data-i18n="Corporate_Norway">Beautiful Norway</a></h3>
+                                <h3><a href="../index.aspx?trackname=53ff70b3-5e38-4073-9326-cb535fa640ac" class="i" data-i18n="Corporate_Norway">Beautiful Norway</a></h3>
                                 <p class="i" data-i18n="Corporate_Norway1">Severe nature and open-heart people - paradise in the North</p>
-                                <a href="#" rel="prettyPhoto"><i class="fa fa-eye"></i><span class="i" data-i18n="Corporate_View">View</span></a>
+                                <a href="../index.aspx?trackname=53ff70b3-5e38-4073-9326-cb535fa640ac"><i class="fa fa-eye"></i><span class="i" data-i18n="Corporate_View">View</span></a>
                             </div>
                         </div>
                     </div>
@@ -247,9 +214,9 @@
                         <img class="img-responsive" src="../img/germany1.jpg" alt="">
                         <div class="jasm-overlay">
                             <div class="jasm-recent-work-inner">
-                                <h3><a href="#" class="i" data-i18n="Corporate_Germany">Old good Germany</a></h3>
+                                <h3><a href="../index.aspx?trackname=39574bc3-c43b-4736-b122-dd9d69e3d31a" class="i" data-i18n="Corporate_Germany">Old good Germany</a></h3>
                                 <p class="i" data-i18n="Corporate_Germany1">Quiet and relaxing, busy and inspiring - the real Germany</p>
-                                <a href="#" rel="prettyPhoto"><i class="fa fa-eye"></i><span class="i" data-i18n="Corporate_View">View</span></a>
+                                <a href="../index.aspx?trackname=39574bc3-c43b-4736-b122-dd9d69e3d31a"><i class="fa fa-eye"></i><span class="i" data-i18n="Corporate_View">View</span></a>
                             </div>
                         </div>
                     </div>
@@ -260,9 +227,9 @@
                         <img class="img-responsive" src="../img/ukraine1.jpg" alt="">
                         <div class="jasm-overlay">
                             <div class="jasm-recent-work-inner">
-                                <h3><a href="#" class="i" data-i18n="Corporate_Ukraine">Exciting Ukraine</a></h3>
+                                <h3><a href="../index.aspx?trackname=Ukraine-Kyiv-Pechersk" class="i" data-i18n="Corporate_Ukraine">Exciting Ukraine</a></h3>
                                 <p class="i" data-i18n="Corporate_Ukraine1">Nature, people, food - all what you need to enjoy the life</p>
-                                <a href="#" rel="prettyPhoto"><i class="fa fa-eye"></i><span class="i" data-i18n="Corporate_View">View</span></a>
+                                <a href="../index.aspx?trackname=Ukraine-Kyiv-Pechersk"><i class="fa fa-eye"></i><span class="i" data-i18n="Corporate_View">View</span></a>
                             </div>
                         </div>
                     </div>
@@ -273,9 +240,9 @@
                         <img class="img-responsive" src="../img/italy1.jpg" alt="">
                         <div class="jasm-overlay">
                             <div class="jasm-recent-work-inner">
-                                <h3><a href="#" class="i" data-i18n="Corporate_Italy">Hearty Italy</a></h3>
+                                <h3><a href="../index.aspx?trackname=Italy-Pompei-Vesuvius" class="i" data-i18n="Corporate_Italy">Hearty Italy</a></h3>
                                 <p class="i" data-i18n="Corporate_Italy1">See yourself the beauty of Italian life and history</p>
-                                <a href="#" rel="prettyPhoto"><i class="fa fa-eye"></i><span class="i" data-i18n="Corporate_View">View</span></a>
+                                <a href="../index.aspx?trackname=Italy-Pompei-Vesuvius"><i class="fa fa-eye"></i><span class="i" data-i18n="Corporate_View">View</span></a>
                             </div>
                         </div>
                     </div>
@@ -334,7 +301,6 @@
                         <div class="social-footter">
                             <a target="_blank" href="https://twitter.com/seeyourtravel"><i class="fa fa-2x fa-twitter"></i></a>
                             <a target="_blank" href="https://facebook.com/seeyourtravel"><i class="fa fa-2x fa-facebook"></i></a>
-                            <a target="_blank" href="https://plus.google.com/u/0/b/111330135415627573371/dashboard/overview"><i class="fa fa-2x fa-google-plus"></i></a>
                             <a target="_blank" href="https://www.youtube.com/channel/UCfSj_WKVFx0DrI5qmhLjo_A"><i class="fa fa-2x fa-youtube"></i></a>
                         </div>
 
@@ -377,29 +343,10 @@
 
     </script>
 
-    <script type="text/javascript">
-        var clicky_site_ids = clicky_site_ids || [];
-        clicky_site_ids.push(100870997);
-        (function () {
-            var s = document.createElement('script');
-            s.type = 'text/javascript';
-            s.async = true;
-            s.src = '//static.getclicky.com/js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
-        })();
+    
 
-    </script>
 
-<%--    <script type="text/javascript">
-        window._urq = window._urq || [];
-        _urq.push(['initSite', '74067c72-36c1-4bde-a189-72fdcd4f2a60']);
-        (function () {
-            var ur = document.createElement('script'); ur.type = 'text/javascript'; ur.async = true;
-            ur.src = ('https:' == document.location.protocol ? 'https://cdn.userreport.com/userreport.js' : 'http://cdn.userreport.com/userreport.js');
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ur, s);
-        })();
-    </script>--%>
 
-<script>(function (e, t, o, n) { var c, s, i; e.SMCX = e.SMCX || [], t.getElementById(n) || (c = t.getElementsByTagName(o), s = c[c.length - 1], i = t.createElement(o), i.type = "text/javascript", i.async = !0, i.id = n, i.src = ["https:" === location.protocol ? "https://" : "http://", "widget.surveymonkey.com/collect/website/js/iG52UUUrFEhnXq1bZxRqTZkORidoOUGeZeNO2TdT3XUZjpoiRI2Vya76NMc4B_2FHq.js"].join(""), s.parentNode.insertBefore(i, s)) })(window, document, "script", "smcx-sdk");</script>
+
 </body>
 </html>
