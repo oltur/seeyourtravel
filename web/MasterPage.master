@@ -6,11 +6,19 @@
 <head runat="server"><meta charset="utf-8" /><meta name="referrer" content="origin" />
 
     <link rel="SHORTCUT ICON" href="favicon.ico" />
+    <link rel="icon" type="image/png" sizes="192x192" href="img/syt-icon-192.png" />
+    <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
+    <meta name="theme-color" content="#225EAC" />
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-    <meta property="og:image" content="//seeyourtravel.com/img/SiteLogo.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SeeYourTravel" />
+    <meta property="og:title" content="SeeYourTravel.app - replay your journey on the map" />
+    <meta property="og:description" content="Create, share and replay your travels on the map, with photos, places and music." />
+    <meta property="og:image" content="https://seeyourtravel.app/img/og-image.png" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="741" />
-    <meta property="og:image:height" content="555" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <script src="libs/Chart.bundle.js"></script>
     <%--    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.bundle.js"></script>--%>
@@ -271,7 +279,7 @@
 {
   "@context": "http://schema.org",
   "@type": "Organization",
-  "url": "https://www.seeyourtravel.com/corporate",
+  "url": "https://seeyourtravel.app/corporate",
   "contactPoint": [{
     "@type": "ContactPoint",
     "telephone": "+972-58-7786365",

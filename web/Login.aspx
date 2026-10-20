@@ -55,12 +55,12 @@
     <div class="mapheader">
         <span style="position: absolute; left: 0;">
             <a href="./corporate" target="_blank">
-                <img src="img/SiteLogo.png" style="height: 50px; vertical-align: middle;" /></a>
+                <img src="img/syt-logo-small.png" style="height: 50px; vertical-align: middle;" /></a>
         </span>
     </div>
 
     <div id="loginform" title="Sign in">
-        <img src="img/SiteLogo.png" style="height: 60px;" alt="SeeYourTravel" />
+        <img src="img/syt-logo-small.png" style="height: 60px;" alt="SeeYourTravel" />
         <h2>Sign in</h2>
         <div>to create and manage your travels</div>
         <div id="googleButton"></div>

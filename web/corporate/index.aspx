@@ -10,6 +10,11 @@
     <script src="../libs/jquery-ui.js"></script>
     <script src="../libs/jquery.cookie.js"></script>
     <link rel="SHORTCUT ICON" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="192x192" href="../img/syt-icon-192.png">
+    <link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+    <meta property="og:title" content="SeeYourTravel.app - your travel planning community">
+    <meta property="og:image" content="https://seeyourtravel.app/img/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
     <link href="css/animate.min.css" rel="stylesheet">
@@ -32,7 +37,7 @@
 {
   "@context": "http://schema.org",
   "@type": "Organization",
-  "url": "https://www.seeyourtravel.com/corporate",
+  "url": "https://seeyourtravel.app/corporate",
   "contactPoint": [{
     "@type": "ContactPoint",
     "telephone": "+972-58-7786265",
@@ -95,8 +100,8 @@
                 <!-- LOGO STARTS HERE -->
                 <div class="row">
                     <div class="col-xs-12 jasm-logo" data-scroll-reveal="wait 0.25s, then enter top and move 40px over 1s">
-                        <a href="https://seeyourtravel.com/" title="">
-                            <img src="../img/See Your Travels-01.png" class="jasm-logo-1x" alt="">
+                        <a href="../index.aspx" title="SeeYourTravel">
+                            <img src="../img/syt-logo-small.png" class="jasm-logo-1x" alt="">
                         </a>
                     </div>
                 </div>
@@ -104,7 +109,7 @@
                 <!-- TITLE STARTS HERE -->
                 <div class="row">
                     <div class="col-xs-12 jasm-title" data-scroll-reveal="wait 0.5s, then enter left and move 40px over 1s" style="text-shadow: 1px 1px #005BBB;">
-                        <h1 class="jasm-text-center"><a class="i" style="font-size: 52px; color: white" data-i18n="Corporate_SeeYourTravelCom" href="https://seeyourtravel.com">SeeYourTravel.com</a></h1>
+                        <h1 class="jasm-text-center"><a style="font-size: 52px; color: white" href="../index.aspx">SeeYourTravel.app</a></h1>
                     </div>
                 </div>
                 <!-- /TITLE  ENDS HERE-->
@@ -271,7 +276,7 @@
                 </div>
                 <p>&nbsp;</p>
                 <p align="center">
-                    <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://seeyourtravel.com/corporate" data-via="SeeYourTravel">Tweet</a>
+                    <a href="https://twitter.com/share" class="twitter-share-button" data-url="https://seeyourtravel.app/corporate" data-via="SeeYourTravel">Tweet</a>
                     <script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + '://platform.twitter.com/widgets.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'twitter-wjs');</script>
 <!--
                     &nbsp;
