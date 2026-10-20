@@ -1,5 +1,5 @@
 <!--
-SeeYourTravel.com - Travel Experience Site
+SeeYourTravel.app - Travel Experience Site
 Copyright (c) 2014-2015, Oleksandr Turevskiy
 All rights reserved.
 <html manifest="manifest.appcache">
@@ -11,7 +11,7 @@ Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
 {
   "@context": "http://schema.org",
   "@type": "Organization",
-  "url": "https://www.seeyourtravel.com/corporate",
+  "url": "https://www.seeyourtravel.app/corporate",
   "contactPoint": [{
     "@type": "ContactPoint",
     "telephone": "+972-58-7786365",

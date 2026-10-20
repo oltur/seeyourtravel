@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SeeYourTravel.com – Your travel planning community</title>
+    <title>SeeYourTravel.app – Your travel planning community</title>
     <meta content='width=device-width, initial-scale=1' name='viewport'>
     <link rel="stylesheet" href="../styles/jquery-ui.css" />
     <script src="../libs/jquery.js"></script>
@@ -270,7 +270,7 @@
 
                     <div class="fb-page" data-href="https://www.facebook.com/seeyourtravel" data-width="300" data-small-header="false" data-adapt-container-width="false" data-hide-cover="false" data-show-facepile="true" data-show-posts="false">
                         <div class="fb-xfbml-parse-ignore">
-                            <blockquote cite="https://www.facebook.com/seeyourtravel"><a href="https://www.facebook.com/seeyourtravel">Seeyourtravel.com</a></blockquote>
+                            <blockquote cite="https://www.facebook.com/seeyourtravel"><a href="https://www.facebook.com/seeyourtravel">Seeyourtravel.app</a></blockquote>
                         </div>
                     </div>
                 </div>
@@ -302,7 +302,7 @@
 
                     <div class="jasm-text-center">
                         <h1 class="i underline" data-i18n="Corporate_GETINTOUCH">GET IN TOUCH</h1>
-                        <p><span class="i" data-i18n="Corporate_FeelFree">Feel free to contact us at</span> <a href="mailto:info@seeyourtravel.com">info@seeyourtravel.com</a></p>
+                        <p><span class="i" data-i18n="Corporate_FeelFree">Feel free to contact us at</span> <a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a></p>
                         <div class="social-footter">
                             <a target="_blank" href="https://twitter.com/seeyourtravel"><i class="fa fa-2x fa-twitter"></i></a>
                             <a target="_blank" href="https://facebook.com/seeyourtravel"><i class="fa fa-2x fa-facebook"></i></a>

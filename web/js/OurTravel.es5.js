@@ -387,7 +387,7 @@ function selectMapStyle() {
 
     map.removeLayer(tileLayer);
     tileLayer = L.tileLayer(mapTileUrl, {
-        attribution: 'SeeYourTravel.com &copy; Map data &copy; <a href="https://www.mapbox.com/">MapBox</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png"/>',
+        attribution: 'SeeYourTravel.app &copy; Map data &copy; <a href="https://www.mapbox.com/">MapBox</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png"/>',
         maxZoom: 18,
         id: id
     });
@@ -475,7 +475,7 @@ function init(filename, handler) {
     } else {
         map = L.map('map', { zoomControl: false });
         tileLayer = L.tileLayer(mapTileUrl, {
-            attribution: 'SeeYourTravel.com &copy; Map data &copy; <a target-"_blank" href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a target-"_blank" href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a target-"_blank" href="http://flickr.com">Flickr</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png"/>',
+            attribution: 'SeeYourTravel.app &copy; Map data &copy; <a target-"_blank" href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a target-"_blank" href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a target-"_blank" href="http://flickr.com">Flickr</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png"/>',
             maxZoom: 20,
             id: "mapbox.streets"
         });

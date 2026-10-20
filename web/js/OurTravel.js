@@ -1,6 +1,6 @@
 
 //#region Variables
-var ATTRIBUTION = 'SeeYourTravel.com &copy; Map data &copy; <a target="_blank" href= "http://openstreetmap.org" > OpenStreetMap</a >, <a target="_blank" href= "http://creativecommons.org/licenses/by-sa/2.0/" > CC - BY - SA</a >, Imagery © <a target="_blank" href= "http://flickr.com" > Flickr</a>; Powered by <a target="_blank" href="https://darksky.net/poweredby/">DarkSky</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png" />';
+var ATTRIBUTION = 'SeeYourTravel.app &copy; Map data &copy; <a target="_blank" href= "http://openstreetmap.org" > OpenStreetMap</a >, <a target="_blank" href= "http://creativecommons.org/licenses/by-sa/2.0/" > CC - BY - SA</a >, Imagery © <a target="_blank" href= "http://flickr.com" > Flickr</a>; Powered by <a target="_blank" href="https://darksky.net/poweredby/">DarkSky</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png" />';
 var tracksFolder = 'tracks/';
 //        var url = 'http://{s}.tile.cloudmade.com/5bcd2fc5d5714bd48096c7478324e0fe/997/256/{z}/{x}/{y}.png';
 //        var url = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6IjZjNmRjNzk3ZmE2MTcwOTEwMGY0MzU3YjUzOWFmNWZhIn0.Y8bhBaUMqFiPrDRW9hieoQ';      
