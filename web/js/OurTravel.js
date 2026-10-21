@@ -519,6 +519,23 @@ function arrangePhotos(photos) {
     return own.concat(pub).slice(0, MAX_STRIP_PHOTOS);                    // yours first, then public ones
 }
 
+// Size every photo to the strip height and place them side by side (cheap: no reloading, used live while resizing)
+function layoutStrip(h) {
+    var x = 0;
+    scrollerContent.children().each(function () {
+        var img = this.getElementsByTagName("img")[0];
+        if (!img) return;
+        var ar = parseFloat(img.getAttribute("data-ar")) || (img.width / img.height) || 1.5;
+        var w = Math.round(ar * h);
+        img.style.width = w + "px"; img.style.height = h + "px";
+        img.width = w; img.height = h;
+        this.style.left = x + "px";
+        x += w;
+    });
+    curX = x;
+    fullW = x / 2;
+}
+
 var lastStripArgs = null;
 function get_photos_success(photos, p, tolerancy) {
     lastStripArgs = { photos: photos, p: p, tol: tolerancy };
@@ -558,6 +575,7 @@ function get_photos_success(photos, p, tolerancy) {
 
         nextImage.title = photoCredit(ph);
         nextImage.classList.add("photo");
+        nextImage.setAttribute("data-ar", ph.width / ph.height);
         // Own photos: the original file; public photos (Commons): a large version.
         var full = ph.source === "own" && /^\.?\/?data\/images\//.test(ph.photo_url) ? ph.photo_url : (ph.big_url || ph.photo_file_url);
         nextImage.setAttribute("data-full", full);
@@ -577,15 +595,8 @@ function get_photos_success(photos, p, tolerancy) {
         $('<div id="photoEmpty"></div>').text($.t("No photos here yet")).appendTo(scroller);
     }
 
-    curX = 0;
     scrollerContent.children().clone().appendTo(scrollerContent);
-    scrollerContent.children().each(function () {
-        var $this = $(this);
-        $this.css('left', curX);
-        var img = $this.find("img")[0];
-        curX += img.width;
-    });
-    fullW = curX / 2;
+    layoutStrip(divHeight);
     viewportW = scroller.width();
     imageUl.fadeIn(100);
 }
@@ -1446,13 +1457,22 @@ $(function () {
         active = true; startY = e.clientY; startH = $strip.height(); window.hidePhotoPreview && window.hidePhotoPreview();
         try { this.setPointerCapture(e.pointerId); } catch (x) { } e.preventDefault(); $('body').addClass('resizingStrip');
     }).on('pointermove', function (e) {
-        if (active) setH(startH + (startY - e.clientY), false);
+        if (!active) return;
+        pendingH = startH + (startY - e.clientY);
+        if (!raf) raf = requestAnimationFrame(function () { raf = 0; applyLive(setH(pendingH, false)); });   // live, one update per frame
     }).on('pointerup pointercancel', function (e) {
         if (!active) return; active = false; $('body').removeClass('resizingStrip');
-        setH($strip.height(), true); relayoutStrip();
+        applyLive(setH(pendingH != null ? pendingH : $strip.height(), true)); pendingH = null;
     });
+    var raf = 0, pendingH = null;
+    // resize the photos with the strip, keeping the same part of the strip in view
+    function applyLive(h) {
+        var oldFull = fullW, left = scroller.scrollLeft();
+        layoutStrip(h);
+        if (oldFull > 0 && fullW > 0) scroller.scrollLeft(left * fullW / oldFull);
+    }
     $(window).on('resize', function () {
-        var h = $strip.height(); if (h > maxH()) { setH(maxH(), false); clearTimeout(timer); timer = setTimeout(relayoutStrip, 200); }
+        var h = $strip.height(); if (h > maxH()) { applyLive(setH(maxH(), false)); }
     });
 });
 
