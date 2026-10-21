@@ -210,6 +210,79 @@ syt.api.searchSYTPlaces = function (request) {
 
     return deferred.promise();
 }
+// Turns a Commons "query" answer (pages with imageinfo) into the photo objects the strip uses.
+syt.api._commonsPhotos = function (data) {
+    var photos = [];
+    var pages = (data.query && data.query.pages) ? data.query.pages : {};
+    $.each(pages, function (id, page) {
+        var info = page.imageinfo && page.imageinfo[0];
+        if (!info || !/^image\/(jpeg|png)$/.test(info.mime) || !info.thumburl)
+            return;
+        var meta = info.extmetadata || {};
+        var artist = meta.Artist ? $("<div>").html(meta.Artist.value).text() : "Wikimedia Commons";
+        var coord = page.coordinates && page.coordinates[0];
+        var title = page.title.replace(/^File:/, "");
+        photos.push({
+            height: info.thumbheight,
+            width: info.thumbwidth,
+            photo_file_url: info.thumburl,
+            photo_url: info.descriptionurl,
+            photo_title: title,
+            owner_name: artist,
+            source: "commons",
+            rank: page.index || 0,                       // order of the search = nearest / most relevant first
+            license: meta.LicenseShortName ? $("<div>").html(meta.LicenseShortName.value).text() : "",
+            license_url: meta.LicenseUrl ? meta.LicenseUrl.value : "",
+            latitude: coord ? coord.lat : undefined,
+            longitude: coord ? coord.lon : undefined,
+            // larger version for the viewer
+            big_url: "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(title.replace(/ /g, "_")) + "?width=1600"
+        });
+    });
+    return photos;
+};
+
+// Last resort when nothing is found around a point (sea, mountains, empty land): find the names of the place
+// (town, county, region, country) and search Commons for photos with that name, most specific name first.
+syt.api.searchPlaceNamePhotos = function (track, p, low) {
+    var deferred = $.Deferred();
+    if (!$('#useFlickrImagesCheckBox').is(':checked') || track.useFlickrImages == "No") {
+        deferred.resolve({ photos: [] });
+        return deferred.promise();
+    }
+    var divHeight = $("#imageDiv").height() || 150;
+    var names = [];
+    syt.api.throttle("nominatim|rev|" + p.lat.toFixed(2) + "|" + p.lng.toFixed(2), {
+        dataType: "json",
+        url: "https://nominatim.openstreetmap.org/reverse",
+        data: { lat: p.lat, lon: p.lng, zoom: 10, format: "json", "accept-language": "en" }
+    }, function (d) {
+        var a = (d && d.address) || {};
+        var list = [a.city || a.town || a.village || a.municipality || a.suburb, a.county, a.state, a.country];
+        return { names: list.filter(function (n, i) { return n && list.indexOf(n) === i; }) };
+    }, low).then(function (r) {
+        names = r.__empty ? [] : r.names;
+        var found = [], i = 0;
+        (function next() {
+            if (i >= names.length || found.length >= 12) { deferred.resolve({ photos: found }); return; }
+            var name = names[i++];
+            syt.api.throttle("commons|name|" + name + "|" + divHeight, {
+                dataType: "json",
+                url: "https://commons.wikimedia.org/w/api.php",
+                data: {
+                    action: "query", format: "json", origin: "*",
+                    generator: "search", gsrsearch: name + " filetype:bitmap -flag -map -logo -coat", gsrnamespace: 6, gsrlimit: 40,
+                    prop: "imageinfo", iiprop: "url|size|mime|extmetadata", iiurlheight: Math.max(divHeight, 150) * 2
+                }
+            }, function (data) { return { photos: syt.api._commonsPhotos(data) }; }, low).then(function (res) {
+                if (!res.__empty) found = found.concat(res.photos);
+                next();
+            });
+        })();
+    });
+    return deferred.promise();
+};
+
 // Public photos by location from Wikimedia Commons (the old Flickr/Panoramio sources are gone).
 // The function keeps its old name because the page and the "use Flickr images" checkbox refer to it.
 syt.api.searchFlickrImages = function (track, p, tolerancy, low) {
@@ -234,34 +307,7 @@ syt.api.searchFlickrImages = function (track, p, tolerancy, low) {
             prop: "imageinfo|coordinates", colimit: 50, iiprop: "url|size|mime|extmetadata", iiurlheight: Math.max(divHeight, 150) * 2
         }
     }, function (data) {
-        var result = { photos: [] };
-        var pages = (data.query && data.query.pages) ? data.query.pages : {};
-        $.each(pages, function (id, page) {
-            var info = page.imageinfo && page.imageinfo[0];
-            if (!info || !/^image\/(jpeg|png)$/.test(info.mime) || !info.thumburl)
-                return;
-            var meta = info.extmetadata || {};
-            var artist = meta.Artist ? $("<div>").html(meta.Artist.value).text() : "Wikimedia Commons";
-            var coord = page.coordinates && page.coordinates[0];
-            var title = page.title.replace(/^File:/, "");
-            result.photos.push({
-                height: info.thumbheight,
-                width: info.thumbwidth,
-                photo_file_url: info.thumburl,
-                photo_url: info.descriptionurl,
-                photo_title: title,
-                owner_name: artist,
-                source: "commons",
-                rank: page.index || 0,                       // order of the geosearch = nearest first
-                license: meta.LicenseShortName ? $("<div>").html(meta.LicenseShortName.value).text() : "",
-                license_url: meta.LicenseUrl ? meta.LicenseUrl.value : "",
-                latitude: coord ? coord.lat : undefined,
-                longitude: coord ? coord.lon : undefined,
-                // larger version for the viewer
-                big_url: "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(title.replace(/ /g, "_")) + "?width=1600"
-            });
-        });
-        return result;
+        return { photos: syt.api._commonsPhotos(data) };
     }, low).then(function (result) {
         deferred.resolve(result.__empty ? { photos: [] } : result);
     });

@@ -374,6 +374,7 @@ function doStartStop() {
 
 // If a stop has too few photos, widen the search radius (x2 each time, up to MAX_PHOTO_WIDENINGS times).
 var MIN_PHOTOS = 15;
+var MIN_NAME_PHOTOS = 6;   // below this many photos after widening, search by place name
 var MAX_PHOTO_WIDENINGS = 4;
 
 // Photo search with a small cache and look-ahead: the photos for the places the marker will reach in the next
@@ -411,6 +412,12 @@ var photoSearch = (function () {
                     .then(function (v) {
                         var photos = v[0].photos.concat(v[1].photos);
                         if (photos.length < MIN_PHOTOS && widenings < MAX_PHOTO_WIDENINGS) attempt(t * 2, widenings + 1);
+                        else if (photos.length < MIN_NAME_PHOTOS) {
+                            // still (almost) nothing around the point: look for photos of the place by name
+                            syt.api.searchPlaceNamePhotos(track, p, low).then(function (byName) {
+                                resolve({ photos: arrangePhotos(photos.concat(byName.photos)), tol: t });
+                            });
+                        }
                         else resolve({ photos: arrangePhotos(photos), tol: t });
                     });
             };
