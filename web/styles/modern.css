@@ -152,7 +152,7 @@ button.headerButton:disabled { background-color: #b9c3d0 !important; color: #fff
 #photoPreview .pp-cap { max-width: 70vw; padding: 5px 4px 1px; font-size: 12px; color: #44505e; text-align: center; }
 #photoPreview .pp-cap:empty { display: none; }
 
-#photoToggle { position: fixed; left: 50%; bottom: var(--syt-strip-h, 0px); transform: translateX(-50%); z-index: 1002; padding: 3px 14px 2px; border: 0; border-radius: 12px 12px 0 0; background: rgba(34,94,172,.92); color: #fff; font-size: 12px; cursor: pointer; transition: bottom .2s, background-color .15s; box-shadow: 0 -2px 8px rgba(0,0,0,.25); }
+#photoToggle { position: fixed; left: 50%; bottom: var(--syt-strip-h, 0px); transform: translateX(-50%); z-index: 900; padding: 3px 14px 2px; border: 0; border-radius: 12px 12px 0 0; background: rgba(34,94,172,.92); color: #fff; font-size: 12px; cursor: pointer; transition: bottom .2s, background-color .15s; box-shadow: 0 -2px 8px rgba(0,0,0,.25); }
 #photoToggle:hover { background: #1b4d8e; }
 #photoToggle .chev { display: inline-block; transition: transform .2s; }
 #photoToggle.collapsed .chev { transform: rotate(180deg); }
@@ -208,3 +208,111 @@ body.resizingStrip { cursor: ns-resize; user-select: none; }
 #helpPanel p { margin: 4px 0 8px; }
 #helpPanel .hpClose { position: absolute; top: 6px; right: 8px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(0,0,0,.08) !important; color: #333 !important; font-size: 20px; line-height: 26px; cursor: pointer; z-index: 2; }
 #helpPanel .hpClose:hover { background: rgba(0,0,0,.18) !important; transform: none; }
+
+/* Photos flying in on the map */
+.flyLayer { position: absolute; inset: 0; z-index: 650; pointer-events: none; overflow: hidden; }
+.flyCard { position: absolute; width: 150px; padding: 4px 4px 0; border-radius: 12px; background: #fff; box-shadow: 0 6px 22px rgba(0,0,0,.45); cursor: zoom-in; pointer-events: auto;
+  transform-origin: 50% 50%; will-change: transform, opacity; }
+.flyCard.flying { transition: transform .75s cubic-bezier(.2, .9, .25, 1.1), opacity .45s ease-out; }
+.flyCard.leaving { transition: transform .65s cubic-bezier(.5, 0, .75, .4), opacity .5s ease-in .1s; }
+.flyCard img { display: block; width: 142px; height: 98px; object-fit: cover; border-radius: 9px; background: #dfe6ee; }
+.flyCard span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; padding: 3px 3px 0; margin-bottom: 5px; font-size: 10.5px; line-height: 1.25; color: #44505e; overflow: hidden; text-overflow: ellipsis; word-break: break-word; }
+.flyCard:hover { box-shadow: 0 8px 28px rgba(0,0,0,.55); }
+.photoPin { background: none; border: 0; }
+.photoPin img { box-sizing: border-box; width: 38px !important; height: 38px !important; min-width: 38px; max-width: none !important; max-height: none !important; aspect-ratio: 1 / 1; border-radius: 50%; object-fit: cover; border: 3px solid #ffd84a; box-shadow: 0 2px 8px rgba(0,0,0,.5); background: #dfe6ee; display: block; transition: transform .15s; }
+.photoPin:hover img { transform: scale(1.3); }
+@media (prefers-reduced-motion: reduce) { .flyCard.flying, .flyCard.leaving { transition: opacity .3s; } }
+
+/* Map stays hidden until the requested track has positioned it */
+.leaflet-container { transition: opacity .3s ease-out; }
+.leaflet-container.syt-loading { opacity: 0; }
+
+/* Long names: the track list never grows past its box, and ends with an ellipsis */
+#tracksList { text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+#trackNameFull { position: absolute; left: 0; top: 40px; display: none; font-size: 12px; font-weight: 600; line-height: 1.25; color: #12213a; pointer-events: none; word-break: break-word;
+  text-shadow: 0 0 2px #fff, 0 0 3px #fff, 0 0 6px rgba(255,255,255,.95); }
+
+/* =====================  Welcome panel  ===================== */
+@keyframes sytPop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+#helpPanel {
+    padding: 0 !important; overflow: hidden; border: 1px solid rgba(255,255,255,.6);
+    border-radius: 20px !important; background: rgba(255,255,255,.97) !important;
+    box-shadow: 0 18px 50px rgba(18, 48, 92, .35), 0 2px 6px rgba(18, 48, 92, .15);
+    -webkit-backdrop-filter: none; backdrop-filter: none; animation: sytPop .3s var(--syt-ease, ease-out);
+}
+#helpPanel .ui-tabs .ui-tabs-nav, #helpPanel #tabs-movie > ul {
+    margin: 0; padding: 12px 50px 12px 14px;
+    background: linear-gradient(135deg, #12305c, #225EAC); border-radius: 0;
+}
+#helpPanel .ui-tabs .ui-tabs-nav li { background: transparent; border-radius: 999px; margin: 0 4px 0 0; padding: 0; border: 0; }
+#helpPanel .ui-tabs .ui-tabs-nav li a { padding: 6px 14px; color: rgba(255,255,255,.85); font-weight: 500; font-size: 13.5px; }
+#helpPanel .ui-tabs .ui-tabs-nav li:hover { background: rgba(255,255,255,.14); }
+#helpPanel .ui-tabs .ui-tabs-nav li.ui-tabs-active { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+#helpPanel .ui-tabs .ui-tabs-nav li.ui-tabs-active a { color: #12305c; }
+#helpPanel .ui-tabs-panel { padding: 16px 20px 18px; }
+#helpPanel .hpClose { top: 10px; right: 12px; background: rgba(255,255,255,.18) !important; color: #fff !important; }
+#helpPanel .hpClose:hover { background: rgba(255,255,255,.34) !important; }
+#helpPanel #tab-welcome > img { height: 46px; vertical-align: middle; margin: 0 12px 0 0 !important; }
+#helpPanel #takeATour {
+    width: auto !important; height: auto !important; padding: 10px 22px; font-size: 15px !important; font-weight: 600; vertical-align: middle;
+    border-radius: 999px; background: var(--syt-blue); box-shadow: 0 6px 16px rgba(34, 94, 172, .4);
+}
+#helpPanel #helpContext { margin-top: 10px; color: #26323f; }
+#helpPanel #helpContext h2 { font-size: 21px; line-height: 1.25; margin: 6px 0 8px; color: #12305c; font-weight: 700; }
+#helpPanel #helpContext a { color: var(--syt-blue-dark, #225EAC); }
+/* "don't show again" as a switch */
+#helpPanel #dontShowOnStartup { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; margin: 10px 8px 0 0; vertical-align: middle; border-radius: 999px; background: #c9d3e0; position: relative; cursor: pointer; transition: background-color .2s; }
+#helpPanel #dontShowOnStartup::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
+#helpPanel #dontShowOnStartup:checked { background: var(--syt-blue); }
+#helpPanel #dontShowOnStartup:checked::after { transform: translateX(16px); }
+#helpPanel label[for="dontShowOnStartup"] { vertical-align: middle; display: inline-block; margin-top: 10px; max-width: calc(100% - 50px); }
+#helpPanel label[for="dontShowOnStartup"] b { font-weight: 400; font-size: 12.5px; color: #5a6675; }
+
+/* =====================  Description panel  ===================== */
+#textToReadArea0 {
+    display: flex; flex-direction: column; overflow: hidden; padding: 0 !important;
+    background: rgba(255,255,255,.94) !important; border: 1px solid rgba(255,255,255,.7) !important;
+    border-radius: 18px !important; box-shadow: 0 14px 40px rgba(18, 48, 92, .32), 0 2px 6px rgba(18, 48, 92, .15);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: sytPop .3s var(--syt-ease, ease-out);
+}
+#textToReadArea0 .descHeader {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; cursor: move;
+    padding: 9px 10px 9px 16px; font-weight: 600; font-size: 14px; color: #fff;
+    background: linear-gradient(135deg, #12305c, #225EAC);
+}
+#textToReadArea0 .descClose { width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.18); color: #fff; font-size: 18px; line-height: 24px; cursor: pointer; transition: background-color .15s; }
+#textToReadArea0 .descClose:hover { background: rgba(255,255,255,.34); }
+#textToReadArea0 #textToReadArea {
+    position: static !important; flex: 1 1 auto; background: transparent !important; overflow: auto !important;
+    margin: 0 !important; padding: 12px 18px 16px !important; font-size: 15px; line-height: 1.65; color: #1d2733;
+    scrollbar-width: thin; scrollbar-color: #b7c4d6 transparent; overflow-wrap: anywhere;
+}
+#textToReadArea0 #textToReadArea p { margin: 0 0 .8em; }
+#textToReadArea0 #textToReadArea::-webkit-scrollbar { width: 8px; }
+#textToReadArea0 #textToReadArea::-webkit-scrollbar-thumb { background: #b7c4d6; border-radius: 8px; }
+
+/* The moving marker: vehicle picture with a soft shadow so it stands out on any map */
+img.vehicleIcon { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px rgba(255,255,255,.9)) drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+
+/* ===================== Track properties (Track tab) ===================== */
+#helpPanel { transition: width .25s var(--syt-ease, ease); }
+#helpPanel.wide { width: min(700px, calc(100vw - 20px)) !important; }
+.trackStats { margin: 0 0 14px; }
+.trackStats .ts-title { margin: 0 0 10px; font-size: 20px; color: #12305c; }
+.trackStats .ts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.trackStats .ts-item { background: #f2f6fc; border-radius: 12px; padding: 9px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.trackStats .ts-item.wide { grid-column: span 2; }
+.trackStats .ts-label { font-size: 11.5px; letter-spacing: .02em; text-transform: uppercase; color: #6a7686; }
+.trackStats .ts-value { font-size: 17px; font-weight: 600; color: #12305c; overflow-wrap: anywhere; }
+.trackStats .ts-note { margin: 10px 2px 0; font-size: 12px; color: #6a7686; }
+.trackStats .ts-empty { color: #6a7686; margin: 6px 0 12px; }
+#helpPanel #elevationChartDiv { margin-top: 6px; }
+@media (max-width: 520px) { .trackStats .ts-item.wide { grid-column: span 1; } .trackStats .ts-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* The panel never grows past the window: it scrolls inside */
+#helpPanel { max-height: calc(100vh - 70px); overflow-y: auto !important; overflow-x: hidden !important; scrollbar-width: thin; }
+
+/* "Loading track..." notice while the map waits for the track */
+#trackLoading { position: fixed; left: 50%; top: 45%; transform: translateX(-50%); z-index: 1500; display: flex; align-items: center; gap: 12px; padding: 12px 22px; border-radius: 999px; background: rgba(255,255,255,.95); box-shadow: 0 8px 28px rgba(18,48,92,.3); color: #12305c; font-weight: 600; }
+#trackLoading .spin { width: 20px; height: 20px; border-radius: 50%; border: 3px solid #cfdcf0; border-top-color: #225EAC; animation: sytSpin .8s linear infinite; }
+@keyframes sytSpin { to { transform: rotate(360deg); } }

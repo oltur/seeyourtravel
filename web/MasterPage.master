@@ -24,18 +24,18 @@
     <%-- Chart.js (470 KB) is loaded on demand, see ensureChartJs() in js/OurTravel.js --%>
     <%--    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.bundle.js"></script>--%>
 
-    <script src="libs/jquery.js"></script>
-    <script src="libs/jquery-ui.js"></script>
-    <script src="libs/jquery.cookie.js"></script>
-    <script src="libs/jquery.tinycarousel.js"></script>
-    <script src="libs/toastr.min.js"></script>
-    <script src="libs/leaflet-src.js"></script>
-    <script src="libs/leaflet.markercluster-src.js"></script>
-    <%--<script src="libs/leaflet-routing-machine.js"></script>--%>
-    <script src="libs/i18next.js"></script>
+    <script src="<%=Tools.V("libs/jquery.js")%>"></script>
+    <script src="<%=Tools.V("libs/jquery-ui.js")%>"></script>
+    <script src="<%=Tools.V("libs/jquery.cookie.js")%>"></script>
+    <script src="<%=Tools.V("libs/jquery.tinycarousel.js")%>"></script>
+    <script src="<%=Tools.V("libs/toastr.min.js")%>"></script>
+    <script src="<%=Tools.V("libs/leaflet-src.js")%>"></script>
+    <script src="<%=Tools.V("libs/leaflet.markercluster-src.js")%>"></script>
+    <%--<script src="<%=Tools.V("libs/leaflet-routing-machine.js")%>"></script>--%>
+    <script src="<%=Tools.V("libs/i18next.js")%>"></script>
     <script>window.initFacebook = function () { }; window.fbAsyncInit = function () { };</script>
     
-    <script src="libs//jquery.tour.js"></script>
+    <script src="<%=Tools.V("libs//jquery.tour.js")%>"></script>
         <style>
             .tour_item.active {
                 z-index: 9998;
@@ -187,19 +187,19 @@
             }
         </style>   
     <%-- Google Maps/Platform replaced by free services (OSM tiles, Nominatim, OSRM, Open-Meteo) --%>
-    <script src="js/compat.js"></script>
+    <script src="<%=Tools.V("js/compat.js")%>"></script>
     <% if (!Tools.LoginEnabled) { %><style>#logout { display: none !important; }</style><% } %>
-    <script src="libs/json2.js"></script>
-    <script src="libs/jstorage.js"></script>
+    <script src="<%=Tools.V("libs/json2.js")%>"></script>
+    <script src="<%=Tools.V("libs/jstorage.js")%>"></script>
 
     <link href="corporate/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="styles/leaflet.css" />
+    <link rel="stylesheet" href="<%=Tools.V("styles/leaflet.css")%>" />
     <!--[if lte IE 8]>
-    <link rel="stylesheet" href="styles/leaflet.ie.css"/>
+    <link rel="stylesheet" href="<%=Tools.V("styles/leaflet.ie.css")%>"/>
     <![endif]-->
-    <link rel="stylesheet" href="styles/jquery-ui.css" />
-    <link rel="stylesheet" href="styles/tinycarousel.css" />
-    <link rel="stylesheet" href="styles/toastr.min.css" />
+    <link rel="stylesheet" href="<%=Tools.V("styles/jquery-ui.css")%>" />
+    <link rel="stylesheet" href="<%=Tools.V("styles/tinycarousel.css")%>" />
+    <link rel="stylesheet" href="<%=Tools.V("styles/toastr.min.css")%>" />
 
     <script>
         var IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; 
@@ -208,18 +208,18 @@
         var IS_ANDROID_WEBVIEW = !!window.JSInterface;
     </script>
 
-    <script src="js/OurTravel.Common.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/OurTravel.js"></script>
-    <script src="js/AnimatedMarker.js"></script>
-    <script src="js/get_text.js"></script>
+    <script src="<%=Tools.V("js/OurTravel.Common.js")%>"></script>
+    <script src="<%=Tools.V("js/api.js")%>"></script>
+    <script src="<%=Tools.V("js/OurTravel.js")%>"></script>
+    <script src="<%=Tools.V("js/AnimatedMarker.js")%>"></script>
+    <script src="<%=Tools.V("js/get_text.js")%>"></script>
 
-    <%--<link rel="stylesheet" href="styles/leaflet-routing-machine.css" />--%>
+    <%--<link rel="stylesheet" href="<%=Tools.V("styles/leaflet-routing-machine.css")%>" />--%>
 
-    <link rel="stylesheet" href="styles/ourTravel.common.css" />
-    <link rel="stylesheet" href="styles/ourTravel.css" />
-    <link rel="stylesheet" href="styles/modern.css" />
-    <link rel="stylesheet" href="styles/fonts.css" />
+    <link rel="stylesheet" href="<%=Tools.V("styles/ourTravel.common.css")%>" />
+    <link rel="stylesheet" href="<%=Tools.V("styles/ourTravel.css")%>" />
+    <link rel="stylesheet" href="<%=Tools.V("styles/modern.css")%>" />
+    <link rel="stylesheet" href="<%=Tools.V("styles/fonts.css")%>" />
 
     <meta name="google-signin-client_id" content="179651162952-alrnetid5672ki6fqb7qh8b8ptu9aspk.apps.googleusercontent.com" />
 

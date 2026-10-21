@@ -36,61 +36,24 @@ public partial class services_get_places : System.Web.UI.Page
             //    XmlNodeList list = doc.SelectNodes(query);
 
             //    foreach (XmlElement elem in list)
+            // Google-Places-like answer (built with a serializer; the old hand-made template had unescaped braces and always failed with a 500)
+            var results = new System.Collections.Generic.List<object>();
             foreach (var place in places)
             {
-                // http://localhost:88/seeyourtravel/services/get_places.aspx?types=restaurant%2Clodging&set=full&from=0&to=10&miny=47.955776&minx=10.096568999999999&maxy=48.055775999999994&maxx=10.196569&callback=abc
-
-                double lat = place.Lat;
-                double lng = place.Lng;
                 string icon = "data/places/forum.jpg";
-                Guid id = Guid.Empty;
-                string description = place.Name;
-                string resultTypes = "\'restaurant\'";
-                string vicinity = place.Vicinity;
-
-                if (items.Length > 0)
-                    items.AppendLine(",");
-                items.AppendFormat(@"
-      {
-         'geometry' : {
-            'location' : {
-               'lat' : {0}, 
-               'lng' : {1}
+                results.Add(new
+                {
+                    geometry = new { location = new { lat = place.Lat, lng = place.Lng } },
+                    icon = icon,
+                    id = "syt-" + place.Lat.ToString("F5", System.Globalization.CultureInfo.InvariantCulture) + "-" + place.Lng.ToString("F5", System.Globalization.CultureInfo.InvariantCulture),
+                    name = place.Name,
+                    photos = new[] { new { height = 500, width = 375, raw_reference = new { fife_url = icon } } },
+                    rating = 1.1,
+                    types = new[] { "restaurant" },
+                    vicinity = place.Vicinity
+                });
             }
-         },
-         'icon' : '{2}',
-         'id' : '{3}',
-         'name' : '{4}',
-         'opening_hours' : {
-            'open_now' : true,
-            'weekday_text' : []
-         },
-         'photos' : [
-            {
-               'height' : 500,
-               'width' : 375,
-               'html_attributions' : [
-                  'TBD'
-               ],
-               'raw_reference' : {
-                  'fife_url' : '{2}'
-               }
-            }
-         ],
-         'rating' : 1.1,
-         'types' : [ {5} ]
-         'vicinity' : '{6}'
-      }
-", (decimal)lat, (decimal)lng, icon, id, description, resultTypes, vicinity);
-            }
-
-            string result = string.Format(@"/**/{0}( {
-   'results' : [
-      {1}
-   ],
-   'status' : 'OK'
-}
- )", callback, items.ToString());
+            string result = "/**/" + callback + "( " + new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(new { results = results, status = "OK" }) + " )";
             //Response.Cache.SetNoStore();
             //Response.Cache.SetNoServerCaching();
             //Response.Cache.SetMaxAge(new TimeSpan(0));

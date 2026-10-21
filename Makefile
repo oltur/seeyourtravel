@@ -5,6 +5,7 @@
 #   make logs     follow web logs
 #   make status   show containers and HTTP check
 #   make clean    remove containers, network, DB volume and image (db/ source files are untouched)
+#   make thumbs   (re)generate the web copies of all photos in web/data/thumbs (new uploads get theirs automatically)
 #   make tunnel   start the Cloudflare tunnel (needs CF_TUNNEL_TOKEN in .env; `make up` starts it automatically when set)
 #   make tunnel-logs / tunnel-down
 
@@ -19,7 +20,8 @@ APP_PW    ?= $(shell sed -n 's/.*LOCAL.SEEYOURTRAVEL.com;.*Password=\([^;"&]*\).
 SQL_IMAGE ?= mcr.microsoft.com/mssql/server:2022-latest
 SQLCMD     = docker exec syt-sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P '$(SA_PW)'
 
-.PHONY: up down restart logs status clean network image db-volume sql web wait-sql attach-db tunnel tunnel-logs tunnel-down
+
+.PHONY: thumbs up down restart logs status clean network image db-volume sql web wait-sql attach-db tunnel tunnel-logs tunnel-down
 
 up: network image sql attach-db web
 	@if [ -n "$(CF_TUNNEL_TOKEN)" ]; then $(MAKE) --no-print-directory tunnel; else echo "(no CF_TUNNEL_TOKEN in .env: not published to the internet)"; fi
@@ -77,6 +79,9 @@ tunnel-logs:
 
 tunnel-down:
 	-docker rm -f syt-tunnel
+
+thumbs:
+	python3 tools/make_thumbs.py
 
 down:
 	-docker stop syt-web syt-sql syt-tunnel

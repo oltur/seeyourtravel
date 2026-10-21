@@ -50,7 +50,7 @@
                     <tr>
                         <td class="big i" data-i18n="TrackName">Track name:</td>
                         <td>
-                            <input id="name" name="name" type="text" value="<%="New track " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")  %>" style="width: 180px;" /></td>
+                            <input id="name" name="name" type="text" value="<%="New track " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")  %>" style="width: 100%; min-width: 180px; max-width: 360px; box-sizing: border-box;" oninput="this.title = this.value" /></td>
                     </tr>
                     <tr>
                         <td class="big i" data-i18n="Maketrackpublic">Make track public?</td>
@@ -61,11 +61,12 @@
                     <tr>
                         <td class="big i" data-i18n="Category">Category:</td>
                         <td>
-                            <input id="category" name="category" list="categories" value="Other" style="width: 180px;" />
+                            <input id="category" name="category" list="categories" value="Other" style="width: 180px;" autocomplete="off" title="Choose a category from the list or type a new one" />
                             <datalist class="i" id="categories">
                                 <option value="Ukraine" class="i" data-i18n="Ukraine" />
                                 <option value="Germany" class="i" data-i18n="Germany" />
                                 <option value="Europe" class="i" data-i18n="Europe" />
+                                <option value="Israel" class="i" data-i18n="Israel" />
                                 <option value="Asia" class="i" data-i18n="Asia" />
                                 <option value="America" class="i" data-i18n="America" />
                                 <option value="Other" class="i" data-i18n="Other" />
@@ -124,15 +125,15 @@
                     <br />
                     <table>
                         <tr>
-                            <td>From:</td>
+                            <td class="i" data-i18n="From">From:</td>
                             <td>
-                                <input id="fromLocation" type="text" value="Champs-Élysées, Paris" placeholder="Start address or place" style="width: 200px" />
+                                <input id="fromLocation" type="text" value="Champs-Élysées, Paris" class="i" data-i18n="[placeholder]FromPlaceholder" placeholder="Start address or place" style="width: 200px" />
                             </td>
                         </tr>
                         <tr>
-                            <td>To:</td>
+                            <td class="i" data-i18n="To">To:</td>
                             <td>
-                                <input id="toLocation" type="text" value="Buckingham Palace, London" placeholder="Destination address or place" style="width: 200px" />
+                                <input id="toLocation" type="text" value="Buckingham Palace, London" class="i" data-i18n="[placeholder]ToPlaceholder" placeholder="Destination address or place" style="width: 200px" />
                             </td>
                         </tr>
                     </table>
@@ -274,6 +275,7 @@
     </script>
     <%
         string trackname = Request.QueryString["trackname"];
+        if (string.IsNullOrEmpty(trackname) && IsExisting) trackname = TrackFileName;   // opened by track id (e.g. after saving)
         if (!string.IsNullOrEmpty(trackname))
         {
             Response.Write(string.Format(@"<script language='javascript'>
@@ -340,28 +342,37 @@
             };
 
             var btn = $("#createByRoute").prop("disabled", true);
-            toastr.info("Searching for a route…");
+            toastr.info(T("RouteSearching", "Searching for a route…"));
             directionsService.route(request, function (result, status) {
                 btn.prop("disabled", false);
                 if (status == 'OK') {
                     setDirections(result);
-                    toastr.success("Route created: " + $("#points option").length + " points");
+                    toastr.success(T("RouteCreated", "Route created: {0} points").replace("{0}", $("#points option").length));
                 } else if (status == 'ZERO_RESULTS' || status == 'NOT_FOUND') {
-                    toastr.error("Could not find one of the places or a route between them. Try a more general name, e.g. a city.");
+                    toastr.error(T("RouteNotFound", "Could not find one of the places or a route between them. Try a more general name, e.g. a city."));
                 } else {
-                    toastr.error("Route service is not available right now (" + status + "). Please try again.");
+                    toastr.error(T("RouteUnavailable", "Route service is not available right now ({0}). Please try again.").replace("{0}", status));
                 }
             });
         }
 
+        // The browser only offers list entries that match the text in the box, so with "Other" typed in there is just "Other":
+        // on focus the box is emptied (and restored if left empty) to offer every category.
+        $(function () {
+            var $c = $("#category"), keep = "";
+            $c.on("focus mousedown", function () { if (this.value) { keep = this.value; this.value = ""; } })
+              .on("blur change", function () { if (this.value === "") this.value = keep || "Other"; });
+        });
+
         function deleteThisTrack() {
-            if (!confirm("Delete this track permanently? This cannot be undone.")) return;
+            var trackLabel = $.trim($("#name").val()) || $("#trackFileName").val();
+            if (!confirm(T("DeleteTracksConfirm", "Delete {0} permanently? This cannot be undone.").replace("{0}", '"' + trackLabel + '"'))) return;
             $.post("services/delete_trackbyfilename.aspx", { fileName: $("#trackFileName").val() })
                 .done(function (r) {
-                    if (String(r).indexOf("OK") === 0) window.location = "index.aspx";
-                    else toastr.error("Could not delete the track: " + r);
+                    if ($.trim(String(r)) === "OK") window.location = "index.aspx";
+                    else toastr.error(T("DeleteTrackFailedWhy", "Could not delete the track: {0}").replace("{0}", r));
                 })
-                .fail(function () { toastr.error("Could not delete the track."); });
+                .fail(function (xhr) { toastr.error(T("DeleteTrackFailedWhy", "Could not delete the track: {0}").replace("{0}", (xhr.responseText || xhr.statusText || "").toString().slice(0, 80))); });
         }
 
         $(function () {
@@ -552,37 +563,37 @@
 
             var x = $('#travelWith').find(":selected").val();
             if (x == "WalkingMan") {
-                var t = "currentposition.png";//("aman.gif");
+                var t = "aman.gif";
                 $("#velocityMetersPerSec").val(Math.round(5 * 10 * 1000 / 3660));
                 $("#icon").val(t);
                 setAnimatedMarkerIcon(t);
             }
             else if (x == "Bike") {
-                var t = "currentposition.png";//("mybike.png");
+                var t = "mybike.png";
                 $("#velocityMetersPerSec").val(Math.round(15 * 50 * 1000 / 3660));
                 $("#icon").val(t);
                 setAnimatedMarkerIcon(t);
             }
             else if (x == "Car") {
-                var t = "currentposition.png";//"mycar.png";
+                var t = "mycar.png";
                 $("#velocityMetersPerSec").val(Math.round(100 * 100 * 1000 / 3660));
                 $("#icon").val(t);
                 setAnimatedMarkerIcon(t);
             }
             else if (x == "Bus") {
-                var t = "currentposition.png";//("mybus.png");
+                var t = "mybus.png";
                 $("#velocityMetersPerSec").val(Math.round(80 * 100 * 1000 / 3660));
                 $("#icon").val(t);
                 setAnimatedMarkerIcon(t);
             }
             else if (x == "Yacht") {
-                var t = "currentposition.png";//("myyacht.png");
+                var t = "myyacht.png";
                 $("#velocityMetersPerSec").val(Math.round(40 * 100 * 1000 / 3660));
                 $("#icon").val(t);
                 setAnimatedMarkerIcon(t);
             }
             else if (x == "Plane") {
-                var t = "currentposition.png";//("myplane.png");
+                var t = "myplane.png";
                 $("#velocityMetersPerSec").val(Math.round(800 * 100 * 1000 / 3660));
                 $("#icon").val(t);
                 setAnimatedMarkerIcon(t);
@@ -683,7 +694,7 @@
             reader.onload = function () {
                 var xml;
                 try { xml = $.parseXML(reader.result); }
-                catch (e) { toastr.error("This does not look like a valid GPX file."); input.value = ""; return; }
+                catch (e) { toastr.error(T("GpxInvalid", "This does not look like a valid GPX file.")); input.value = ""; return; }
 
                 var nodes = $(xml).find("trkpt");
                 if (!nodes.length) nodes = $(xml).find("rtept");
@@ -693,7 +704,7 @@
                     var lat = parseFloat($(this).attr("lat")), lon = parseFloat($(this).attr("lon"));
                     if (isFinite(lat) && isFinite(lon)) pts.push([lat, lon]);
                 });
-                if (!pts.length) { toastr.error("No track points found in this file."); input.value = ""; return; }
+                if (!pts.length) { toastr.error(T("GpxNone", "No track points found in this file.")); input.value = ""; return; }
 
                 var total = pts.length;
                 if (total > 1000) pts = window.sytSimplifyPath(pts, 1000);
@@ -706,10 +717,10 @@
                 points[0].selectedIndex = 0;
                 points.change();
                 updateMap();
-                toastr.success("Imported " + pts.length + " points" + (total > pts.length ? " (reduced from " + total + ")" : ""));
+                toastr.success(T("GpxImported", "Imported {0} points").replace("{0}", pts.length) + (total > pts.length ? T("GpxReducedFrom", " (reduced from {0})").replace("{0}", total) : ""));
                 input.value = "";   // allow importing the same file again
             };
-            reader.onerror = function () { toastr.error("Could not read the file."); };
+            reader.onerror = function () { toastr.error(T("GpxReadError", "Could not read the file.")); };
             reader.readAsText(f);
         }
     </script>

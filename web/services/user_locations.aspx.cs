@@ -1,117 +1,142 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Web;
-using System.Linq;
 using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Web;
+using System.Web.Script.Serialization;
 
+// Sharing the position with other users is opt-in:
+//   getsharing / setsharing  - read / change the signed-in user's consent (setsharing must be a POST from the page)
+//   senduserlocation         - saves the position, ONLY for users who agreed (switching sharing off deletes the saved positions)
+//   getfriendslocations      - last positions (rounded to ~100 m, at most one hour old) of the OTHER users who agreed,
+//                              and only for a user who agreed too
 public partial class services_user_locations : System.Web.UI.Page
 {
+    static bool tableChecked;
+    static readonly object tableLock = new object();
+
+    public class FriendRow
+    {
+        public Guid UserID { get; set; }
+        public string UserName { get; set; }
+        public double Lat { get; set; }
+        public double Lng { get; set; }
+        public DateTime Time { get; set; }
+    }
+
+    static void EnsureTable(SeeYourTravelEntities db)
+    {
+        if (tableChecked) return;
+        lock (tableLock)
+        {
+            if (tableChecked) return;
+            db.Database.ExecuteSqlCommand(
+                "IF OBJECT_ID('dbo.LocationSharing') IS NULL CREATE TABLE dbo.LocationSharing (UserID uniqueidentifier NOT NULL PRIMARY KEY, Enabled bit NOT NULL, Updated datetime NOT NULL)");
+            tableChecked = true;
+        }
+    }
+
+    static bool IsSharing(SeeYourTravelEntities db, Guid userId)
+    {
+        return db.Database.SqlQuery<int>("SELECT COUNT(*) FROM dbo.LocationSharing WHERE UserID = @p0 AND Enabled = 1", userId).First() > 0;
+    }
+
+    void Json(string body)
+    {
+        Response.Clear();
+        Response.Write(body);
+        Response.End();
+    }
+
     protected void Page_Load(object sender, EventArgs e)
     {
-        string action = Request.QueryString["action"];
+        string action = Request.QueryString["action"] ?? "";
         string callback = Request.QueryString["callback"];
-
-        // http://localhost:88/seeyourtravel/services/user_locations.aspx?action=getuserlocations&userId=ttt&lat=50&lng=50
-        // http://localhost:88/seeyourtravel/services/get_places.aspx?types=restaurant%2Clodging&set=full&from=0&to=10&miny=47.955776&minx=10.096568999999999&maxy=48.055775999999994&maxx=10.196569&callback=abc
-
-        Debug.WriteLine(Request.Cookies["AndroidWebView"] != null? Request.Cookies["AndroidWebView"].Value:"0");
-
-        //Response.Cache.SetNoStore();
-        //Response.Cache.SetNoServerCaching();
-        //Response.Cache.SetMaxAge(new TimeSpan(0));
-        //Response.Cache.SetCacheability(HttpCacheability.NoCache);
-        //Response.Cache.AppendCacheExtension("no-store, must-revalidate");
-        //Response.AppendHeader("Pragma", "no-cache");
-        //Response.AppendHeader("Expires", "0");
-
-        SeeYourTravelEntities db = new SeeYourTravelEntities();
+        if (string.IsNullOrEmpty(callback) || !Regex.IsMatch(callback, @"^[A-Za-z0-9_$.]{1,100}$"))
+            callback = "callback";
+        Func<string, string> jsonp = body => "/**/" + callback + "( " + body + " )";
 
         Response.ContentType = "application/javascript; charset=utf-8";
         Response.Headers.Add("X-Frame-Options", "SAMEORIGIN");
         Response.Headers.Add("Content-Disposition", "Attachment");
+        Response.Cache.SetCacheability(HttpCacheability.NoCache);
 
-        if (string.Compare(action, "getfriendslocations", true) == 0)
+        // the signed-in user comes from the session, never from the query string; guests have no position and no friends
+        Guid userId = Tools.GetUserId(this);
+        var js = new JavaScriptSerializer();
+        var db = new SeeYourTravelEntities();
+        try { EnsureTable(db); }
+        catch (Exception ex) { Debug.WriteLine("[user_locations] " + ex.Message); Json(jsonp(action.Equals("getfriendslocations", StringComparison.OrdinalIgnoreCase) ? "[]" : "{}")); return; }
+
+        if (action.Equals("getsharing", StringComparison.OrdinalIgnoreCase))
         {
-            string userId = Request.QueryString["userId"];
-            Guid userId2 = string.IsNullOrEmpty(userId) ? Guid.Empty : Guid.Parse(userId);
-
-            string resultgetfriendslocations = @"/**/" + callback + @"( [{0}] )";
-            string userTemplate = @"{{
-'userId' : '{0}',
-'userName' : '{1}',
-'lat' : {2},
-'lng' : {3},
-'time' : '{4}'
-}}";
-
-            var lastLocations = db.GetFriendsLocations(userId2).ToList();
-            var strLocs = new List<string>(lastLocations.Count);
-            foreach (var location in lastLocations)
-            {
-                string t = string.Format(userTemplate,
-                location.UserID,
-                location.UserName,
-                location.Lat,
-                location.Lng,
-                location.Time);
-                strLocs.Add(t);
-            }
-            Response.Clear();
-            string s = string.Format(resultgetfriendslocations, string.Join(", ", strLocs.ToArray()));
-            Response.Write(s);//TODO: Fix
+            Json(jsonp(js.Serialize(new { enabled = userId != Guid.Empty && IsSharing(db, userId), signedIn = userId != Guid.Empty })));
         }
-        else if (string.Compare(action, "senduserlocation", true) == 0)
+        else if (action.Equals("setsharing", StringComparison.OrdinalIgnoreCase))
         {
-
-            Guid userId = Guid.Empty;
-            if (!Guid.TryParse(Request.QueryString["userId"], out userId))
-                userId = Guid.Empty;
-            string lat = Request.QueryString["lat"];
-            string lng = Request.QueryString["lng"];
-            int source = int.Parse(Request.QueryString["source"] ?? "1");
-
-            //if (userId == Guid.Empty)
+            // changing consent needs a POST made by the page itself (not a link or an image on another site)
+            if (Request.HttpMethod != "POST" || Request.Headers["X-Requested-With"] != "XMLHttpRequest" || userId == Guid.Empty)
             {
-                Dictionary<Guid, Location> locations;
-                if (this.Application["UserLocations"] != null)
-                {
-                    try
-                    {
-                        locations = (Dictionary<Guid, Location>)this.Application["UserLocations"];
-                        if(locations == null)
-                            locations = new Dictionary<Guid, Location>();
-                    }
-                    catch
-                    {
-                        locations = new Dictionary<Guid, Location>();
-                    }
-                }
-                else
-                {
-                    locations = new Dictionary<Guid, Location>();
-                }
-
-                if (locations.ContainsKey(userId))
-                    locations.Remove(userId);
-                locations.Add(userId, new Location() { lat = Double.Parse(lat), lng = Double.Parse(lng) });
-
-                this.Application["UserLocations"] = locations;
-
-                UserLocation userLocation = new UserLocation();
-                userLocation.UserLocationID = Guid.NewGuid();
-                userLocation.UserID = userId;
-                userLocation.Lat = double.Parse(lat);
-                userLocation.Lng = double.Parse(lng);
-                userLocation.Time = DateTime.UtcNow;
-                userLocation.Source = source;
-                db.UserLocations.Add(userLocation);
-                db.SaveChanges();
+                Response.StatusCode = 403;
+                Json(jsonp("{\"error\":\"not allowed\"}"));
+                return;
             }
-            string resultsenduserlocation = @"/**/" + callback + @"( {} )";
-
-            Response.Clear();
-            Response.Write(resultsenduserlocation);
+            bool on = Request.Form["enabled"] == "1";
+            db.Database.ExecuteSqlCommand(
+                "MERGE dbo.LocationSharing AS t USING (SELECT @p0 AS UserID) AS s ON t.UserID = s.UserID " +
+                "WHEN MATCHED THEN UPDATE SET Enabled = @p1, Updated = GETUTCDATE() " +
+                "WHEN NOT MATCHED THEN INSERT (UserID, Enabled, Updated) VALUES (@p0, @p1, GETUTCDATE());", userId, on);
+            if (!on)
+                db.Database.ExecuteSqlCommand("DELETE FROM UserLocation WHERE UserID = @p0", userId);   // withdrawing consent removes the saved positions
+            Json(jsonp(js.Serialize(new { enabled = on })));
         }
-        Response.End();
+        else if (action.Equals("senduserlocation", StringComparison.OrdinalIgnoreCase))
+        {
+            double latV, lngV;
+            int source;
+            if (!int.TryParse(Request.QueryString["source"], out source)) source = 1;
+            if (userId == Guid.Empty || !IsSharing(db, userId) ||
+                !double.TryParse(Request.QueryString["lat"], NumberStyles.Float, CultureInfo.InvariantCulture, out latV) ||
+                !double.TryParse(Request.QueryString["lng"], NumberStyles.Float, CultureInfo.InvariantCulture, out lngV))
+            {
+                Json(jsonp("{}"));
+                return;
+            }
+            var userLocation = new UserLocation();
+            userLocation.UserLocationID = Guid.NewGuid();
+            userLocation.UserID = userId;
+            userLocation.Lat = latV;
+            userLocation.Lng = lngV;
+            userLocation.Time = DateTime.UtcNow;
+            userLocation.Source = source;
+            db.UserLocations.Add(userLocation);
+            try { db.SaveChanges(); }
+            catch (Exception ex) { Debug.WriteLine("[user_locations] " + ex.Message); }
+            Json(jsonp("{}"));
+        }
+        else if (action.Equals("getfriendslocations", StringComparison.OrdinalIgnoreCase))
+        {
+            if (userId == Guid.Empty || !IsSharing(db, userId)) { Json(jsonp("[]")); return; }
+            var rows = db.Database.SqlQuery<FriendRow>(
+                "SELECT u.UserID, u.UserName, l.Lat, l.Lng, l.Time " +
+                "FROM dbo.LocationSharing s JOIN [User] u ON u.UserID = s.UserID " +
+                "CROSS APPLY (SELECT TOP 1 Lat, Lng, Time FROM UserLocation WHERE UserID = s.UserID ORDER BY Time DESC) l " +
+                "WHERE s.Enabled = 1 AND s.UserID <> @p0 AND l.Time > DATEADD(hour, -1, GETUTCDATE())", userId).ToList();
+            var list = rows.Select(r => new
+            {
+                userId = r.UserID.ToString(),
+                userName = r.UserName,
+                lat = Math.Round(r.Lat, 3),
+                lng = Math.Round(r.Lng, 3),
+                time = r.Time.ToString("u")
+            }).ToList();
+            Json(jsonp(js.Serialize(list)));
+        }
+        else
+        {
+            Json(jsonp("{}"));
+        }
     }
 }

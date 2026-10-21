@@ -6,11 +6,11 @@
         var returnUrl = "<%= HttpUtility.JavaScriptStringEncode(ReturnUrl) %>";
 
         function onGoogleCredential(response) {
-            $("#loginMessage").text("Signing in…");
+            $("#loginMessage").text(T("SigningIn", "Signing in…"));
             $.post("google_login.ashx", { credential: response.credential })
                 .done(function () { window.location = returnUrl; })
                 .fail(function (xhr) {
-                    var msg = "Sign-in failed";
+                    var msg = T("SignInFailed", "Sign-in failed");
                     try { msg = JSON.parse(xhr.responseText).error || msg; } catch (e) { }
                     $("#loginMessage").text(msg);
                 });
@@ -23,7 +23,7 @@
                     google.accounts.id.initialize({ client_id: "<%= HttpUtility.JavaScriptStringEncode(Tools.GoogleClientId) %>", callback: onGoogleCredential });
                     google.accounts.id.renderButton(document.getElementById("googleButton"), { theme: "outline", size: "large", shape: "pill", text: "signin_with" });
                 } else if (tries++ < 50) setTimeout(init, 200);
-                else $("#loginMessage").text("Could not load Google sign-in. Check your connection.");
+                else $("#loginMessage").text(T("GoogleLoadError", "Could not load Google sign-in. Check your connection."));
             })();
         };
 
@@ -61,10 +61,10 @@
 
     <div id="loginform" title="Sign in">
         <img src="img/syt-logo-small.png" style="height: 60px;" alt="SeeYourTravel" />
-        <h2>Sign in</h2>
-        <div>to create and manage your travels</div>
+        <h2 class="i" data-i18n="SignIn">Sign in</h2>
+        <div class="i" data-i18n="SignInSub">to create and manage your travels</div>
         <div id="googleButton"></div>
         <div id="loginMessage"></div>
-        <p style="margin-top: 18px"><a href="index.aspx">Continue as guest</a></p>
+        <p style="margin-top: 18px"><a href="index.aspx" class="i" data-i18n="ContinueGuest">Continue as guest</a></p>
     </div>
 </asp:Content>

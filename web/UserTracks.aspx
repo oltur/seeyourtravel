@@ -217,23 +217,28 @@
                 window.location = "editor.aspx?trackname=" + tracksList.val();
             });
             $("#buttonDelete").click(function () {
-                if (tracksList.val() != null) {
-                    var url = "services/delete_trackbyfilename.aspx?fileName=" + tracksList.val();
-                    $.ajax({
-                        //                    dataType: "jsonp",
-                        url: url,
-                        success: function (data) {
-                            toastr.info("Track is deleted", "", { timeOut: 5000, extendedTimeOut: 10000 });
-                            fillTracks();
-                            $("#frameUrl").val("");
-                            $("#divframe").html("");
-                        },
-                        error: function (XMLHttpRequest, textStatus, errorThrown) {
-                            console.log("delete track error: " + textStatus); console.log("Error: " + errorThrown);
-                            toastr.error(textStatus + "," + errorThrown, "ERROR", { timeOut: 5000, extendedTimeOut: 10000 });
-                        }
-                    });
-                }
+                var names = tracksList.val();
+                if (names == null || names.length === 0) return;
+                if (!$.isArray(names)) names = [names];
+                var labels = tracksList.find('option:selected').map(function () { return $(this).text(); }).get();
+                var what = names.length === 1 ? '"' + labels[0] + '"' : T("TracksCount", "{0} tracks").replace("{0}", names.length);
+                if (!confirm(T("DeleteTracksConfirm", "Delete {0} permanently? This cannot be undone.").replace("{0}", what))) return;
+                var done = 0, failed = [];
+                (function next() {
+                    if (!names.length) {
+                        if (done) toastr.info(done === 1 ? T("TrackDeleted", "Track is deleted") : T("TracksDeleted", "{0} tracks are deleted").replace("{0}", done), "", { timeOut: 5000, extendedTimeOut: 10000 });
+                        failed.forEach(function (f) { toastr.error(T("DeleteTrackFailedWhy", "Could not delete the track: {0}").replace("{0}", f), "", { timeOut: 8000 }); });
+                        fillTracks();
+                        $("#frameUrl").val("");
+                        $("#divframe").html("");
+                        return;
+                    }
+                    var name = names.shift();
+                    $.post("services/delete_trackbyfilename.aspx", { fileName: name })
+                        .done(function (r) { if ($.trim(String(r)) === "OK") done++; else failed.push($.trim(String(r))); })
+                        .fail(function (xhr) { failed.push((xhr.responseText || xhr.statusText || "").toString().slice(0, 80)); })
+                        .always(next);
+                })();
             });
         });
 

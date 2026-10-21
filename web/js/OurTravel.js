@@ -2,6 +2,8 @@
 //#region Variables
 var ATTRIBUTION = 'SeeYourTravel.app &copy; Map data &copy; <a target="_blank" href= "http://openstreetmap.org" > OpenStreetMap</a >, <a target="_blank" href= "http://creativecommons.org/licenses/by-sa/2.0/" > CC - BY - SA</a >, Imagery © <a target="_blank" href= "http://flickr.com" > Flickr</a>; Powered by <a target="_blank" href="https://darksky.net/poweredby/">DarkSky</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png" />';
 var tracksFolder = 'tracks/';
+// translated text with the English text as the fallback (a missing key shows the English text)
+function T(key, def, opts) { return (window.$ && $.t) ? $.t(key, $.extend({ defaultValue: def }, opts || {})) : def; }
 //        var url = 'http://{s}.tile.cloudmade.com/5bcd2fc5d5714bd48096c7478324e0fe/997/256/{z}/{x}/{y}.png';
 //        var url = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6IjZjNmRjNzk3ZmE2MTcwOTEwMGY0MzU3YjUzOWFmNWZhIn0.Y8bhBaUMqFiPrDRW9hieoQ';      
 var mapTileUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib2x0dXJ1YSIsImEiOiJlODQ4ZTI2MWI4OGZkZjUyNDRiNjY4MDFkZGI0ODc4NyJ9.iiCb_tZgs_ipvEv3s6Zx0A';
@@ -23,6 +25,8 @@ var scroller;
 var scrollerContent;
 var curX;
 var fullW;
+// the page was opened for a specific track: don't jump to the current location or show a placeholder view first
+var trackRequested = /[?&](trackname|trackid)=[^&]/i.test(location.search);
 var viewportW;
 var myBarChart = null;
 
@@ -99,6 +103,7 @@ function showHelpPanel(show) {
                 'samples': 128
             }, plotElevation);
         }
+        updateTrackStats();
         $('#helpPanel').show('slide', { direction: "left" }, 500);
     }
     else {
@@ -158,8 +163,9 @@ function onBodyResize() {
 
 //#endregion
 
+var locationTimer = null;
 function showLocation() {
-    //    console.log("before getting location");
+    if (locationTimer) return;          // already running: one position check per minute is enough
     if (navigator.geolocation) {
         var options = {
             enableHighAccuracy: true,
@@ -167,7 +173,7 @@ function showLocation() {
             maximumAge: 300000
         };
         navigator.geolocation.getCurrentPosition(showPosition, errorPosition, options);
-        setTimeout(arguments.callee, 60000);
+        locationTimer = setTimeout(function () { locationTimer = null; showLocation(); }, 60000);
     } else {
         console.log("Geolocation is not supported by this browser");
     }
@@ -175,6 +181,8 @@ function showLocation() {
 function errorPosition(err) {
     console.warn('Cannot get position(' + err.code + '): ' + err.message);
 };
+var lastSent = { t: 0, pos: null };
+var shareLocation = false;   // the user's consent, kept on the server
 function showPosition(position) {
     //    console.log("position: " + position.coords.latitude + ", " + position.coords.longitude);
     if ($("#map").length) {
@@ -186,10 +194,15 @@ function showPosition(position) {
         //        markerWhereIAmCircle.setLatLng(newLatLng);
         //        markerWhereIAmCircle.setRadius(position.coord.accuracy);
 
-        if (typeof track == "undefined")
+        if (typeof track == "undefined" && !trackRequested)
             map.setView(newLatLng, 8);
 
         //console.log(window.navigator.standalone);
+        // only signed-in users share their position, and only if it changed or a minute passed (guests: nothing is sent)
+        var now = Date.now();
+        var moved = !lastSent.pos || lastSent.pos.distanceTo(newLatLng) > 30;
+        if (!globalUserId || !shareLocation || (!moved && now - lastSent.t < 60000)) return;
+        lastSent = { t: now, pos: newLatLng };
         var urlp = "services/user_locations.aspx?action=senduserlocation&source=2&userId=" + globalUserId + "&lat=" + position.coords.latitude.toString() + "&lng=" + position.coords.longitude.toString()
         $.ajax({
             dataType: "jsonp",
@@ -236,6 +249,7 @@ function changeSpeed(value) {
     var v = Math.max(MIN_SPEED_KMH, parseFloat(value) || MIN_SPEED_KMH);
     $("#speedSlider").val(v);
     $("#speedValue").text(parseFloat($("#speedSlider").val()) + " km/h");
+    if (window.updateTrackStats && $('#helpPanel').is(':visible')) updateTrackStats();
     if (typeof animatedMarker != "undefined")
     {
         animatedMarker.options.distance = getSpeedMps();
@@ -258,6 +272,7 @@ function SaveSettings() {
     $.cookie("settings_useSYTImagesCheckBox", $("#useSYTImagesCheckBox").is(':checked'));
     $.cookie("settings_useGooglePlacesCheckBox", $("#useGooglePlacesCheckBox").is(':checked'));
     $.cookie("settings_useSYTPlacesCheckBox", $("#useSYTPlacesCheckBox").is(':checked'));
+    $.cookie("settings_flyIn", $("#flyInCheckBox").is(':checked'));
 
     $.cookie("settings_mapStyle", $('#mapStyle option:selected').val());
     $.cookie("settings_volume", $('#slider').slider("value"));
@@ -283,6 +298,7 @@ function LoadSettings() {
         $("#useSYTImagesCheckBox").prop("checked", $.cookie("settings_useSYTImagesCheckBox") == "true");
         $("#useGooglePlacesCheckBox").prop("checked", $.cookie("settings_useGooglePlacesCheckBox") == "true");
         $("#useSYTPlacesCheckBox").prop("checked", $.cookie("settings_useSYTPlacesCheckBox") == "true");
+        if (typeof $.cookie("settings_flyIn") != "undefined") $("#flyInCheckBox").prop("checked", $.cookie("settings_flyIn") == "true");
 
         // The Description panel is shown/hidden when a track is loaded (see loadTrack).
         if (!b)
@@ -305,7 +321,7 @@ function safePlayAudio() {
     if (promise && promise.catch) {
         promise.then(function () { console.log("Audio playing: " + audio.src); }).catch(function (err) {
             if (err && err.name === "NotAllowedError") {
-                toastr.info("Click anywhere on the page to enable the music", "", { timeOut: 5000 });
+                toastr.info(T("EnableMusic", "Click anywhere on the page to enable the music"), "", { timeOut: 5000 });
                 var resume = function () {
                     $(document).off("click keydown touchstart", resume);
                     if (!isTrackPaused && audio.src)
@@ -342,7 +358,7 @@ $(function () {
 
 function doStartStop() {
     if (isTrackLoaded) {
-        $('#continuePauseButton').removeAttr('disabled');
+        $('#continuePauseButton, #restartButton').removeAttr('disabled');
         if (isTrackPaused) {
             isTrackPaused = !isTrackPaused;
             if (typeof animatedMarker != "undefined")
@@ -368,8 +384,30 @@ function doStartStop() {
         }
     }
     else {
-        $('#continuePauseButton').attr('disabled', 'disabled');
+        $('#continuePauseButton, #restartButton').attr('disabled', 'disabled');
     }
+}
+
+// Start the route again from its first point (also after it was paused or has ended), with music and photos from the beginning.
+function restartRoute() {
+    if (!isTrackLoaded || typeof animatedMarker == "undefined" || !track)
+        return;
+    animatedMarker.stop();
+    animatedMarker._seg = null;
+    animatedMarker.options.distance = getSpeedMps();
+    animatedMarker.start();                       // jumps back to the first point and moves on
+    isTrackPaused = false;
+    scrollerEnabled = true;
+    $('#continuePauseButton').css('background-image', 'url(img/pause.png )');
+    if ($("#showGoesOn").length > 0)
+        $("#showGoesOn").val("1");
+    if (track.audioSrc && track.audioSrc.length > 0) {
+        audio.currentTime = 0;
+        safePlayAudio();
+    }
+    if (window.flyIn && flyIn.clear) flyIn.clear();   // photos may fly in again
+    try { map.setView(track.trackData[0], map.getZoom(), { animate: false }); } catch (e) { }
+    if (typeof toastr != "undefined") toastr.info(T("Route restarted", "Route restarted"), "", { timeOut: 1500 });
 }
 
 // If a stop has too few photos, widen the search radius (x2 each time, up to MAX_PHOTO_WIDENINGS times).
@@ -591,6 +629,7 @@ function get_photos_success(photos, p, tolerancy, force) {
     stripPhotos = photos;
     count = photos.length;
     $("#lblCoord").text(p.lat + " " + p.lng);
+    if (window.flyInPhotos) window.flyInPhotos(photos, p, tolerancy);
     var imageUl = imageDiv.children();
     imageUl.fadeOut(100);
     imageUl.empty();
@@ -622,7 +661,7 @@ function get_photos_success(photos, p, tolerancy, force) {
         nextImage.classList.add("photo");
         nextImage.setAttribute("data-ar", ph.width / ph.height);
         // Own photos: the original file; public photos (Commons): a large version.
-        var full = ph.source === "own" && /^\.?\/?data\/images\//.test(ph.photo_url) ? ph.photo_url : (ph.big_url || ph.photo_file_url);
+        var full = ph.big_url || ph.photo_file_url;
         nextImage.setAttribute("data-full", full);
         nextImage.setAttribute("data-credit", photoCredit(ph));
         nextLink.appendChild(nextImage);
@@ -630,7 +669,7 @@ function get_photos_success(photos, p, tolerancy, force) {
         var badge = document.createElement("span");
         badge.className = "photoBadge " + (ph.source === "own" ? "own" : "pub");
         badge.textContent = ph.source === "own" ? "📍" : "🌍";
-        badge.title = ph.source === "own" ? "Photo taken here" : "Public photo (Wikimedia Commons)";
+        badge.title = ph.source === "own" ? T("BadgeOwn", "Photo taken here") : T("BadgePublic", "Public photo (Wikimedia Commons)");
         nextLi.appendChild(badge);
 
         imageUl[0].appendChild(nextLi);
@@ -646,16 +685,158 @@ function get_photos_success(photos, p, tolerancy, force) {
     imageUl.fadeIn(100);
 }
 
+//#region Fly-in photos
+// When the marker arrives at a new place, up to three photos that were taken nearby fly out of their exact spot on the map
+// into small cards around the marker, stay for a few seconds and shrink back into a round pin on the map.
+var flyIn = (function () {
+    var MAX_CARDS = 3, HOLD_MS = 6500, MAX_PINS = 60, MIN_GAP_MS = 2500, IDLE_GAP_MS = 15000;
+    var layer = null, lastShow = 0, shown = {}, shownOrder = [], pins = [], pinPhotos = [], active = [], current = null;
+
+    function enabled() {
+        return $('#flyInCheckBox').is(':checked') && !document.hidden;
+    }
+    function reduced() { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+    function ensureLayer() {
+        if (layer) return layer;
+        layer = $('<div class="flyLayer"></div>').appendTo(map.getContainer())[0];
+        return layer;
+    }
+    // identity of a picture independent of the thumbnail size/URL it was found with (same file name = same photo)
+    function key(ph) { return photoKey(ph); }
+    function remember(ph) {
+        shown[key(ph)] = true; shownOrder.push(key(ph));
+        while (shownOrder.length > 400) delete shown[shownOrder.shift()];
+    }
+
+    function anchors(n, w, h, center) {
+        var off = n === 1 ? [[0, -h - 40]] : n === 2 ? [[-w / 2 - 14, -h - 40], [w / 2 + 14, -h - 40]] : [[-w - 24, -h - 20], [0, -h - 60], [w + 24, -h - 20]];
+        var c = map.getSize(), out = [];
+        // flip below the marker when there is no room above, and keep the cards inside the map
+        var flip = center.y + off[0][1] - h / 2 < 60;
+        off.forEach(function (o) {
+            var x = center.x + o[0], y = center.y + (flip ? -o[1] + h * 0.2 : o[1]);
+            out.push({ x: Math.max(w / 2 + 8, Math.min(c.x - w / 2 - 8, x)), y: Math.max(h / 2 + 50, Math.min(c.y - h / 2 - 170, y)) });
+        });
+        return out;
+    }
+
+    function addPin(ph) {
+        var thumb = (ph.photo_file_url || '').replace(/"/g, '%22');
+        var m = L.marker([ph.latitude, ph.longitude], {
+            icon: L.divIcon({ className: 'photoPin', html: '<img src="' + thumb + '" alt="" loading="lazy"/>', iconSize: [38, 38], iconAnchor: [19, 19] }),
+            title: ph.photo_title && ph.photo_title !== 'TBD' ? ph.photo_title : '', thumb: ph.photo_file_url
+        });
+        var idx = pinPhotos.push(ph) - 1;
+        m.on('click', function () { photoViewer.open(idx, pinPhotos); });
+        placeCluster.addLayer(m);
+        pins.push(m);
+        while (pins.length > MAX_PINS) { placeCluster.removeLayer(pins.shift()); }
+    }
+
+    function closeAll() {
+        active.slice().forEach(function (c) { c(true); });
+    }
+
+    // Photos with a known position that were not shown yet, nearest first (own photos win ties).
+    function candidates(photos, here, maxDist) {
+        var list = [];
+        photos.forEach(function (ph) {
+            if (typeof ph.latitude !== 'number' || typeof ph.longitude !== 'number' || shown[key(ph)]) return;
+            var d = here.distanceTo([ph.latitude, ph.longitude]);
+            if (d <= maxDist) list.push({ ph: ph, d: d + (ph.source === 'own' ? 0 : 150) });
+        });
+        list.sort(function (a, b) { return a.d - b.d; });
+        return list.map(function (x) { return x.ph; });
+    }
+
+    function fly(picks, here) {
+        var narrow = map.getSize().x < 640;
+        if (narrow) picks = picks.slice(0, map.getSize().x < 420 ? 1 : 2);   // three cards do not fit side by side on a phone
+        var W = 150, H = 106, c = map.latLngToContainerPoint(here), pos = anchors(picks.length, W, H, c), L0 = ensureLayer();
+        lastShow = Date.now();
+        picks.forEach(function (ph, i) {
+            remember(ph);
+            var card = document.createElement('div');
+            card.className = 'flyCard';
+            var credit = photoCredit(ph).replace(/</g, '&lt;');
+            card.innerHTML = '<img alt="" src="' + (ph.photo_file_url || '').replace(/"/g, '%22') + '"/><span>' + credit + '</span>';
+            card.style.left = (pos[i].x - W / 2) + 'px'; card.style.top = (pos[i].y - H / 2) + 'px';
+            var origin = map.latLngToContainerPoint([ph.latitude, ph.longitude]);
+            card.style.transform = 'translate(' + (origin.x - pos[i].x) + 'px,' + (origin.y - pos[i].y) + 'px) scale(.12)';
+            card.style.opacity = '0';
+            L0.appendChild(card);
+            var hovered = false, timer = null, closed = false;
+            function close(force) {
+                if (closed || (hovered && force !== true)) return; closed = true;
+                clearTimeout(timer);
+                var k = active.indexOf(close); if (k >= 0) active.splice(k, 1);
+                var o2 = map.latLngToContainerPoint([ph.latitude, ph.longitude]);
+                var cx = parseFloat(card.style.left) + W / 2, cy = parseFloat(card.style.top) + H / 2;
+                card.classList.add('leaving');
+                card.style.transform = 'translate(' + (o2.x - cx) + 'px,' + (o2.y - cy) + 'px) scale(.12)';
+                card.style.opacity = '0';
+                setTimeout(function () { if (card.parentNode) card.parentNode.removeChild(card); addPin(ph); }, reduced() ? 50 : 700);
+            }
+            active.push(close);
+            card.addEventListener('mouseenter', function () { hovered = true; clearTimeout(timer); });
+            card.addEventListener('mouseleave', function () { hovered = false; timer = setTimeout(close, 1500); });
+            card.addEventListener('click', function () { photoViewer.open(0, [ph]); });
+            // fly in on the next frames (the browser needs the start state first)
+            setTimeout(function () {
+                if (closed) return;
+                card.classList.add('flying');
+                card.style.transform = 'translate(0,0) scale(1)';
+                card.style.opacity = '1';
+                timer = setTimeout(close, HOLD_MS + i * 500);
+            }, 60 + i * 220);
+        });
+    }
+
+    // radius of the search that found these photos (degrees) -> metres we accept for "nearby"
+    function reach(tol) {
+        return Math.max(2500, Math.min(10000, (tol || 0.02) * 111000 * 0.6));
+    }
+
+    function show(photos, p, tol) {
+        if (typeof map === 'undefined' || typeof placeCluster === 'undefined') return;
+        current = { photos: photos, p: p, tol: tol };
+        if (!enabled()) return;
+        var now = Date.now();
+        if (now - lastShow < MIN_GAP_MS) return;
+        var here = L.latLng(p.lat, p.lng);
+        var cand = candidates(photos, here, reach(tol));
+        // nothing close: still fly in the nearest one or two (within 20 km)
+        if (!cand.length) cand = candidates(photos, here, 20000).slice(0, 2);
+        if (!cand.length) return;
+        closeAll();   // a new place: the old cards fly back to their spots and make room
+        fly(cand.slice(0, MAX_CARDS), here);
+    }
+
+    // Long stay in one place (or nothing new for a while): bring up photos around the marker that were not shown yet.
+    setInterval(function () {
+        if (!current || !enabled() || typeof map === 'undefined' || typeof placeCluster === 'undefined') return;
+        if (active.length || Date.now() - lastShow < IDLE_GAP_MS) return;
+        var here = (typeof animatedMarker !== 'undefined' && animatedMarker.getLatLng) ? animatedMarker.getLatLng() : L.latLng(current.p.lat, current.p.lng);
+        var cand = candidates(current.photos, here, Math.max(reach(current.tol), 5000));
+        if (!cand.length) { lastShow = Date.now() - IDLE_GAP_MS + 5000; return; }   // check again in 5 s
+        fly(cand.slice(0, MAX_CARDS), here);
+    }, 4000);
+
+    return { show: show, clear: function () { closeAll(); $('.flyLayer').empty(); pins.forEach(function (m) { placeCluster.removeLayer(m); }); pins = []; pinPhotos = []; shown = {}; shownOrder = []; current = null; } };
+})();
+window.flyInPhotos = flyIn.show;
+//#endregion
+
 //#region Photo viewer
 var photoViewer = (function () {
-    var $v, $img, $cap, idx = 0, open = false;
+    var $v, $img, $cap, idx = 0, open = false, list = null;
 
     function build() {
         $v = $(
             '<div id="photoViewer" role="dialog" aria-modal="true" aria-label="Photo viewer">' +
-            '<button type="button" class="pv-btn pv-close" aria-label="Close" title="Close (Esc)">×</button>' +
-            '<button type="button" class="pv-btn pv-prev" aria-label="Previous" title="Previous (←)">‹</button>' +
-            '<button type="button" class="pv-btn pv-next" aria-label="Next" title="Next (→)">›</button>' +
+            '<button type="button" class="pv-btn pv-close" aria-label="' + T("Close", "Close") + '" title="' + T("Close", "Close") + ' (Esc)">×</button>' +
+            '<button type="button" class="pv-btn pv-prev" aria-label="' + T("Previous", "Previous") + '" title="' + T("Previous", "Previous") + ' (←)">‹</button>' +
+            '<button type="button" class="pv-btn pv-next" aria-label="' + T("Next", "Next") + '" title="' + T("Next", "Next") + ' (→)">›</button>' +
             '<figure><img alt=""/><figcaption></figcaption></figure></div>').appendTo('body');
         $img = $v.find('img'); $cap = $v.find('figcaption');
         $v.on('click', function (e) { if (e.target === this || $(e.target).is('figure')) close(); });
@@ -680,22 +861,23 @@ var photoViewer = (function () {
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
 
     function show() {
-        var ph = stripPhotos[idx];
+        var ph = list[idx];
         if (!ph) return;
-        var full = ph.source === "own" && /^\.?\/?data\/images\//.test(ph.photo_url) ? ph.photo_url : (ph.big_url || ph.photo_file_url);
+        var full = ph.big_url || ph.photo_file_url;
         $img.attr('src', ph.photo_file_url);                         // instantly show the strip thumbnail ...
         var big = new Image();
-        big.onload = function () { if (stripPhotos[idx] === ph) $img.attr('src', full); };   // ... then the large one
+        big.onload = function () { if (list[idx] === ph) $img.attr('src', full); };   // ... then the large one
         big.src = full;
         var title = ph.photo_title && ph.photo_title !== "TBD" ? ph.photo_title.replace(/\.[a-z]{3,4}$/i, "") : "";
         var html = (title ? '<strong>' + esc(title) + '</strong><br>' : '') + esc(photoCredit(ph));
         if (ph.source === "commons") {
             if (ph.license_url) html = html.replace(esc(ph.license), '<a href="' + esc(ph.license_url) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a>');
-            html += ' · <a href="' + esc(ph.photo_url) + '" target="_blank" rel="noopener">Source: Wikimedia Commons</a>';
+            html += ' · <a href="' + esc(ph.photo_url) + '" target="_blank" rel="noopener">' + esc(T("SourceCommons", "Source: Wikimedia Commons")) + '</a>';
         }
+        if (ph.source === "own" && ph.photo_url) html += ' \u00b7 <a href="' + esc(ph.photo_url) + '" target="_blank" rel="noopener">' + esc(T("Original", "Original")) + '</a>';
         if (typeof ph.latitude === "number" && typeof ph.longitude === "number" && typeof map !== "undefined")
-            html += ' · <a href="#" class="pv-map">Show on map</a>';
-        html += '<span class="pv-count">' + (idx + 1) + ' / ' + stripPhotos.length + '</span>';
+            html += ' · <a href="#" class="pv-map">' + esc(T("ShowOnMap", "Show on map")) + '</a>';
+        html += '<span class="pv-count">' + (idx + 1) + ' / ' + list.length + '</span>';
         $cap.html(html);
         $cap.find('.pv-map').on('click', function (e) {
             e.preventDefault(); close();
@@ -703,11 +885,12 @@ var photoViewer = (function () {
         });
     }
 
-    function go(d) { if (!stripPhotos.length) return; idx = (idx + d + stripPhotos.length) % stripPhotos.length; show(); }
+    function go(d) { if (!list.length) return; idx = (idx + d + list.length) % list.length; show(); }
     function close() { open = false; if ($v) $v.removeClass('open'); setTimeout(function () { if (!open && $v) $v.hide(); }, 180); }
     return {
-        open: function (i) {
+        open: function (i, customList) {
             if (!$v) build();
+            list = customList || stripPhotos;
             idx = i; open = true; $('#photoPreview').hide();
             $v.show(); setTimeout(function () { $v.addClass('open'); }, 0); show();
             $v.find('.pv-close').focus();
@@ -847,6 +1030,16 @@ function init(filename, handler) {
         map = L.map('map', { zoomControl: false });
         // a sensible start view (Europe): without it the map stays blank when no track is chosen and the location is unavailable
         map.setView([48, 14], 4);
+        if (trackRequested) {
+            // keep the map hidden until the track has set the real view (no flash of Europe / the current location)
+            var mapEl = map.getContainer();
+            mapEl.classList.add('syt-loading');
+            // a small "loading" notice while the map is hidden, so the page never looks dead
+            var $loading = $('<div id="trackLoading"><span class="spin"></span><span class="txt i" data-i18n="LoadingTrack">Loading track\u2026</span></div>').appendTo('body');
+            if ($.fn.i18n) $loading.find('.i').i18n();
+            window.sytRevealMap = function () { mapEl.classList.remove('syt-loading'); $loading.fadeOut(200, function () { $loading.remove(); }); };
+            setTimeout(window.sytRevealMap, 6000);   // safety net if the track cannot be loaded
+        }
         tileLayer = L.tileLayer(mapTileUrl, {
             attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
             tileSize: 512,
@@ -923,14 +1116,28 @@ function init(filename, handler) {
 
                 track = tempTrack
                 photoSearch.clear();
+                if (window.flyIn && flyIn.clear) flyIn.clear();
                 applyDefaultSpeed(track);
 
+                // the vehicle chosen in the editor ("Travel with"); tracks without one keep the target sign
+                // the picture saved with the track, else the one for its "Travel with" (walking man, bike, car, ...), else the target sign
+                var VEHICLE_ICONS = { WalkingMan: "aman.gif", Bike: "mybike.png", Car: "mycar.png", Bus: "mybus.png", Yacht: "myyacht.png", Plane: "myplane.png" };
+                var iconFile = (track.icon && /^[\w.-]+\.(png|gif|jpg|jpeg|svg)$/i.test(track.icon)) ? track.icon : "currentposition.png";
+                if (iconFile === "currentposition.png" && VEHICLE_ICONS[track.travelWith]) iconFile = VEHICLE_ICONS[track.travelWith];
+                var vehicle = iconFile !== "currentposition.png";
+                var iconSize = vehicle ? (/\.gif$/i.test(iconFile) ? 56 : 46) : markerSize * 1.5;   // the animated walking man is a little larger
                 var myIcon = L.icon({
-                    iconUrl: translateTracksContentPath("currentposition.png"),//track.icon),
-                    iconSize: [markerSize * 1.5, markerSize * 1.5],
-                    iconAnchor: [markerSize * 0.75, markerSize * 0.75],
+                    iconUrl: translateTracksContentPath(iconFile),
+                    iconSize: [iconSize, iconSize],
+                    iconAnchor: [iconSize / 2, iconSize / 2],
+                    className: vehicle ? 'vehicleIcon' : '',
                     shadowUrl: null
                 });
+                if (vehicle) {   // missing file: use the target sign
+                    var probe = new Image();
+                    probe.onerror = function () { myIcon.options.iconUrl = translateTracksContentPath("currentposition.png"); if (animatedMarker) animatedMarker.setIcon(myIcon); };
+                    probe.src = translateTracksContentPath(iconFile);
+                }
 
                 var lastUpdateTime = new Date(2000, 2);
 
@@ -1012,7 +1219,8 @@ function init(filename, handler) {
                 markerFinish = L.marker(track.trackData[track.trackData.length - 1]).bindPopup("Finish");//TODO
                 markers.addLayer(markerFinish);
 
-                map.setView(track.trackData[0], track.defaultScale ? track.defaultScale : 8);
+                map.setView(track.trackData[0], track.defaultScale ? track.defaultScale : 8, { animate: false });
+                if (window.sytRevealMap) window.sytRevealMap();
 
                 if (track.audioSrc && track.audioSrc.length > 0) {
                     audio.src = translateTracksContentPath(track.audioSrc);
@@ -1033,6 +1241,9 @@ function init(filename, handler) {
                 }
 
                 isTrackLoaded = true;
+
+                // look for the photos of the starting place right away (the first step of the marker comes seconds later)
+                try { showPhotos(track, pointToLatLng(track.trackData[0])); } catch (e) { console.log('first photos: ' + e); }
 
                 if (handler) {
                     handler();
@@ -1269,7 +1480,7 @@ function createPhotoMarker(place) {
     var link = document.createElement('a');
     link.target = '_blank'; link.rel = 'noopener';
     link.href = isWiki ? wikiLink : "https://www.google.com/search?q=" + encodeURIComponent(place.name);
-    link.textContent = isWiki ? 'Open in Wikipedia' : 'Search on Google';
+    link.textContent = isWiki ? T('OpenInWikipedia', 'Open in Wikipedia') : T('SearchOnGoogle', 'Search on Google');
     go.appendChild(link);
     domelem.appendChild(go);
     return domelem;
@@ -1358,6 +1569,7 @@ function plotElevation(elevations) {
 }
 
 function plotElevationNow(elevations) {
+    setTrackElevation(elevations);
 
     var chartDiv = document.getElementById('elevationChartDiv');
     //if (status !== 'OK') {
@@ -1555,7 +1767,7 @@ $(function () {
     }
     var saved = NaN; try { saved = parseInt(localStorage.getItem(key), 10); } catch (e) { }
     if (saved > 0) setH(saved, false);
-    var $h = $('<div id="photoResize" title="Drag to resize the photo strip" role="separator" aria-orientation="horizontal"><span></span></div>').appendTo($strip);
+    var $h = $('<div id="photoResize" title="' + T("ResizeStrip", "Drag to resize the photo strip") + '" role="separator" aria-orientation="horizontal"><span></span></div>').appendTo($strip);
     var startY = 0, startH = 0, active = false, timer = null;
     $h.on('pointerdown', function (e) {
         active = true; startY = e.clientY; startH = $strip.height(); window.hidePhotoPreview && window.hidePhotoPreview();
@@ -1590,7 +1802,7 @@ $(function () {
     var $strip = $('#imageDiv0');
     if (!$strip.length) return;
     var key = 'sytStripHidden';
-    var $btn = $('<button type="button" id="photoToggle" aria-label="Show or hide photos"><span class="chev">▾</span> <span class="lbl">Photos</span></button>').appendTo('body');
+    var $btn = $('<button type="button" id="photoToggle" aria-label="Show or hide photos"><span class="chev">▾</span> <span class="lbl i" data-i18n="Photos">Photos</span></button>').appendTo('body');
     function apply(hidden, animate) {
         $btn.toggleClass('collapsed', hidden).attr('aria-expanded', !hidden);
         if (animate) $strip.stop(true, true)[hidden ? 'slideUp' : 'slideDown'](200); else $strip.toggle(!hidden);
@@ -1599,6 +1811,7 @@ $(function () {
     var hidden = false; try { hidden = localStorage.getItem(key) === '1'; } catch (e) { }
     if (hidden) apply(true, false);
     $btn.on('click', function () { apply(!$btn.hasClass('collapsed'), true); });
+    if ($.fn.i18n) $btn.find('.i').i18n();
 });
 //#endregion
 
@@ -1765,3 +1978,181 @@ setInterval(function () {
         document.documentElement.style.setProperty('--syt-strip-h', h + 'px');
     }
 }, 300);
+
+
+//#region Position sharing (opt-in)
+// Nobody's position is saved or shown unless the user switched sharing on; others' positions are only shown to users who share too.
+$(function () {
+    var $box = $('#shareLocationCheckBox'), $note = $('#shareLocationNote');
+    if (!$box.length || typeof globalUserId === 'undefined' || !globalUserId) return;   // guests: stays disabled
+    function reflect(on) {
+        shareLocation = on;
+        $box.prop('checked', on).prop('disabled', false).attr('title', '');
+        $note.removeAttr('data-i18n').text(on ? T('ShareLocationOnNote', 'Your position (about 100 m accuracy) is visible to other users who share theirs. Turning this off deletes your saved positions.')
+                      : T('ShareLocationOffNote', 'Off. Turn on to see other users who share, and to be seen by them (about 100 m accuracy, last hour only).'));
+        if (!on && typeof markersFriends !== 'undefined') markersFriends.clearLayers();
+    }
+    $.getJSON('services/user_locations.aspx?action=getsharing&callback=?').done(function (d) {
+        reflect(!!d.enabled);
+        if (d.enabled) { locationTimer = null; lastSent = { t: 0, pos: null }; showLocation(); }
+    });
+    $box.on('change', function () {
+        var want = this.checked;
+        if (want && !confirm(T('ShareLocationConfirm', 'Share your position with other users who also share theirs?\n\n- Only your last position of the past hour is shown, rounded to about 100 m, with your user name.\n- Others can only see you if they share their own position.\n- You can switch it off at any time; this deletes your saved positions.')))
+        {
+            this.checked = false; return;
+        }
+        $box.prop('disabled', true);
+        $.ajax({ type: 'POST', url: 'services/user_locations.aspx?action=setsharing', data: { enabled: want ? 1 : 0 }, dataType: 'text' })
+            .done(function () { reflect(want); if (want) { locationTimer = null; lastSent = { t: 0, pos: null }; showLocation(); } })
+            .fail(function () { reflect(!want); toastr.error(T('ShareLocationError', 'Could not change the setting. Please try again.')); });
+    });
+});
+//#endregion
+
+
+//#region Track name box
+// The track list (top left) adapts to the selected name: it gets as wide as the name needs (but leaves room for the menu button and
+// the language list); a name that is still too long is shown in a smaller font, then cut with "..." - the full name is the tooltip.
+(function () {
+    var ctx = document.createElement('canvas').getContext('2d');
+    function fit() {
+        var sel = document.getElementById('tracksList');
+        if (!sel) return;
+        var opt = sel.options[sel.selectedIndex];
+        var text = opt ? opt.text : '';
+        sel.title = text;
+        var maxW = Math.max(150, window.innerWidth - 42 - 140);   // menu button on the left, language list on the right
+        var family = getComputedStyle(sel).fontFamily, size = 14;
+        function width(px) { ctx.font = px + 'px ' + family; return ctx.measureText(text).width + 52; }   // padding + arrow
+        while (size > 11 && width(size) > maxW) size--;
+        sel.style.fontSize = size + 'px';
+        sel.style.width = Math.round(Math.min(maxW, Math.max(150, width(size)))) + 'px';
+        // still too long for the box: show the full name under it (wrapped, with a light halo so it reads on the map)
+        var cap = document.getElementById('trackNameFull');
+        if (!cap) {
+            cap = document.createElement('div'); cap.id = 'trackNameFull';
+            sel.parentNode.appendChild(cap);
+        }
+        var cut = width(size) > maxW;
+        cap.textContent = cut ? text : '';
+        cap.style.display = cut ? 'block' : 'none';
+        cap.style.maxWidth = Math.round(maxW) + 'px';
+    }
+    var last = null;
+    $(function () {
+        setInterval(function () {      // the selection is also set by script (no change event), so look for changes
+            var sel = document.getElementById('tracksList');
+            if (!sel) return;
+            var now = sel.selectedIndex + '|' + sel.options.length + '|' + window.innerWidth;
+            if (now !== last) { last = now; fit(); }
+        }, 400);
+        $(document).on('change', '#tracksList', fit);
+    });
+})();
+//#endregion
+
+
+//#region Track properties (Track tab of the information panel)
+function trackDistanceMeters(t) {
+    if (t._distance != null) return t._distance;
+    var d = t.trackData || [], sum = 0, prev = null;
+    for (var i = 0; i < d.length; i++) {
+        var p = pointToLatLng(d[i]);
+        if (prev) sum += prev.distanceTo(p);
+        prev = p;
+    }
+    return (t._distance = sum);
+}
+
+function formatDuration(sec) {
+    sec = Math.round(sec);
+    if (sec < 60) return sec + " " + T("iseconds", "seconds");
+    var m = Math.round(sec / 60);
+    if (m < 60) return m + " " + T("iminutes", "minutes");
+    var h = Math.floor(m / 60); m = m % 60;
+    if (h < 48) return h + " " + T("ihours", "hours") + (m ? " " + m + " " + T("iminutes", "minutes") : "");
+    return Math.round(h / 24) + " " + T("idays", "days");
+}
+
+function formatDistance(meters) {
+    var km = T("UnitKm", "km");
+    if (meters < 1000) return Math.round(meters) + " " + T("UnitM", "m");
+    return (meters < 100000 ? (meters / 1000).toFixed(1) : Math.round(meters / 1000).toLocaleString()) + " " + km;
+}
+
+// elevations come from plotElevation (samples along the route)
+function setTrackElevation(elevations) {
+    if (typeof track == "undefined" || !track || !elevations.length) return;
+    var min = Infinity, max = -Infinity, up = 0, down = 0, prev = null;
+    elevations.forEach(function (e) {
+        var h = Math.round(e.elevation);
+        if (isFinite(h)) {
+            min = Math.min(min, h); max = Math.max(max, h);
+            if (prev !== null) { if (h > prev) up += h - prev; else down += prev - h; }
+            prev = h;
+        }
+    });
+    if (min === Infinity) return;
+    track._elev = { min: min, max: max, up: up, down: down };
+    updateTrackStats();
+}
+
+function placeNameOf(p) {
+    return new Promise(function (resolve) {
+        syt.api.throttle("nominatim|rev|" + p.lat.toFixed(2) + "|" + p.lng.toFixed(2) + "|" + getTwitterLanguage(), {
+            dataType: "json",
+            url: "https://nominatim.openstreetmap.org/reverse",
+            data: { lat: p.lat, lon: p.lng, zoom: 10, format: "json", "accept-language": getTwitterLanguage() }
+        }, function (d) {
+            var a = (d && d.address) || {};
+            var n = a.city || a.town || a.village || a.municipality || a.suburb || a.county || "";
+            return { name: [n, a.country].filter(Boolean).join(", ") };
+        }).then(function (r) { resolve(r.__empty ? "" : r.name); });
+    });
+}
+
+function updateTrackStats() {
+    var $box = $("#trackStats");
+    if (!$box.length) return;
+    if (typeof track == "undefined" || !track || !track.trackData || !track.trackData.length) {
+        $box.html('<p class="ts-empty">' + $("<div>").text(T("NoTrackLoaded", "Choose a track to see its details.")).html() + "</p>");
+        return;
+    }
+    var esc = function (t) { return $("<div>").text(t == null ? "" : String(t)).html(); };
+    var dist = trackDistanceMeters(track), speed = getSpeedMps();
+    var items = [];
+    function add(label, value, wide) { if (value !== "" && value != null) items.push('<div class="ts-item' + (wide ? ' wide' : '') + '"><span class="ts-label">' + esc(label) + '</span><span class="ts-value">' + value + "</span></div>"); }
+
+    var m = T("UnitM", "m");
+    add(T("StatDistance", "Distance"), esc(formatDistance(dist)));
+    add(T("StatPlayback", "Playback time at current speed"), esc(formatDuration(dist / speed)));
+    if (track._elev) {
+        add(T("StatHighest", "Highest point"), esc(track._elev.max + " " + m));
+        add(T("StatLowest", "Lowest point"), esc(track._elev.min + " " + m));
+        add(T("StatAscent", "Total ascent"), "↗ " + esc(track._elev.up + " " + m));
+        add(T("StatDescent", "Total descent"), "↘ " + esc(track._elev.down + " " + m));
+    }
+    var first = pointToLatLng(track.trackData[0]), last = pointToLatLng(track.trackData[track.trackData.length - 1]);
+    add(T("StatStart", "Start"), esc(track._startName || first.lat.toFixed(4) + ", " + first.lng.toFixed(4)), true);
+    add(T("StatFinish", "Finish"), esc(track._endName || last.lat.toFixed(4) + ", " + last.lng.toFixed(4)), true);
+    add(T("StatPoints", "Track points"), esc(track.trackData.length.toLocaleString()));
+    if (track.category) add(T("StatCategory", "Category"), esc(T(track.category, track.category)));
+    if (track.travelWith) add(T("StatTravelWith", "Travel with"), esc(track.travelWith));
+    add(T("StatVisibility", "Visibility"), esc(track.isPublic == "No" ? T("StatPrivate", "Private") : T("StatPublic", "Public")));
+    if (track.copyright && track.copyright !== "(c)") add(T("StatCopyright", "Copyright"), esc(track.copyright), true);
+
+    var title = track.name ? '<h3 class="ts-title">' + esc(track.name) + "</h3>" : "";
+    var note = track._elev ? '<p class="ts-note">' + esc(T("StatElevationNote", "Elevations are estimated from a terrain model along the route.")) + "</p>" : "";
+    $box.html(title + '<div class="ts-grid">' + items.join("") + "</div>" + note);
+
+    // names of the start and finish places (once per track)
+    if (!track._namesRequested) {
+        track._namesRequested = true;
+        var t = track;
+        placeNameOf(first).then(function (n) { t._startName = n; if (t === track) updateTrackStats(); });
+        placeNameOf(last).then(function (n) { t._endName = n; if (t === track) updateTrackStats(); });
+    }
+}
+window.updateTrackStats = updateTrackStats;
+//#endregion

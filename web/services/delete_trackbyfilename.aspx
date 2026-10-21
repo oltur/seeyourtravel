@@ -1,8 +1,11 @@
-<%@ Page Language="C#"%>
+<%@ Page EnableSessionState="ReadOnly" Language="C#"%>
 <%@ Import Namespace="System.IO" %>
 <%
     // Deletes a track owned by the current user (or any track, for administrators). Answers "OK" or an error text.
+    Response.Clear();
     Response.ContentType = "text/plain";
+    // deleting needs a POST made by the page itself (not a link or an image on another site)
+    if (Request.HttpMethod != "POST" || Request.Headers["X-Requested-With"] != "XMLHttpRequest") { Response.StatusCode = 405; Response.Write("POST only"); Response.End(); }
     Guid userId = Tools.GetUserId(this);
     string fileName = Request["fileName"];
     Guid parsed;

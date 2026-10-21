@@ -68,7 +68,13 @@ public partial class services_get_panoramas : System.Web.UI.Page
             {
                 if (items.Length > 0)
                     items.Append(",");
-                items.Append("{\"height\":100,\"latitude\":" + ((decimal)Image.Lat).ToString() + ",\"longitude\":" + ((decimal)Image.Lng).ToString() + ",\"owner_id\":999999,\"owner_name\":\"-----\",\"owner_url\":\"http://www.example.com/\",\"photo_file_url\":\"" + urlThumbnail + "\",\"photo_id\":9999999999,\"photo_title\":\"TBD\",\"photo_url\":\"" + url + "\",\"upload_date\":\"1 January 1901\",\"width\":100}");
+                // ready-made JPEG copies (see PhotoDerivatives); fall back to the on-the-fly thumbnail if they don't exist yet
+                string file = Path.GetFileName(Image.FileName);
+                int[] d = PhotoDerivatives.Dimensions(PhotoDerivatives.PathFor(Server, 480, file));
+                string fileUrl = d != null ? PhotoDerivatives.UrlFor(480, file) : urlThumbnail;
+                string bigUrl = File.Exists(PhotoDerivatives.PathFor(Server, 1600, file)) ? PhotoDerivatives.UrlFor(1600, file) : url;
+                int pw = d != null ? d[0] : 100, ph = d != null ? d[1] : 100;
+                items.Append("{\"height\":" + ph + ",\"latitude\":" + ((decimal)Image.Lat).ToString() + ",\"longitude\":" + ((decimal)Image.Lng).ToString() + ",\"owner_id\":999999,\"owner_name\":\"-----\",\"owner_url\":\"http://www.example.com/\",\"photo_file_url\":\"" + fileUrl + "\",\"big_url\":\"" + bigUrl + "\",\"photo_id\":9999999999,\"photo_title\":\"TBD\",\"photo_url\":\"" + url + "\",\"upload_date\":\"1 January 1901\",\"width\":" + pw + "}");
             }
         }
 

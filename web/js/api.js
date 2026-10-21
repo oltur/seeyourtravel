@@ -272,7 +272,7 @@ syt.api.searchPlaceNamePhotos = function (track, p, low) {
                 data: {
                     action: "query", format: "json", origin: "*",
                     generator: "search", gsrsearch: name + " filetype:bitmap -flag -map -logo -coat", gsrnamespace: 6, gsrlimit: 40,
-                    prop: "imageinfo", iiprop: "url|size|mime|extmetadata", iiurlwidth: 600, iiurlheight: Math.round(Math.max(divHeight, 150) * 1.5)
+                    prop: "imageinfo", iiprop: "url|size|mime|extmetadata", iiextmetadatafilter: "Artist|LicenseShortName|LicenseUrl", maxage: 600, smaxage: 600, iiurlwidth: 600, iiurlheight: Math.round(Math.max(divHeight, 150) * 1.5)
                 }
             }, function (data) { return { photos: syt.api._commonsPhotos(data) }; }, low).then(function (res) {
                 if (!res.__empty) found = found.concat(res.photos);
@@ -304,7 +304,7 @@ syt.api.searchFlickrImages = function (track, p, tolerancy, low) {
             action: "query", format: "json", origin: "*",
             generator: "geosearch", ggscoord: p.lat + "|" + p.lng, ggsradius: radius,
             ggslimit: 50, ggsnamespace: 6,
-            prop: "imageinfo|coordinates", colimit: 50, iiprop: "url|size|mime|extmetadata", iiurlwidth: 600, iiurlheight: Math.round(Math.max(divHeight, 150) * 1.5)
+            prop: "imageinfo|coordinates", colimit: 50, iiprop: "url|size|mime|extmetadata", iiextmetadatafilter: "Artist|LicenseShortName|LicenseUrl", maxage: 600, smaxage: 600, iiurlwidth: 600, iiurlheight: Math.round(Math.max(divHeight, 150) * 1.5)
         }
     }, function (data) {
         return { photos: syt.api._commonsPhotos(data) };

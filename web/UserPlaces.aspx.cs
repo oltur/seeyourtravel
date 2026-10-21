@@ -46,6 +46,7 @@ public partial class UserPlaces : System.Web.UI.Page
                 var newFileName = imageId.ToString() + ext;
                 var path = Server.MapPath("./data/images/" + newFileName);
                 file.SaveAs(path);
+                PhotoDerivatives.Create(Server, path);
                 Location photoLocation = LocationExtractor.GetLocation(path);
 
                 var image = new Image();

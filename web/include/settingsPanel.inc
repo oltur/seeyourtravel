@@ -23,6 +23,13 @@
             <br />
             <input id="useSYTPlacesCheckBox" type="checkbox" checked="checked" title="Use SeeYourTravel places"  onchange="SaveSettings();"/>
             <label for="useSYTPlacesCheckBox" class="i" data-i18n="UseCYTPlaces">Use SeeYourTravel places</label>
+            <br />
+            <input id="flyInCheckBox" type="checkbox" checked="checked" title="Photos fly in on the map" onchange="SaveSettings();"/>
+            <label for="flyInCheckBox" class="i" data-i18n="FlyIn">Photos fly in on the map</label>
+            <br />
+            <input id="shareLocationCheckBox" type="checkbox" disabled="disabled" title="Sign in to share your position" />
+            <label for="shareLocationCheckBox" class="i" data-i18n="ShareLocation">Share my position with others who share theirs</label>
+            <div id="shareLocationNote" class="i" data-i18n="ShareLocationSignIn" style="font-size: 12px; color: #5a6675; margin: 0 0 4px 22px;">Sign in to use this. Off by default.</div>
 <%--            <br />
             <label for="pictureHeight">Max Picture Height</label>
             <input id="pictureMaxHeight" type="number" value="100" />--%>
@@ -45,7 +52,7 @@
                 <option>mapbox.high-contrast</option>
             </select>
             <br />
-            <label for="speedSlider" class="i">Moving speed:</label>
+            <label for="speedSlider" class="i" data-i18n="MovingSpeed">Moving speed:</label>
             <span id="speedValue">1800 km/h</span>
             <br />
             <input id="speedSlider" type="range" min="5" max="3000" step="5" value="1800" style="width: 80%; margin-left: 10%" title="Moving speed"

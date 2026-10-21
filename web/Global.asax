@@ -70,7 +70,8 @@
     protected void Application_PostAcquireRequestState(Object sender, EventArgs e)
     {
         var session = HttpContext.Current.Session;
-        if (session != null && session["UserId"] == null)
+        // service pages use a read-only session (so their requests do not wait for each other): nothing to write there
+        if (session != null && !session.IsReadOnly && session["UserId"] == null)
         {
             if (Tools.AutoLogin(HttpContext.Current.Request))
             {

@@ -14,6 +14,37 @@ public static class Tools
     {
         get { return (System.Configuration.ConfigurationManager.AppSettings["GoogleClientId"] ?? "").Trim(); }
     }
+    /// <summary>
+    /// Address of a static file (relative to the site root) with a version taken from its modification time,
+    /// e.g. js/OurTravel.js?v=1d9b2c3a4f - so browsers and Cloudflare fetch a changed file immediately instead of an old cached copy.
+    /// <paramref name="prefix"/> is for pages in a sub folder, e.g. "../".
+    /// </summary>
+    public static string V(string path, string prefix = "")
+    {
+        try
+        {
+            var clean = path.Replace("//", "/").TrimStart('/');
+            var file = HttpContext.Current.Server.MapPath("~/" + clean);
+            if (System.IO.File.Exists(file))
+                return prefix + path + "?v=" + System.IO.File.GetLastWriteTimeUtc(file).Ticks.ToString("x");
+        }
+        catch (Exception) { }
+        return prefix + path;
+    }
+
+    /// <summary>Like V, for a file whose address on the page differs from its path under the site root.</summary>
+    public static string VAt(string siteRootPath, string url)
+    {
+        try
+        {
+            var file = HttpContext.Current.Server.MapPath("~/" + siteRootPath.TrimStart('/'));
+            if (System.IO.File.Exists(file))
+                return url + "?v=" + System.IO.File.GetLastWriteTimeUtc(file).Ticks.ToString("x");
+        }
+        catch (Exception) { }
+        return url;
+    }
+
     public static bool LoginEnabled { get { return GoogleClientId.Length > 0; } }
 
     // True when the request came through a reverse proxy / Cloudflare tunnel.

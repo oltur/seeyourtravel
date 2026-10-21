@@ -197,7 +197,7 @@
                 <a id="alogo" href="javascript:clickMenu()" class="menu3lines"><i class="fa fa-bars" aria-hidden="true"></i></a>
             </div>
             <div style="position: absolute; left: 42px; top: -2px; z-index: 1001">
-                <select style="vertical-align: central; width: 200px; height: 35px" id="tracksList" class="i graySelect" onchange="clickStart()"></select>
+                <select style="vertical-align: central; min-width: 150px; max-width: calc(100vw - 180px); height: 35px; text-overflow: ellipsis" id="tracksList" class="i graySelect" onchange="clickStart()"></select>
             </div>
             <div style="position: absolute; left: 240px; top: 15px; z-index: 1001">
                 <div id="wrapper">
@@ -206,7 +206,7 @@
             </div>
                         <div id="menuPanel" class="menuPanel">
                 <div>
-                    <div class="searchBox"><input type="text" id="searchForPlace" data-i18n="[placeholder]Search for places" class="i" autocomplete="off" aria-label="Search for place"  placeholder="Search for place" onkeydown="if(event.keyCode == 13) {search($(this)); return false;} return true;" /><button type="button" onclick="search($('#searchForPlace'));return false;" data-i18n="Go" id="searchButton" title="Search" class="i" >Go</button></div>
+                    <div class="searchBox"><input type="text" id="searchForPlace" data-i18n="[placeholder]Search for places;[aria-label]Search for places" class="i" autocomplete="off" aria-label="Search for place"  placeholder="Search for place" onkeydown="if(event.keyCode == 13) {search($(this)); return false;} return true;" /><button type="button" onclick="search($('#searchForPlace'));return false;" data-i18n="Go" id="searchButton" title="Search" class="i" >Go</button></div>
                     <button type="button" data-i18n="[title]New;New" id="newTrackButton" title="New" class="i headerButton" style="background-image: url(img/new.png );" onclick="clickNew()">New</button>
                     <button type="button" data-i18n="[title]Edit;Edit" id="editTrackButton" title="Edit" class="i headerButton" style="background-image: url(img/edit.png );" onclick="clickEdit()">Edit</button>
                     <button type="button" data-i18n="[title]Settings;Settings" id="settingsCheckBox" title="Settings" class="i headerButton" style="background-image: url(img/settings1.png );" onclick="clickSettings()">Settings</button>
@@ -227,6 +227,8 @@
                 <button type="button" id="mute" style="padding-left: 0; background-image: url(img/unmute.png );" class="sideButton" onclick="clickMute();SaveSettings();"></button>
                 <br />
                 <button type="button" id="continuePauseButton" disabled="disabled" class="sideButton" style="padding-left: 0; background-image: url(img/play.png );" onclick="doStartStop();"></button>
+                <br />
+                <button type="button" id="restartButton" disabled="disabled" class="sideButton i" data-i18n="[title]RestartRoute;[aria-label]RestartRoute" title="Restart route" aria-label="Restart route" style="padding-left: 0; background-image: url(img/restart.png );" onclick="restartRoute();"></button>
             </div>
 
 
@@ -235,6 +237,7 @@
             <div id="map2"></div>
 
             <div id="textToReadArea0" class="ui-widget-content" style="z-index: 100; min-height: 50px; min-width: 50px; background: rgba(100,100,100,0.2); border-width: 0; width: 25%; height: 25%; position: absolute; left: 2%; top: 35%">
+                <div class="descHeader"><span class="i" data-i18n="Description">Description</span><button type="button" class="descClose i" data-i18n="[title]Close;[aria-label]Close" title="Close" aria-label="Close" onclick="$('#textToReadArea0').hide();">&times;</button></div>
                 <div id="textToReadArea" style="position: absolute; overflow: scroll; background: rgba(240,240,240,0.9); padding: 0; top: 2px; bottom: 2px; left: 2px; right: 2px; margin: 0 auto; resize: none;"></div>
             </div>
 
@@ -338,7 +341,7 @@
                             .remove()
                             .end()
                         var label = "";
-                        tracksList.append('<option value="Choose a track" data-i18n="Chooseatrack">Choose a track:</option>');
+                        tracksList.append($('<option value="Choose a track" data-i18n="Chooseatrack"></option>').text((window.T ? T("Chooseatrack", "Choose a track:") : "Choose a track:")));
                         clearSidePanel();
 
                         markersTracks.clearLayers();
@@ -347,7 +350,7 @@
                             var parts = fileList[i].split(';');
                             if (label != parts[3]) {
                                 label = parts[3];
-                                tracksList.append('<optgroup label="' + label + '" style="color: black;"/>');
+                                tracksList.append($('<optgroup style="color: black;"/>').attr('label', (window.T ? T(label, label) : label)));
                             }
                             tracksList.append('<option value="' + parts[0] + '">' + (parts[2] == 1 ? "" : "*") + parts[1] + '</option>');
                             var isSelected = (trackParam == parts[0]);
