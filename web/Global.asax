@@ -12,6 +12,18 @@
     protected void Application_BeginRequest(Object sender, EventArgs e)
     {
         var req = HttpContext.Current.Request;
+        if (Tools.IsProxied(req))
+        {
+            // behind the tunnel: always use https and the bare domain (www -> seeyourtravel.app)
+            var host = req.Headers["X-Forwarded-Host"] ?? req.Url.Host;
+            bool www = host.StartsWith("www.", StringComparison.OrdinalIgnoreCase);
+            if (!Tools.IsHttps(req) || www)
+            {
+                var target = "https://" + (www ? host.Substring(4) : host) + req.RawUrl;
+                HttpContext.Current.Response.RedirectPermanent(target, true);
+                return;
+            }
+        }
         if (Tools.IsHttps(req))
             HttpContext.Current.Response.AppendHeader("Strict-Transport-Security", "max-age=31536000");
     }
