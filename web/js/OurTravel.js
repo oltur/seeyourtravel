@@ -822,6 +822,23 @@ function init(filename, handler) {
     }
 
     markers = new L.FeatureGroup();
+    // Places (Wikipedia/SYT/Google) are grouped only gently: nearby markers merge into a small round badge, and
+    // the grouping stops completely when zoomed in (zoom 13+).
+    placeCluster = L.markerClusterGroup({
+        maxClusterRadius: 38,
+        disableClusteringAtZoom: 13,
+        showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        chunkedLoading: true,
+        iconCreateFunction: function (cluster) {
+            var kids = cluster.getAllChildMarkers(), thumb = '';
+            for (var i = 0; i < kids.length && !thumb; i++) thumb = kids[i].options.thumb || '';
+            var n = cluster.getChildCount();
+            var html = (thumb ? '<img src="' + thumb.replace(/"/g, '%22') + '" alt="" onerror="this.style.display=\'none\'"/>' : '') + '<b>' + n + '</b>';
+            return L.divIcon({ html: html, className: 'sytCluster' + (thumb ? ' withThumb' : ''), iconSize: [50, 50] });
+        }
+    });
+    markers.addLayer(placeCluster);
     map.addLayer(markers);
     if (typeof markersFriends == "undefined") {
         markersFriends = new L.FeatureGroup();
@@ -1103,16 +1120,13 @@ function weather_success(place) {
         iconImg = "001lighticons-90.png";
     }
 
-    var icon = L.icon({
-        iconUrl: ("services/create_image.aspx?text=" + encodeURIComponent(place.temperature) + "&fontColor=White&backColor=Transparent&borderColor=Transparent&fontName=Arial&fontSize=10&fontStyle=Bold&height=30&width=100&imagePath=/img/weather/" + iconImg),
-        //"img/weather/" + iconImg),
-        //,shadowUrl: 'img/shadow-white.png',
-
-        iconSize: [100, 30], // size of the icon
-        //shadowSize:   [50, 50], // size of the shadow
-        iconAnchor: [50, 15] // point of the icon which will correspond to marker's location
-        //shadowAnchor: [25, 25],  // the same for the shadow
-        //    popupAnchor:  [25, 0] // point from which the popup should open relative to the iconAnchor
+    // High-contrast label (HTML instead of the old picture with thin white text): dark text on a light pill
+    var tempText = $("<div>").text(place.temperature).html();
+    var icon = L.divIcon({
+        className: 'wxIcon',
+        html: '<div class="wxLabel"><img src="img/weather/' + iconImg + '" alt=""/><span>' + tempText + '</span></div>',
+        iconSize: [112, 30],
+        iconAnchor: [56, 15]
     });
 
     var domelem = document.createElement('a');
@@ -1213,10 +1227,10 @@ function createPhotoMarker(place) {
     var marker = L.marker(new L.LatLng(
         isGoogle ? place.geometry.location.lat() : place.geometry.location.lat,
         isGoogle ? place.geometry.location.lng() : place.geometry.location.lng),
-        { icon: icon, title: place.name }).bindPopup(domelem);
+        { icon: icon, title: place.name, thumb: (isWiki && place.thumb) ? place.thumb : '' }).bindPopup(domelem);
     myMarkers.push(marker);
 
-    markers.addLayer(marker);
+    placeCluster.addLayer(marker);
 
 }
 
