@@ -179,3 +179,13 @@ button.headerButton:disabled { background-color: #b9c3d0 !important; color: #fff
 #photoResize:hover span, .resizingStrip #photoResize span { background: #ffd84a; width: 72px; }
 body.resizingStrip { cursor: ns-resize; user-select: none; }
 #imageDiv0 { overflow: hidden; max-height: 60vh; }
+
+/* Wikipedia markers with a preview picture */
+.wikiThumbIcon { position: relative; background: none; border: 0; }
+.wikiThumbIcon img { box-sizing: border-box; width: 46px !important; height: 46px !important; min-width: 46px; max-width: none !important; max-height: none !important; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.45); background: #dfe6ee; display: block; transition: transform .15s; }
+.wikiThumbIcon:hover { z-index: 10000 !important; }
+.wikiThumbIcon:hover img { transform: scale(1.35); }
+.wikiThumbIcon span { position: absolute; right: -2px; bottom: -2px; width: 17px; height: 17px; border-radius: 50%; background: #222; color: #fff; font: 700 11px/17px Georgia, serif; text-align: center; border: 1.5px solid #fff; pointer-events: none; }
+.wikiThumbIcon.noimg img { display: none; }
+.wikiThumbIcon.noimg { width: 26px !important; height: 26px !important; border-radius: 50%; background: #333; }
+.placePopup p { margin: 0 0 6px; } .placePopup .pp-title { font-weight: 700; } .placePopup .pp-desc { color: #5a6675; font-size: 13px; }

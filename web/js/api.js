@@ -65,19 +65,43 @@ syt.api.searchWikiPlaces = function (request) {
     var deferred = $.Deferred();
     var lang = getTwitterLanguage();
     var lat = request.location.lat(), lng = request.location.lng();
-    var key = "wiki|" + lang + "|" + lat.toFixed(2) + "|" + lng.toFixed(2);
-    var urlp = "https://" + lang + ".wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=" + request.radius + "&gscoord=" + lat + "%7C" + lng + "&format=json&origin=*";
+    var key = "wiki|" + lang + "|" + lat.toFixed(2) + "|" + lng.toFixed(2) + "|" + request.radius;
+    var limit = Math.min(50, MAX_GOOGLE_PLACES * 2);
+    // generator=geosearch + pageimages gives each nearby article its lead-image thumbnail (and a short description) in one request
+    var urlp = "https://" + lang + ".wikipedia.org/w/api.php?action=query&generator=geosearch&ggsradius=" + request.radius +
+        "&ggscoord=" + lat + "%7C" + lng + "&ggslimit=" + limit +
+        "&prop=pageimages%7Cdescription%7Ccoordinates&piprop=thumbnail&pithumbsize=160&pilimit=" + limit + "&colimit=" + limit +
+        "&format=json&origin=*";
 
     syt.api.throttle(key, { dataType: "json", url: urlp, crossDomain: true }, function (data2) {
+        var pages = (data2.query && data2.query.pages) ? data2.query.pages : {};
+        var list = [];
+        $.each(pages, function (id, pg) {
+            var c = pg.coordinates && pg.coordinates[0];
+            if (!c) return;
+            list.push({
+                index: pg.index || 0,
+                id: pg.pageid,
+                name: pg.title,
+                description: pg.description || "",
+                thumb: pg.thumbnail ? pg.thumbnail.source : "",
+                lat: c.lat, lng: c.lon
+            });
+        });
+        // nearest first, but articles with a picture are preferred so the map shows previews rather than empty icons
+        list.sort(function (a, b) { return (!!b.thumb - !!a.thumb) || (a.index - b.index); });
         var result = [];
-        for (var i = 0; i < Math.min(MAX_GOOGLE_PLACES, data2.query.geosearch.length); i++) {
-            var item = data2.query.geosearch[i];
+        var maxWiki = Math.round(MAX_GOOGLE_PLACES * 1.6);   // a few more than before: they are pictures now
+        for (var i = 0; i < Math.min(maxWiki, list.length); i++) {
+            var item = list[i];
             result.push({
-                id: item.pageid,
-                name: item.title,
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                thumb: item.thumb,
                 types: "wiki",
-                photos: [{ raw_reference: { fife_url: "img/wiki.png" } }],
-                geometry: { location: { lat: item.lat, lng: item.lon } }
+                photos: [{ raw_reference: { fife_url: item.thumb || "img/wiki.png" } }],
+                geometry: { location: { lat: item.lat, lng: item.lng } }
             });
         }
         return result;

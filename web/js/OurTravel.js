@@ -1157,7 +1157,16 @@ function createPhotoMarker(place) {
     var isWiki = place.types.indexOf("wiki") >= 0;
 
     var isPremium = Math.random() < 0.1;
-    var icon = L.icon({
+    var thumbIcon = null;
+    if (isWiki && place.thumb) {
+        var safe = place.thumb.replace(/"/g, '%22');
+        thumbIcon = L.divIcon({
+            className: 'wikiThumbIcon',
+            html: '<img src="' + safe + '" alt="" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\')"/><span>W</span>',
+            iconSize: [46, 46], iconAnchor: [23, 23]
+        });
+    }
+    var icon = thumbIcon || L.icon({
         iconUrl: (
             place.types.indexOf("lodging") >= 0 ? "img/lodging.png" :
             place.types.indexOf("restaurant") >= 0 ? "img/restaurant1.png" :
@@ -1176,20 +1185,35 @@ function createPhotoMarker(place) {
         //    popupAnchor:  [0, 0] // point from which the popup should open relative to the iconAnchor
     });
 
-    var domelem = document.createElement('a');
-    //domelem.href = place.name;
-    domelem.innerHTML = "<p>" + place.name + "</p><img height='100px' width='100px' src='" + (isGoogle ? photos[0].getUrl({ 'maxWidth': 100, 'maxHeight': 100 }) : photos[0].raw_reference.fife_url) + "'/>";
-    domelem.alt = place.name;
-    domelem.onclick = function () {
-        window.open(isWiki ?
-            "https://" + getTwitterLanguage() + ".wikipedia.org/?curid=" + place.id :
-            "https://www.google.com.ua/search?q=" + place.name, "_blank");
-        // do whatever else you want to do - open accordion etc
-    };
+    var wikiLink = "https://" + getTwitterLanguage() + ".wikipedia.org/?curid=" + place.id;
+    var domelem = document.createElement('div');
+    domelem.className = 'placePopup';
+    var title = document.createElement('p');
+    title.className = 'pp-title';
+    title.textContent = place.name;
+    domelem.appendChild(title);
+    if (isWiki && place.description) {
+        var d = document.createElement('p');
+        d.className = 'pp-desc';
+        d.textContent = place.description;
+        domelem.appendChild(d);
+    }
+    var pic = document.createElement('img');
+    pic.alt = place.name;
+    pic.src = isGoogle ? photos[0].getUrl({ 'maxWidth': 100, 'maxHeight': 100 }) : photos[0].raw_reference.fife_url;
+    pic.style.maxWidth = '160px'; pic.style.maxHeight = '120px'; pic.style.borderRadius = '6px';
+    domelem.appendChild(pic);
+    var go = document.createElement('p');
+    var link = document.createElement('a');
+    link.target = '_blank'; link.rel = 'noopener';
+    link.href = isWiki ? wikiLink : "https://www.google.com/search?q=" + encodeURIComponent(place.name);
+    link.textContent = isWiki ? 'Open in Wikipedia' : 'Search on Google';
+    go.appendChild(link);
+    domelem.appendChild(go);
     var marker = L.marker(new L.LatLng(
         isGoogle ? place.geometry.location.lat() : place.geometry.location.lat,
         isGoogle ? place.geometry.location.lng() : place.geometry.location.lng),
-        { icon: icon }).bindPopup(domelem);
+        { icon: icon, title: place.name }).bindPopup(domelem);
     myMarkers.push(marker);
 
     markers.addLayer(marker);
