@@ -376,26 +376,115 @@ function doStartStop() {
 var MIN_PHOTOS = 15;
 var MAX_PHOTO_WIDENINGS = 4;
 
-function showPhotos(track, p, tolerancy) {
-    if (!tolerancy)
-        tolerancy = track.photoLocationTolerancy / 1000;
-    if (!tolerancy)
-        tolerancy = 0.1;
+// Photo search with a small cache and look-ahead: the photos for the places the marker will reach in the next
+// few seconds are searched (and their first thumbnails preloaded) in advance. Only a few places are kept; older ones,
+// and the preloaded images of the current one, are released so memory stays low.
+var photoSearch = (function () {
+    var MAX_ENTRIES = 4;        // current place + the next ones + one previous
+    var PRELOAD_THUMBS = 12;    // thumbnails preloaded per upcoming place (about what is visible in the strip)
+    var entries = [];           // least recently used first
 
-    var tryPhotos = function (tol, widenings) {
-        Promise.all(
-            [syt.api.searchSYTImages(track, p, tol),
-            syt.api.searchFlickrImages(track, p, tol)]).then(function (values) {
-                var photos = values[0].photos.concat(values[1].photos);
-                if (photos.length < MIN_PHOTOS && widenings < MAX_PHOTO_WIDENINGS) {
-                    tryPhotos(tol * 2, widenings + 1);
-                }
-                else {
-                    get_photos_success(photos, p, tol);
-                }
+    function keyOf(p, tol) {
+        return [p.lat.toFixed(3), p.lng.toFixed(3), tol.toFixed(4),
+            $('#useFlickrImagesCheckBox').is(':checked'), $('#useSYTImagesCheckBox').is(':checked')].join('|');
+    }
+    function release(e) {
+        for (var i = 0; i < e.imgs.length; i++) { e.imgs[i].onload = e.imgs[i].onerror = null; e.imgs[i].src = ''; }
+        e.imgs = [];
+    }
+    function find(key) {
+        for (var i = 0; i < entries.length; i++)
+            if (entries[i].key === key) { var e = entries.splice(i, 1)[0]; entries.push(e); return e; }
+        return null;
+    }
+    function create(track, p, tol, low) {
+        var key = keyOf(p, tol);
+        var e = find(key);
+        if (e) {
+            if (!low) { syt.api.searchFlickrImages(track, p, tol, false); }   // a prefetched request that is now needed jumps the queue
+            return e;
+        }
+        e = { key: key, imgs: [], released: false };
+        e.promise = new Promise(function (resolve) {
+            var attempt = function (t, widenings) {
+                Promise.all([syt.api.searchSYTImages(track, p, t), syt.api.searchFlickrImages(track, p, t, low && widenings === 0)])
+                    .then(function (v) {
+                        var photos = v[0].photos.concat(v[1].photos);
+                        if (photos.length < MIN_PHOTOS && widenings < MAX_PHOTO_WIDENINGS) attempt(t * 2, widenings + 1);
+                        else resolve({ photos: photos, tol: t });
+                    });
+            };
+            attempt(tol, 0);
+        });
+        entries.push(e);
+        while (entries.length > MAX_ENTRIES) { var old = entries.shift(); old.released = true; release(old); }
+        return e;
+    }
+    function defaultTol(track, tol) {
+        return tol || (track.photoLocationTolerancy / 1000) || 0.1;
+    }
+
+    // upcoming positions along the track: where the marker will be after k photo updates
+    function upcoming(track, n) {
+        if (typeof animatedMarker === 'undefined' || !track || !track.trackData) return [];
+        var data = track.trackData, len = data.length, i = Math.max(animatedMarker._i || 0, 0);
+        var step = getSpeedMps() * updateIntervalSeconds, need = step, acc = 0, res = [];
+        for (var j = i; j < len - 1 && res.length < n; j++) {
+            var a = pointToLatLng(data[j]), b = pointToLatLng(data[j + 1]), d = a.distanceTo(b);
+            while (d > 0 && acc + d >= need && res.length < n) {
+                var f = (need - acc) / d;
+                res.push({ lat: a.lat + f * (b.lat - a.lat), lng: a.lng + f * (b.lng - a.lng) });
+                need += step;
+            }
+            acc += d;
+        }
+        return res;
+    }
+
+    return {
+        get: function (track, p, tol) {
+            tol = defaultTol(track, tol);
+            var e = create(track, p, tol, false);
+            return e.promise;
+        },
+        // search + preload the photos of the places ahead (low priority)
+        prefetch: function (track) {
+            if (document.hidden) return;
+            if (navigator.connection && navigator.connection.saveData) return;
+            if (navigator.deviceMemory && navigator.deviceMemory < 1) return;
+            var tol = defaultTol(track), pts = upcoming(track, 2);
+            pts.forEach(function (pt) {
+                var e = create(track, pt, tol, true);
+                if (e.preloading) return;
+                e.preloading = true;
+                e.promise.then(function (r) {
+                    if (e.released) return;
+                    var list = arrangePhotos(r.photos.slice()).slice(0, PRELOAD_THUMBS);
+                    for (var k = 0; k < list.length; k++) {
+                        var im = new Image();
+                        im.decoding = 'async';
+                        im.src = list[k].photo_file_url;
+                        e.imgs.push(im);
+                    }
+                });
             });
+        },
+        // the strip now shows this place: its preloaded copies are no longer needed
+        shown: function (track, p, tol) {
+            var e = find(keyOf(p, defaultTol(track, tol)));
+            if (e) release(e);
+        },
+        clear: function () { entries.forEach(release); entries = []; },
+        stats: function () { return { entries: entries.length, preloaded: entries.reduce(function (n, e) { return n + e.imgs.length; }, 0) }; }
     };
-    tryPhotos(tolerancy, 0);
+})();
+
+function showPhotos(track, p, tolerancy) {
+    photoSearch.get(track, p, tolerancy).then(function (r) {
+        get_photos_success(r.photos.slice(), p, r.tol);
+        photoSearch.shown(track, p, tolerancy);
+        setTimeout(function () { photoSearch.prefetch(track); }, 1500);   // after the current photos have been requested
+    });
 }
 
 // ---- Photo strip -------------------------------------------------------------------------------
@@ -430,7 +519,10 @@ function arrangePhotos(photos) {
     return own.concat(pub).slice(0, MAX_STRIP_PHOTOS);                    // yours first, then public ones
 }
 
+var lastStripArgs = null;
 function get_photos_success(photos, p, tolerancy) {
+    lastStripArgs = { photos: photos, p: p, tol: tolerancy };
+    if (window.hidePhotoPreview) window.hidePhotoPreview();
     var divHeight = $("#imageDiv").height();
 
     photos = arrangePhotos(photos);
@@ -755,6 +847,7 @@ function init(filename, handler) {
             function (tempTrack) {
 
                 track = tempTrack
+                photoSearch.clear();
                 applyDefaultSpeed(track);
 
                 var myIcon = L.icon({
@@ -1232,6 +1325,7 @@ function compactTrackData(trackData) {
 }
 
 //#region Photo hover preview
+var dragMoved = false;
 $(function () {
     var $preview = $('<div id="photoPreview"><img alt="" /><div class="pp-cap"></div></div>').css({
         position: 'fixed', display: 'none', zIndex: 5000, pointerEvents: 'none',
@@ -1240,6 +1334,11 @@ $(function () {
     }).appendTo('body');
     var $previewImg = $preview.find('img').css({ display: 'block', maxWidth: '70vw', maxHeight: '60vh' });
     var $previewCap = $preview.find('.pp-cap');
+    var lastTouch = 0, token = 0;
+    function canHoverNow() { return !window.matchMedia || window.matchMedia('(hover: hover)').matches; }
+
+    // The preview is only shown while the mouse is really over a photo; everything else hides it.
+    window.hidePhotoPreview = function () { token++; $preview.hide(); };
 
     function place(e) {
         var w = $preview.outerWidth(), h = $preview.outerHeight();
@@ -1250,22 +1349,42 @@ $(function () {
         $preview.css({ left: left, top: top });
     }
 
+    $(document).on('touchstart pointerdown', function (e) {
+        if (e.type === 'touchstart' || (e.originalEvent && e.originalEvent.pointerType && e.originalEvent.pointerType !== 'mouse')) lastTouch = Date.now();
+        if (!$(e.target).closest('img.photo').length) window.hidePhotoPreview();
+    });
+
     $(document).on('mouseenter', 'img.photo', function (e) {
-        if (dragMoved) return;
+        if (dragMoved || !canHoverNow() || Date.now() - lastTouch < 800) return;   // no hover preview on touch screens
         var src = this.getAttribute('data-full');
         if (!src)
             return;
+        var my = ++token;
         $previewCap.text(this.getAttribute('data-credit') || '');
-        $previewImg.off('load').one('load', function () { place(e); $preview.show(); });
+        $previewImg.off('load').one('load', function () { if (my === token) { place(e); $preview.show(); } });
         $previewImg.attr('src', src);
         if ($previewImg[0].complete)
             $previewImg.trigger('load');
-    }).on('mousemove', 'img.photo', function (e) {
-        if ($preview.is(':visible'))
-            place(e);
     }).on('mouseleave', 'img.photo', function () {
-        $preview.hide();
+        window.hidePhotoPreview();
     });
+
+    // Safety nets: the photo under the mouse can disappear (strip reloads, scrolls) without a mouseleave.
+    $(document).on('mousemove', function (e) {
+        if (!$preview.is(':visible')) return;
+        if ($(e.target).closest('img.photo').length) place(e); else window.hidePhotoPreview();
+    });
+    $(document).on('keydown', function (e) { if (e.key === 'Escape') window.hidePhotoPreview(); });
+    $(document).on('mouseleave', 'html', window.hidePhotoPreview);
+    $(window).on('blur scroll wheel resize', window.hidePhotoPreview);
+    document.addEventListener('mouseout', function (e) { if (!e.relatedTarget) window.hidePhotoPreview(); });
+    $('#imageDiv0 .innerScrollArea').on('scroll', function () {
+        // the strip scrolls under a still mouse: re-check what is under it
+        if (!$preview.is(':visible')) return;
+        var el = document.elementFromPoint($preview.data('mx') || 0, $preview.data('my') || 0);
+        if (!el || !$(el).closest('img.photo').length) window.hidePhotoPreview();
+    });
+    $(document).on('mousemove', function (e) { $preview.data({ mx: e.clientX, my: e.clientY }); });
 
     // Click opens the viewer (middle click / ctrl+click still open the source page)
     $(document).on('click', '#imageDiv0 a[data-index]', function (e) {
@@ -1277,7 +1396,6 @@ $(function () {
 });
 
 // Drag / swipe the strip by hand
-var dragMoved = false;
 $(function () {
     var el = document.querySelector('#imageDiv0 .innerScrollArea');
     if (!el) return;
@@ -1306,6 +1424,42 @@ $(function () {
         if (d) { el.scrollLeft += d; e.preventDefault(); }
     }, { passive: false });
 });
+
+// Resize the strip with a handle on its top edge: it stays at the bottom, full width, never taller than 60% of the window
+$(function () {
+    var $strip = $('#imageDiv0');
+    if (!$strip.length) return;
+    var MIN = 90, key = 'sytStripHeight';
+    function maxH() { return Math.max(MIN, Math.min(560, Math.round(window.innerHeight * 0.6))); }
+    function setH(h, save) {
+        h = Math.max(MIN, Math.min(maxH(), Math.round(h)));
+        $strip.css('height', h + 'px');
+        $('#imageDiv').css('height', '100%');
+        if (save) { try { localStorage.setItem(key, String(h)); } catch (e) { } }
+        return h;
+    }
+    var saved = NaN; try { saved = parseInt(localStorage.getItem(key), 10); } catch (e) { }
+    if (saved > 0) setH(saved, false);
+    var $h = $('<div id="photoResize" title="Drag to resize the photo strip" role="separator" aria-orientation="horizontal"><span></span></div>').appendTo($strip);
+    var startY = 0, startH = 0, active = false, timer = null;
+    $h.on('pointerdown', function (e) {
+        active = true; startY = e.clientY; startH = $strip.height(); window.hidePhotoPreview && window.hidePhotoPreview();
+        try { this.setPointerCapture(e.pointerId); } catch (x) { } e.preventDefault(); $('body').addClass('resizingStrip');
+    }).on('pointermove', function (e) {
+        if (active) setH(startH + (startY - e.clientY), false);
+    }).on('pointerup pointercancel', function (e) {
+        if (!active) return; active = false; $('body').removeClass('resizingStrip');
+        setH($strip.height(), true); relayoutStrip();
+    });
+    $(window).on('resize', function () {
+        var h = $strip.height(); if (h > maxH()) { setH(maxH(), false); clearTimeout(timer); timer = setTimeout(relayoutStrip, 200); }
+    });
+});
+
+// Re-layout the photos for the current strip height (photos are sized to the strip height when loaded)
+function relayoutStrip() {
+    if (lastStripArgs) get_photos_success(lastStripArgs.photos, lastStripArgs.p, lastStripArgs.tol);
+}
 
 // Show / hide handle for the strip
 $(function () {

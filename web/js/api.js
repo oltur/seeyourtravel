@@ -4,11 +4,16 @@ syt.api = {};
 // Wikipedia/Commons rate-limit bursts (HTTP 429). Requests go through one queue, spaced apart,
 // with results cached by rounded coordinates so nearby points share a single request.
 syt.api.throttle = (function () {
-    var cache = {}, groups = {};
-    var SPACING_MS = 400;
+    var cache = {}, order = [], groups = {}, pending = {};
+    var SPACING_MS = 400, MAX_CACHE = 40;   // the cache is bounded so a long track doesn't keep growing in memory
 
     function group(name) {
         return groups[name] = groups[name] || { queue: [], running: false, blockedUntil: 0 };
+    }
+
+    function remember(key) {
+        order.push(key);
+        while (order.length > MAX_CACHE) delete cache[order.shift()];
     }
 
     function next(g) {
@@ -20,13 +25,23 @@ syt.api.throttle = (function () {
     }
 
     // key starts with the service name ("wiki|...", "commons|..."); each service has its own queue.
-    return function (key, ajaxSettings, convert) {
-        if (cache[key])
-            return cache[key];
+    // low = true is for prefetching: such requests wait behind the ones needed right now, and are moved to the front
+    // if the same request is then needed for real.
+    return function (key, ajaxSettings, convert, low) {
         var g = group(key.split("|")[0]);
+        if (cache[key]) {
+            var pj = pending[key];
+            if (!low && pj && pj.low) {
+                var qi = g.queue.indexOf(pj.job);
+                if (qi > 0) { g.queue.splice(qi, 1); g.queue.unshift(pj.job); }
+                pj.low = false;
+            }
+            return cache[key];
+        }
         var deferred = $.Deferred();
         cache[key] = deferred.promise();
-        g.queue.push(function (done) {
+        remember(key);
+        var job = function (done) {
             $.ajax(ajaxSettings).done(function (data) {
                 var result;
                 try { result = convert(data); } catch (e) { result = null; }
@@ -37,8 +52,10 @@ syt.api.throttle = (function () {
                 if (xhr.status == 429)
                     g.blockedUntil = new Date().getTime() + 30000;
                 deferred.resolve({ __empty: true });
-            }).always(done);
-        });
+            }).always(function () { delete pending[key]; done(); });
+        };
+        pending[key] = { job: job, low: !!low };
+        if (low) g.queue.push(job); else g.queue.unshift(job);
         if (!g.running) next(g);
         return cache[key];
     };
@@ -171,7 +188,7 @@ syt.api.searchSYTPlaces = function (request) {
 }
 // Public photos by location from Wikimedia Commons (the old Flickr/Panoramio sources are gone).
 // The function keeps its old name because the page and the "use Flickr images" checkbox refer to it.
-syt.api.searchFlickrImages = function (track, p, tolerancy) {
+syt.api.searchFlickrImages = function (track, p, tolerancy, low) {
     var deferred = $.Deferred();
 
     if (!$('#useFlickrImagesCheckBox').is(':checked') || track.useFlickrImages == "No") {
@@ -221,7 +238,7 @@ syt.api.searchFlickrImages = function (track, p, tolerancy) {
             });
         });
         return result;
-    }).then(function (result) {
+    }, low).then(function (result) {
         deferred.resolve(result.__empty ? { photos: [] } : result);
     });
     return deferred.promise();

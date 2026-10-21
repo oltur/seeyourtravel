@@ -397,7 +397,7 @@
 
             map.on('click', onMapClick);
 
-            $("#imageDiv0").draggable().resizable({ minHeight: 50, minWidth: 50 });
+            // the photo strip is resized with its own top handle (see OurTravel.js)
             $("#textToReadArea0").draggable();
             $("#slider").slider({
                 value: 0.8,

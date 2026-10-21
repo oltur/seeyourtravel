@@ -172,3 +172,10 @@ button.headerButton:disabled { background-color: #b9c3d0 !important; color: #fff
 #photoViewer .pv-prev { left: 12px; top: 50%; margin-top: -24px; }
 #photoViewer .pv-next { right: 12px; top: 50%; margin-top: -24px; }
 @media (max-width: 600px) { #photoViewer figure { inset: 56px 8px 0; } #photoViewer .pv-prev, #photoViewer .pv-next { top: auto; bottom: 14px; margin: 0; } }
+
+/* Photo strip resize handle (top edge) */
+#photoResize { position: absolute; left: 0; right: 0; top: -2px; height: 14px; z-index: 5; cursor: ns-resize; touch-action: none; display: flex; align-items: flex-start; justify-content: center; }
+#photoResize span { width: 54px; height: 5px; margin-top: 3px; border-radius: 3px; background: rgba(255,255,255,.9); box-shadow: 0 1px 4px rgba(0,0,0,.45); transition: background-color .15s, width .15s; }
+#photoResize:hover span, .resizingStrip #photoResize span { background: #ffd84a; width: 72px; }
+body.resizingStrip { cursor: ns-resize; user-select: none; }
+#imageDiv0 { overflow: hidden; max-height: 60vh; }
