@@ -272,9 +272,11 @@
             }
 
             var visited = $.cookie('visited'); // create cookie 'visited' with no value
-            if (visited != 'yes') {
-                //jQuery.tour(tourSteps);
+            if (visited != 'yes' && trackParam == "") {
+                // welcome panel: only for a first visit without a track link, and only once
                 clickHelp();
+                $.cookie('visited', 'yes', { expires: 365, path: '/' });
+                $('#dontShowOnStartup').prop('checked', true);
             }
 
             // the photo strip is resized with its own top handle (see OurTravel.js)

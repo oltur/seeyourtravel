@@ -11,9 +11,10 @@
         <a href="#tab-cast">Comments</a>
       </li>
     </ul>
+    <button type="button" id="closeHelpPanel" class="hpClose" aria-label="Close" title="Close">&times;</button>
     <div id="tab-welcome" style="display: inline-block;">
-      <img src="../img/syt-logo-small.png" style="height:50px; display: inline; margin: 0 5px;" alt=""/>
-      <button id="takeATour" style="width: 200px; height: 50px; font-size: large" type="button" onClick="javascript:jQuery.tour(tourSteps)">Take a tour!</button>
+      <img src="../img/syt-logo-small.png" style="height:42px; display: inline; margin: 0 5px;" alt=""/>
+      <button id="takeATour" style="width: 180px; height: 42px; font-size: medium" type="button" onClick="javascript:jQuery.tour(tourSteps)">Take a tour!</button>
       <div id="helpContext">
 	  <!-- class="i" data-i18n="[html]help_content"-->
       </div>
@@ -39,7 +40,7 @@
   </div>
 </div>
 <script>
-  $('#helpPanel').css("width", getIsMobile() ? (getScreenWidth()-50).toString() : '500px');
+  $('#helpPanel').css("width", getIsMobile() ? (getScreenWidth()-50).toString() : '400px');
 
   $('#tabs-movie').tabs({
   create: function (e, ui) {

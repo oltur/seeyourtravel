@@ -230,8 +230,8 @@ syt.api.searchFlickrImages = function (track, p, tolerancy, low) {
         data: {
             action: "query", format: "json", origin: "*",
             generator: "geosearch", ggscoord: p.lat + "|" + p.lng, ggsradius: radius,
-            ggslimit: 30, ggsnamespace: 6,
-            prop: "imageinfo|coordinates", colimit: 30, iiprop: "url|size|mime|extmetadata", iiurlheight: Math.max(divHeight, 150) * 2
+            ggslimit: 50, ggsnamespace: 6,
+            prop: "imageinfo|coordinates", colimit: 50, iiprop: "url|size|mime|extmetadata", iiurlheight: Math.max(divHeight, 150) * 2
         }
     }, function (data) {
         var result = { photos: [] };

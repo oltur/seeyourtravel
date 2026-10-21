@@ -411,7 +411,7 @@ var photoSearch = (function () {
                     .then(function (v) {
                         var photos = v[0].photos.concat(v[1].photos);
                         if (photos.length < MIN_PHOTOS && widenings < MAX_PHOTO_WIDENINGS) attempt(t * 2, widenings + 1);
-                        else resolve({ photos: photos, tol: t });
+                        else resolve({ photos: arrangePhotos(photos), tol: t });
                     });
             };
             attempt(tol, 0);
@@ -459,7 +459,7 @@ var photoSearch = (function () {
                 e.preloading = true;
                 e.promise.then(function (r) {
                     if (e.released) return;
-                    var list = arrangePhotos(r.photos.slice()).slice(0, PRELOAD_THUMBS);
+                    var list = r.photos.slice(0, PRELOAD_THUMBS);
                     for (var k = 0; k < list.length; k++) {
                         var im = new Image();
                         im.decoding = 'async';
@@ -481,7 +481,7 @@ var photoSearch = (function () {
 
 function showPhotos(track, p, tolerancy) {
     photoSearch.get(track, p, tolerancy).then(function (r) {
-        get_photos_success(r.photos.slice(), p, r.tol);
+        get_photos_success(r.photos, p, r.tol);
         photoSearch.shown(track, p, tolerancy);
         setTimeout(function () { photoSearch.prefetch(track); }, 1500);   // after the current photos have been requested
     });
@@ -505,18 +505,51 @@ function photoCredit(ph) {
     return $.t("Photo from the SeeYourTravel community");
 }
 
+// A "series" = photos that are probably alike: same author and a title that differs only in numbers (e.g. "Split - panoramio (18)")
+function seriesKey(ph, i) {
+    if (ph.source !== "commons") return "own|" + i;   // own photos are not grouped
+    var t = (ph.photo_title || "").toLowerCase().replace(/\.[a-z0-9]+$/, "").replace(/[\d_()\-#\[\]]+/g, " ").replace(/\s+/g, " ").trim();
+    return "commons|" + (ph.owner_name || "") + "|" + t.slice(0, 24);
+}
+
+var MAX_PER_SERIES = 2;
+
+// Dedupe, pick a varied set and mix it: random order, sources alternate, similar photos are never next to each other.
 function arrangePhotos(photos) {
-    var seen = {}, own = [], pub = [];
+    if (photos.arranged) return photos;
+    var seen = {}, list = [];
     for (var i = 0; i < photos.length; i++) {
         var ph = photos[i];
         ph.source = ph.source || "own";
         var k = photoKey(ph);
         if (seen[k]) continue;
         seen[k] = true;
-        (ph.source === "own" ? own : pub).push(ph);
+        ph._series = seriesKey(ph, i);
+        list.push(ph);
     }
-    pub.sort(function (a, b) { return (a.rank || 0) - (b.rank || 0); });   // nearest first
-    return own.concat(pub).slice(0, MAX_STRIP_PHOTOS);                    // yours first, then public ones
+    shuffle(list);
+    // varied selection: at most MAX_PER_SERIES photos of one series
+    var counts = {}, picked = [];
+    for (var j = 0; j < list.length && picked.length < MAX_STRIP_PHOTOS; j++) {
+        var s = list[j]._series;
+        if ((counts[s] || 0) >= MAX_PER_SERIES) continue;
+        counts[s] = (counts[s] || 0) + 1;
+        picked.push(list[j]);
+    }
+    // spread: prefer another source and another series than the previous photo
+    var out = [], pool = picked.slice(), last = null;
+    while (pool.length) {
+        var idx = -1, i2;
+        for (i2 = 0; i2 < pool.length && idx < 0; i2++)
+            if (!last || (pool[i2].source !== last.source && pool[i2]._series !== last._series)) idx = i2;
+        for (i2 = 0; i2 < pool.length && idx < 0; i2++)
+            if (!last || pool[i2]._series !== last._series) idx = i2;
+        if (idx < 0) idx = 0;
+        last = pool.splice(idx, 1)[0];
+        out.push(last);
+    }
+    out.arranged = true;
+    return out;
 }
 
 // Size every photo to the strip height and place them side by side (cheap: no reloading, used live while resizing)
