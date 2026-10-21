@@ -800,6 +800,8 @@ function init(filename, handler) {
     }
     else {
         map = L.map('map', { zoomControl: false });
+        // a sensible start view (Europe): without it the map stays blank when no track is chosen and the location is unavailable
+        map.setView([48, 14], 4);
         tileLayer = L.tileLayer(mapTileUrl, {
             attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
             tileSize: 512,
