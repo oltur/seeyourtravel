@@ -21,7 +21,7 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <script src="libs/Chart.bundle.js"></script>
+    <%-- Chart.js (470 KB) is loaded on demand, see ensureChartJs() in js/OurTravel.js --%>
     <%--    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.bundle.js"></script>--%>
 
     <script src="libs/jquery.js"></script>

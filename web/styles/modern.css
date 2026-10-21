@@ -75,9 +75,7 @@ html, body, form, input, select, button, .headerButton {
 #imageDiv0 {
     border-radius: var(--syt-radius);
     box-shadow: var(--syt-shadow);
-    background: rgba(255, 255, 255, 0.35) !important;
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    background: rgba(255, 255, 255, 0.5) !important;   /* no backdrop blur here: the strip scrolls every frame */
     border: 0 !important;
 }
 #imageDiv0 .innerScrollArea { border-radius: var(--syt-radius); }

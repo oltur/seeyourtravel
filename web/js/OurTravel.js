@@ -577,8 +577,13 @@ function layoutStrip(h) {
 }
 
 var lastStripArgs = null;
-function get_photos_success(photos, p, tolerancy) {
+function get_photos_success(photos, p, tolerancy, force) {
     lastStripArgs = { photos: photos, p: p, tol: tolerancy };
+    // same place as before (same cached, arranged list): keep the strip as it is - no flicker, no re-download, no DOM rebuild
+    if (!force && photos === stripPhotos && scrollerContent.children().length) {
+        $("#lblCoord").text(p.lat + " " + p.lng);
+        return;
+    }
     if (window.hidePhotoPreview) window.hidePhotoPreview();
     var divHeight = $("#imageDiv").height();
 
@@ -1019,7 +1024,7 @@ function init(filename, handler) {
 
                 addMarkersNearAll(track.trackData, GOOGLE_TYPES);
 
-                if (track) {
+                if (track && $('#helpPanel').is(':visible')) {
                     var elevator = new google.maps.ElevationService;
                     elevator.getElevationAlongPath({
                         'path': compactTrackData(track.trackData),
@@ -1242,6 +1247,7 @@ function createPhotoMarker(place) {
     });
 
     var wikiLink = "https://" + getTwitterLanguage() + ".wikipedia.org/?curid=" + place.id;
+    var buildPopup = function () {
     var domelem = document.createElement('div');
     domelem.className = 'placePopup';
     var title = document.createElement('p');
@@ -1266,10 +1272,12 @@ function createPhotoMarker(place) {
     link.textContent = isWiki ? 'Open in Wikipedia' : 'Search on Google';
     go.appendChild(link);
     domelem.appendChild(go);
+    return domelem;
+    };
     var marker = L.marker(new L.LatLng(
         isGoogle ? place.geometry.location.lat() : place.geometry.location.lat,
         isGoogle ? place.geometry.location.lng() : place.geometry.location.lng),
-        { icon: icon, title: place.name, thumb: (isWiki && place.thumb) ? place.thumb : '' }).bindPopup(domelem);
+        { icon: icon, title: place.name, thumb: (isWiki && place.thumb) ? place.thumb : '' }).bindPopup(buildPopup);
     myMarkers.push(marker);
 
     placeCluster.addLayer(marker);
@@ -1333,7 +1341,23 @@ function clearElevation() {
     chartDiv.innerHTML = "<canvas id=\"elevationChartCanvas\" style=\"max-height:" + (getIsMobile() ? 450 : 450) + "px\"></canvas>";
 }
 
+var chartJsPromise = null;
+function ensureChartJs() {
+    if (window.Chart) return Promise.resolve();
+    if (!chartJsPromise) chartJsPromise = new Promise(function (resolve, reject) {
+        var sc = document.createElement('script');
+        sc.src = 'libs/Chart.bundle.js';
+        sc.onload = resolve; sc.onerror = function () { chartJsPromise = null; reject(); };
+        document.head.appendChild(sc);
+    });
+    return chartJsPromise;
+}
+
 function plotElevation(elevations) {
+    ensureChartJs().then(function () { plotElevationNow(elevations); });
+}
+
+function plotElevationNow(elevations) {
 
     var chartDiv = document.getElementById('elevationChartDiv');
     //if (status !== 'OK') {
@@ -1558,7 +1582,7 @@ $(function () {
 
 // Re-layout the photos for the current strip height (photos are sized to the strip height when loaded)
 function relayoutStrip() {
-    if (lastStripArgs) get_photos_success(lastStripArgs.photos, lastStripArgs.p, lastStripArgs.tol);
+    if (lastStripArgs) get_photos_success(lastStripArgs.photos, lastStripArgs.p, lastStripArgs.tol, true);
 }
 
 // Show / hide handle for the strip
@@ -1617,21 +1641,23 @@ $(function () {
     });
 
     // Scrolling management: frame-synced and time-based (the old 20ms timer moved in visible 2px steps)
-    var scrollPos = 0, lastTime = null;
+    var scrollPos = 0, lastTime = null, scrollEl = scroller[0];
     var doScroll = function (time) {
+        window.requestAnimationFrame(doScroll);
         if (lastTime === null)
             lastTime = time;
         var dt = Math.min(time - lastTime, 100);   // ms; capped so a background tab doesn't cause a jump
         lastTime = time;
-        if (scrollerEnabled) {
-            if (Math.abs(scroller.scrollLeft() - Math.round(scrollPos)) > 2)
-                scrollPos = scroller.scrollLeft();   // something else moved it (e.g. photos were reloaded)
-            scrollPos += controller.curSpeed * dt / 20;   // curSpeed is "pixels per 20ms"
-            if (scrollPos > fullW * 2 - scroller.width())
-                scrollPos -= fullW;
-            scroller.scrollLeft(Math.round(scrollPos));
-        }
-        window.requestAnimationFrame(doScroll);
+        // nothing to do while the tab is in the background, the strip is hidden/empty or scrolling is off
+        if (!scrollerEnabled || document.hidden || !fullW || !scrollEl.offsetParent) return;
+        var cur = scrollEl.scrollLeft;
+        if (Math.abs(cur - Math.round(scrollPos)) > 2)
+            scrollPos = cur;   // something else moved it (drag, photos were reloaded)
+        scrollPos += controller.curSpeed * dt / 20;   // curSpeed is "pixels per 20ms"
+        if (scrollPos > fullW * 2 - scrollEl.clientWidth)
+            scrollPos -= fullW;
+        var next = Math.round(scrollPos);
+        if (next !== cur) scrollEl.scrollLeft = next;
     };
     window.requestAnimationFrame(doScroll);
     tweenToNewSpeed(controller.fullSpeed);
@@ -1725,11 +1751,17 @@ var tourSteps = [{
 
 
 // Keep the map attribution/scale/zoom clear of the photo strip (it may be hidden, moved or resized).
+// Only touches the page when the value really changed, and not at all in background tabs.
+var lastStripH = -1;
 setInterval(function () {
+    if (document.hidden) return;
     var strip = document.getElementById('imageDiv0'), h = 0;
-    if (strip && strip.offsetHeight > 0 && $(strip).css('display') != 'none') {
+    if (strip && strip.offsetHeight > 0) {
         var r = strip.getBoundingClientRect();
         if (r.bottom > window.innerHeight - 40) h = Math.max(0, Math.round(window.innerHeight - r.top));
     }
-    document.documentElement.style.setProperty('--syt-strip-h', h + 'px');
+    if (h !== lastStripH) {
+        lastStripH = h;
+        document.documentElement.style.setProperty('--syt-strip-h', h + 'px');
+    }
 }, 300);
