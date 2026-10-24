@@ -24,7 +24,16 @@ public partial class SaveTrack : System.Web.UI.Page
 
             string audioFileName = SaveFileByKey("fileAudio", Request.Form["audioSrc"]);
             string imageFileName = SaveFileByKey("fileImage", Request.Form["trackImage"]);
-            string textFileName = SaveFileByKey("fileText", Request.Form["textToRead"]);
+            string textFileName = Request.Form["textToRead"] ?? "";
+            string descriptionText = (Request.Form["descriptionText"] ?? "").Replace("\r\n", "\n").Trim();
+            if (descriptionText.Length > 0)
+            {
+                // always a fresh UTF-8 file named after the track (old files may be UTF-16 or ANSI)
+                textFileName = trackId.ToString() + ".txt";
+                File.WriteAllText(Server.MapPath("./tracks/content/" + textFileName), descriptionText, new System.Text.UTF8Encoding(false));
+            }
+            else
+                textFileName = "";
 
             string trackFileName = Request.Form["trackFileName"];
             string trackDescription = Request.Form["name"];
@@ -47,6 +56,21 @@ public partial class SaveTrack : System.Web.UI.Page
                 {
                     writer.Write(",");
                     writer.WriteLine("\"travelWith\":\"" + Request.Form["travelWith"] + "\"");
+                }
+                foreach (var f in new[] { new[] { "startName", "startName" }, new[] { "endName", "endName" } })
+                {
+                    string v = (Request.Form[f[0]] ?? "").Trim();
+                    if (v.Length > 0)
+                    {
+                        writer.Write(",");
+                        writer.WriteLine("\"" + f[1] + "\":" + new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(v));
+                    }
+                }
+                double vol;
+                if (double.TryParse(Request.Form["audioVolume"], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out vol) && vol >= 0 && vol <= 1)
+                {
+                    writer.Write(",");
+                    writer.WriteLine("\"audioVolume\":" + vol.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 }
                 if (!string.IsNullOrEmpty(Request.Form["copyright"]))
                 {
@@ -95,14 +119,6 @@ public partial class SaveTrack : System.Web.UI.Page
                     writer.WriteLine("\"icon\":\"" + Request.Form["icon"] + "\"");
                 }
 
-                writer.Write(",");
-                writer.WriteLine("\"useFlickrImages\":\"" + ((Request.Form["useFlickrImages"] == "on") ? "Yes" : "No") + "\"");
-                writer.Write(",");
-                writer.WriteLine("\"useSYTImagesTrack\":\"" + ((Request.Form["useSYTImagesTrack"] == "on") ? "Yes" : "No") + "\"");
-                writer.Write(",");
-                writer.WriteLine("\"useGooglePlaces\":\"" + ((Request.Form["useGooglePlaces"] == "on") ? "Yes" : "No") + "\"");
-                writer.Write(",");
-                writer.WriteLine("\"useSYTPlaces\":\"" + ((Request.Form["useSYTPlaces"] == "on") ? "Yes" : "No") + "\"");
 
                 writer.Write(",");
                 writer.WriteLine("\"trackImage\":\"" + imageFileName + "\"");

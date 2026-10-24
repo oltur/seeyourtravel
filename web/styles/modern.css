@@ -362,3 +362,64 @@ html.compact #photoToggle { font-size: 11px; padding: 2px 10px 1px; }
 #recBar .rec-stop { background: #225EAC; color: #fff; font-weight: 600; }
 #recBar .rec-discard { padding: 7px 11px; font-size: 16px; line-height: 1; }
 #recBar .rec-note { flex-basis: 100%; text-align: center; font-weight: 400; font-size: 11.5px; color: #6a7686; }
+
+/* names of the start and the finish of a track, shown next to their markers */
+.leaflet-tooltip.trackEndLabel { font-weight: 600; font-size: 13px; padding: 3px 8px; border-radius: 6px; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* live position in the Info tab */
+.trackStats .ts-live { margin: 0 0 12px; }
+.trackStats .ts-progress { position: relative; height: 22px; border-radius: 11px; background: #e3ebf7; overflow: hidden; margin-bottom: 10px; }
+.trackStats .ts-progress i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #4a8be0, #2f6fc9); transition: width .9s linear; }
+.trackStats .ts-progress span { position: relative; display: block; text-align: center; font-size: 12px; font-weight: 600; line-height: 22px; color: #12305c; mix-blend-mode: normal; }
+.trackStats .ts-live .ts-value { font-variant-numeric: tabular-nums; }
+
+/* the picture of a track as its start marker */
+.trackImageMarker div { width: 54px; height: 54px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.45); overflow: hidden; background: #fff; }
+.trackImageMarker img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.trackStartPopup { text-align: center; }
+.trackStartPopup b { display: block; margin: 2px 0 4px; }
+.trackStartImg { display: block; max-width: 260px; max-height: 220px; border-radius: 8px; margin: 0 auto 4px; }
+
+/* =====================  Track editor panel: draggable, resizable, scrolls inside  ===================== */
+#textToReadArea0.editorPanel {
+    position: absolute; z-index: 1001; display: flex; flex-direction: column; overflow: hidden; padding: 0 !important;
+    min-width: 300px; box-sizing: border-box; background: rgba(255,255,255,.96) !important; border: 1px solid rgba(255,255,255,.7) !important;
+    border-radius: 18px !important; box-shadow: 0 14px 40px rgba(18,48,92,.32), 0 2px 6px rgba(18,48,92,.15);
+}
+.editorPanel .edHeader {
+    flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none;
+    padding: 10px 16px; font-weight: 600; font-size: 15px; color: #fff; background: linear-gradient(135deg, #12305c, #225EAC);
+}
+.editorPanel .edGrip { opacity: .6; letter-spacing: -2px; }
+.editorPanel .edBody { flex: 1 1 auto; overflow: auto; padding: 10px 14px 4px; }
+.editorPanel .edBody::-webkit-scrollbar { width: 8px; }
+.editorPanel .edBody::-webkit-scrollbar-thumb { background: #b7c4d6; border-radius: 8px; }
+.editorPanel .edFooter {
+    flex: 0 0 auto; margin: 0 !important; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    background: #f2f6fc; border-top: 1px solid #dfe7f3;
+}
+.editorPanel .edFooter input[type=submit], .editorPanel .edFooter input[type=button] {
+    height: 34px; padding: 0 16px; border-radius: 10px; border: 1px solid #c6d3e6; background: #fff; color: #12305c; font: inherit; font-weight: 600; cursor: pointer; margin: 0;
+}
+.editorPanel .edFooter input[type=submit] { background: #225EAC; border-color: #225EAC; color: #fff; }
+.editorPanel .edFooter input[type=submit]:hover { background: #12305c; }
+.editorPanel .edFooter input[type=button]:hover { background: #e8eef7; }
+.editorPanel .edFooter #deleteTrack { margin-left: auto; color: #b00020; }
+.editorPanel table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+.editorPanel td.big { width: 36%; padding-right: 8px; vertical-align: middle; color: #12305c; font-size: 14px; line-height: 1.2; }
+.editorPanel td.big small { color: #6a7686; font-size: 11.5px; }
+.editorPanel input[type=text], .editorPanel input[type=number], .editorPanel select, .editorPanel textarea {
+    width: 100% !important; max-width: none !important; box-sizing: border-box; padding: 6px 9px; border: 1px solid #c6d3e6; border-radius: 9px; background: #fff; font: inherit; color: #12305c;
+}
+.editorPanel input:focus, .editorPanel select:focus, .editorPanel textarea:focus { outline: 0; border-color: #225EAC; box-shadow: 0 0 0 3px rgba(34,94,172,.18); }
+.editorPanel input[type=file] { width: 100%; max-width: 100%; font-size: 12.5px; margin-top: 4px; }
+.editorPanel #points { width: 100% !important; border: 1px solid #c6d3e6; border-radius: 9px; font-size: 12px; }
+.editorPanel #pointDescr { display: block; width: 100%; }
+.editorPanel button, .editorPanel #buttonDeleteSelected, .editorPanel #createByRoute {
+    height: 32px; padding: 0 14px; border-radius: 10px; border: 1px solid #c6d3e6; background: #f2f6fc; color: #12305c; font: inherit; cursor: pointer;
+}
+.editorPanel button:hover, .editorPanel #buttonDeleteSelected:hover { background: #e3ebf7; }
+.editorPanel .ui-tabs .ui-tabs-panel { padding: 8px 2px; background: transparent; }
+.editorPanel .ui-resizable-handle { z-index: 3; }
+.editorPanel .ui-resizable-se { width: 16px; height: 16px; right: 3px; bottom: 3px; background: linear-gradient(135deg, transparent 50%, #9fb3cf 50%, #9fb3cf 58%, transparent 58%, transparent 72%, #9fb3cf 72%, #9fb3cf 80%, transparent 80%); }
+@media (max-width: 600px) { .editorPanel td.big { width: 32%; } }

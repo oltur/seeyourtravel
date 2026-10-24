@@ -65,7 +65,7 @@
             }
             return path.filter(function (p, i) { return keep[i]; });
         }
-        var eps = 0.0001, out = rdp(eps);
+        var eps = 0.00001, out = rdp(eps);   // ~1 m: keeps every bend of the road
         while (out.length > max) { eps *= 1.5; out = rdp(eps); }
         return out;
     }
@@ -98,12 +98,16 @@
     function DirectionsService() { }
     DirectionsService.prototype.route = function (req, cb) {
         $.when(geocodeOne(req.origin), geocodeOne(req.destination)).then(function (a, b) {
-            var url = "https://router.project-osrm.org/route/v1/driving/" +
+            // car on the OSRM demo server; walking and cycling need the profile servers of routing.openstreetmap.de
+            var server = req.travelMode === "WALKING" ? "https://routing.openstreetmap.de/routed-foot/route/v1/driving/"
+                       : req.travelMode === "BICYCLING" ? "https://routing.openstreetmap.de/routed-bike/route/v1/driving/"
+                       : "https://router.project-osrm.org/route/v1/driving/";
+            var url = server +
                 a.loc.lng() + "," + a.loc.lat() + ";" + b.loc.lng() + "," + b.loc.lat() +
                 "?overview=full&geometries=geojson";
             $.getJSON(url).then(function (r) {
                 if (!r.routes || !r.routes.length) return cb(null, "ZERO_RESULTS");
-                var path = simplifyPath(r.routes[0].geometry.coordinates.map(function (c) { return new LatLng(c[1], c[0]); }), 400);
+                var path = simplifyPath(r.routes[0].geometry.coordinates.map(function (c) { return new LatLng(c[1], c[0]); }), 3000);
                 cb({ routes: [{ overview_path: path }] }, "OK");
             }, function () { cb(null, "UNKNOWN_ERROR"); });
         }, function (e) { cb(null, typeof e === "string" ? e : "NOT_FOUND"); });

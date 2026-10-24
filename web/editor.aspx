@@ -30,7 +30,9 @@
 
     <div id="map"></div>
 
-    <div id="textToReadArea0" class="ui-widget-content" style="overflow: auto; position: absolute; padding: 10px; z-index: 1001; top: 40px; right: 50px; width: 350px; height: 770px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 0 solid #000;">
+    <div id="textToReadArea0" class="ui-widget-content editorPanel">
+        <div class="edHeader"><span class="i" data-i18n="EditorTitle">Track editor</span><span class="edGrip" aria-hidden="true">⋮⋮</span></div>
+        <div class="edBody">
 
         <input type="hidden" id="trackId" name="trackId" value="<%=this.TrackId%>" />
         <input type="hidden" id="trackFileName" name="trackFileName" value="<%=this.TrackFileName%>" />
@@ -79,6 +81,12 @@
                             <input id="copyright" name="copyright" type="text" value="(c)" style="width: 180px;" /></td>
                     </tr>
                     <tr>
+                        <td class="big i" data-i18n="TrackText" style="vertical-align: top;">Description:<br /><small class="i" data-i18n="TrackTextHint">shown in the panel; HTML allowed</small></td>
+                        <td>
+                            <textarea id="descriptionText" name="descriptionText" rows="7" style="width: 180px; resize: vertical;"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
                         <td class="big i" data-i18n="Travelwith">Travel with:</td>
                         <td>
                             <select id="travelWith" name="travelWith" style="width: 180px;">
@@ -100,6 +108,12 @@
                             <input id="defaultScale" name="defaultScale" type="hidden" max="20" min="1" step="1" value="8" style="width: 180px;" />
                         </td>
                     </tr>
+                    <tr>
+                        <td class="big i" data-i18n="AudioVolume">Audio volume:<br />0..1</td>
+                        <td>
+                            <input id="audioVolume" name="audioVolume" type="number" min="0" max="1" step="0.1" placeholder="0.8" style="width: 180px;" />
+                        </td>
+                    </tr>
                     <%--            <tr>
                 <td class="big i" data-i18n="Defaultscale">Default scale:<br />
                     1(largest).20(smallest)</td>
@@ -118,7 +132,7 @@
                 <p class="big">
                     <span class="big  i" data-i18n="Currentpointdescriptionoptional">Current point description (optional):</span>
                     <br />
-                    <input id="pointDescr" name="pointDescr" type="text" value="" style="width: 250px" />
+                    <textarea id="pointDescr" name="pointDescr" rows="2" placeholder="" style="resize: vertical;"></textarea>
                 </p>
                 <input type="button" value="Delete selected" id="buttonDeleteSelected" class="i" data-i18n="[title]DeleteSelected;[value]DeleteSelected" />
                 <div class="big">
@@ -127,13 +141,13 @@
                         <tr>
                             <td class="i" data-i18n="From">From:</td>
                             <td>
-                                <input id="fromLocation" type="text" value="Champs-Élysées, Paris" class="i" data-i18n="[placeholder]FromPlaceholder" placeholder="Start address or place" style="width: 200px" />
+                                <input id="fromLocation" name="startName" type="text" value="" class="i" data-i18n="[placeholder]FromPlaceholder" placeholder="Champs-Élysées, Paris" style="width: 200px" />
                             </td>
                         </tr>
                         <tr>
                             <td class="i" data-i18n="To">To:</td>
                             <td>
-                                <input id="toLocation" type="text" value="Buckingham Palace, London" class="i" data-i18n="[placeholder]ToPlaceholder" placeholder="Destination address or place" style="width: 200px" />
+                                <input id="toLocation" name="endName" type="text" value="" class="i" data-i18n="[placeholder]ToPlaceholder" placeholder="Buckingham Palace, London" style="width: 200px" />
                             </td>
                         </tr>
                     </table>
@@ -203,49 +217,17 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="big i" data-i18n="TextDescriptionFile">Text description file:</td>
+                        <td class="big i" data-i18n="TextDescriptionFile">Fill the description from a file:</td>
                         <td>
-                            <input type="text" id="textToRead" name="textToRead" style="width: 180px;" />
-                            <input type="file" accept="text/plain" id="fileText" name="fileText" style="width: 180px;" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label for="useFlickrImages" class="i" data-i18n="useFlickrImages">Use Panoramio images</label>
-                        </td>
-                        <td>
-                            <input id="useFlickrImages" name="useFlickrImages" type="checkbox" checked="checked" title="Use Panoramio images" onchange="SaveSettings();" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label for="useSYTImagesTrack" class="i" data-i18n="UseCYTImages">Use SeeYourTravel images</label>
-                        </td>
-                        <td>
-                            <input id="useSYTImagesTrack" name="useSYTImagesTrack" type="checkbox" checked="checked" title="Use SeeYourTravel images" onchange="SaveSettings();" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label for="useGooglePlaces" class="i" data-i18n="UseGooglePlaces">Use Google Places</label>
-                        </td>
-                        <td>
-                            <input id="useGooglePlaces" name="useGooglePlaces" type="checkbox" checked="checked" title="Use Google Places" onchange="SaveSettings();" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label for="useSYTPlaces" class="i" data-i18n="UseCYTPlaces">Use SeeYourTravel places</label>
-                        </td>
-                        <td>
-                            <input id="useSYTPlaces" name="useSYTPlaces" type="checkbox" checked="checked" title="Use SeeYourTravel places" onchange="SaveSettings();" />
+                            <input type="hidden" id="textToRead" name="textToRead" />
+                            <input type="file" accept=".txt,.htm,.html,text/plain,text/html" id="fileText" style="width: 180px;" />
                         </td>
                     </tr>
                 </table>
             </div>
         </div>
-        <br />
-        <p class="big">
+        </div>
+        <p class="big edFooter">
             <asp:Button
                 ID="Button1"
                 PostBackUrl="saveTrack.aspx"
@@ -287,19 +269,44 @@
     %>
     <script lang="JavaScript">
 
-        function beforeSubmit() {
-            var idx = this.selectedIndex;
+        // the text of the point being edited goes into its list entry (on every key, and before saving)
+        function storePointText() {
+            var $pts = $("#points"), idx = $pts.data("lastIndex");
+            if (idx == null || typeof idx == "undefined") idx = $pts[0].selectedIndex;
+            if (idx == null || idx < 0) return;
+            var opt = $("option", $pts).eq(idx);
+            if (!opt.length) return;
+            var point = JSON.parse(opt.val());
+            if (point.hasOwnProperty("lat"))
+                point["syt_text"] = $("#pointDescr").val();
+            else
+                point[2] = $("#pointDescr").val();
+            opt.val(JSON.stringify(point));
+        }
 
-            if (idx != null && typeof idx != "undefined") {
-                var optionSelected = $("option", this).eq(idx);
-                var valueSelected = optionSelected.val();
-                var point = JSON.parse(valueSelected);
-                if (point.hasOwnProperty("lat"))
-                    point["syt_text"] = $("#pointDescr").val();
-                else
-                    point[2] = $("#pointDescr").val();
-                optionSelected.val(JSON.stringify(point));
-            }
+        function beforeSubmit() {
+            storePointText();
+        }
+
+        // floating editor panel: drag by its header, resize by any edge, size and place are remembered
+        function initEditorPanel() {
+            var $p = $("#textToReadArea0"), key = "syt_editorPanel", saved = null;
+            try { saved = JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { }
+            var w = Math.min(window.innerWidth - 16, Math.max(300, saved && saved.w || 380));
+            var h = Math.min(window.innerHeight - 16, Math.max(260, saved && saved.h || window.innerHeight - 56));
+            var l = saved ? Math.min(Math.max(0, saved.l), window.innerWidth - 80) : Math.max(8, window.innerWidth - w - 50);
+            var t = saved ? Math.min(Math.max(0, saved.t), window.innerHeight - 60) : 40;
+            if (window.innerWidth < 600) { w = window.innerWidth - 16; l = 8; }
+            $p.css({ left: l, top: t, width: w, height: h, right: "auto" });
+            var save = function () {
+                try { localStorage.setItem(key, JSON.stringify({ l: $p.position().left, t: $p.position().top, w: $p.outerWidth(), h: $p.outerHeight() })); } catch (e) { }
+            };
+            $p.draggable({ handle: ".edHeader", containment: "window", stop: save });
+            $p.resizable({ handles: "all", minWidth: 300, minHeight: 260, stop: save });
+            $(window).on("resize", function () {
+                if ($p.outerHeight() > window.innerHeight - 8) $p.css("height", window.innerHeight - 16);
+                if ($p.outerWidth() > window.innerWidth - 8) $p.css("width", window.innerWidth - 16);
+            });
         }
 
         function setDirections(directions) {
@@ -332,13 +339,17 @@
 
         function createTrackByRoute() {
 
+            if (!$.trim($("#fromLocation").val()) || !$.trim($("#toLocation").val())) {
+                toastr.error(T("RouteNeedsPlaces", "Enter the start and the end place first."));
+                return;
+            }
             var directionsService = new google.maps.DirectionsService();
 
             var request = {
                 origin: $("#fromLocation").val(),
                 destination: $("#toLocation").val(),
                 provideRouteAlternatives: false,
-                travelMode: 'DRIVING',
+                travelMode: ({ WalkingMan: 'WALKING', Bike: 'BICYCLING' })[$("#travelWith").val()] || 'DRIVING',
                 unitSystem: google.maps.UnitSystem.METRIC
             };
 
@@ -424,7 +435,7 @@
             map.on('click', onMapClick);
 
             // the photo strip is resized with its own top handle (see OurTravel.js)
-            $("#textToReadArea0").draggable();
+            initEditorPanel();
             $("#slider").slider({
                 value: 0.8,
                 min: 0,
@@ -465,6 +476,18 @@
                     // Set new index as old index
                     $(this).data("lastIndex", idx);
                 });
+
+            // a chosen description file is read into the box (the box is what gets saved)
+            $("#fileText").on("change", function () {
+                var f = this.files && this.files[0];
+                if (!f) return;
+                var r = new FileReader();
+                r.onload = function () { $("#descriptionText").val(String(r.result).replace(/\r\n/g, "\n")); };
+                r.readAsText(f);
+                this.value = "";
+            });
+
+            $("#pointDescr").on("input", storePointText);
 
             document.getElementById('filesGpx').addEventListener('change', handleFileSelect, false);
 
@@ -525,6 +548,8 @@
                             $("#travelWith").val(initialTrack.travelWith);
                         }
 
+                        $("#fromLocation").val(initialTrack.startName || "");
+                        $("#toLocation").val(initialTrack.endName || "");
                         $("#copyright").val(initialTrack.copyright);
                         $("#category").val(initialTrack.category);
                         $("#photoLocationTolerancy").val(initialTrack.photoLocationTolerancy);
@@ -538,13 +563,13 @@
                         $("#audioSrc").val(initialTrack.audioSrc);
                         $("#audioVolume").val(initialTrack.audioVolume);
                         $("#textToRead").val(initialTrack.textToRead);
+                        // the description text is edited in place; it is loaded as the viewer loads it (the old files have mixed encodings)
+                        if (initialTrack.textToRead) {
+                            $.ajax({ url: "tracks/content/" + initialTrack.textToRead + "?" + Math.random(), dataType: "text" })
+                                .done(function (t) { $("#descriptionText").val(String(t).replace(/\r\n/g, "\n")); });
+                        }
                         $("#defaultScale").val(initialTrack.defaultScale);
                         map.setZoom(initialTrack.defaultScale);
-
-                        $("#useFlickrImages").prop('checked', initialTrack.useFlickrImages != "No");
-                        $("#useSYTImagesTrack").prop('checked', initialTrack.useSYTImagesTrack != "No");
-                        $("#useGooglePlaces").prop('checked', initialTrack.useGooglePlaces != "No");
-                        $("#useSYTPlaces").prop('checked', initialTrack.useSYTPlaces != "No");
 
                         if (!isNullOrEmpty(initialTrack.trackGpx)) {
                             $("#trackGpx").val(initialTrack.trackGpx);

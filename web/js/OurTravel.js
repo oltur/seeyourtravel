@@ -1002,12 +1002,16 @@ function loadTrack(path, handler) {
 
             if ($("#textToReadArea").length > 0) {
                 if (!isNullOrEmpty(tempTrack.textToRead)) {
-                    textToReadArea.innerHTML = $.ajax(
+                    var descText = $.ajax(
                         {
                             url: translateTracksContentPath(tempTrack.textToRead + "?" + Math.random()),
                             async: false
                         }
                     ).responseText;
+                    // plain text (no HTML tags) keeps its paragraphs
+                    if (!/<\/?[a-z][^>]*>/i.test(descText))
+                        descText = $("<div>").text(descText).html().replace(/\r?\n/g, "<br>");
+                    textToReadArea.innerHTML = descText;
                     // COMMENTED THE AUTOREADING
                     //get_id('textToReadArea', 'en', 'ml');
                 }
@@ -1192,7 +1196,8 @@ function init(filename, handler) {
                     onStep: function (p) {
                         counter++;
                         if (p.hasOwnProperty("syt_text") && p["syt_text"] != "") {
-                            toastr.info(p["syt_text"], "", { timeOut: 5000, extendedTimeOut: 10000 });
+                            var pointTextMs = Math.min(30000, Math.max(6000, String(p["syt_text"]).length * 80));   // about 12 characters a second
+                            toastr.info(p["syt_text"], "", { timeOut: pointTextMs, extendedTimeOut: 10000 });
                             //prependToSidePanel(p["syt_text"]);
                         }
 
@@ -1250,10 +1255,28 @@ function init(filename, handler) {
                 line = L.polyline(track.trackData, { color: 'green' });
                 markers.addLayer(line);
 
-                markerStart = L.marker(track.trackData[0]).bindPopup("Start");//TODO
+                var startPopup = $("<div>").addClass("trackStartPopup");
+                startPopup.append($("<b>").text(track.startName || "Start"));
+                markerStart = L.marker(track.trackData[0]).bindPopup(startPopup[0]);
+                if (track.trackImage && /^[\w.\- ]+\.(png|gif|jpe?g|webp)$/i.test(track.trackImage)) {
+                    // the picture of the track: it is the start marker (round thumbnail), a click shows it large
+                    var imgUrl = translateTracksContentPath(track.trackImage), startMarker = markerStart, probeImg = new Image();
+                    probeImg.onload = function () {
+                        startPopup.prepend($("<img>").attr("src", imgUrl).addClass("trackStartImg"));
+                        startMarker.setZIndexOffset(500);
+                        startMarker.setIcon(L.divIcon({
+                            className: "trackImageMarker",
+                            html: $("<div>").append($("<img>").attr("src", imgUrl))[0].innerHTML,
+                            iconSize: [58, 58], iconAnchor: [29, 29], popupAnchor: [0, -26]
+                        }));
+                    };
+                    probeImg.src = imgUrl;
+                }
+                if (track.startName) markerStart.bindTooltip(track.startName, { permanent: true, direction: "right", offset: [8, -20], className: "trackEndLabel" });
                 markers.addLayer(markerStart);
 
-                markerFinish = L.marker(track.trackData[track.trackData.length - 1]).bindPopup("Finish");//TODO
+                markerFinish = L.marker(track.trackData[track.trackData.length - 1]).bindPopup(track.endName || "Finish");
+                if (track.endName) markerFinish.bindTooltip(track.endName, { permanent: true, direction: "right", offset: [8, -20], className: "trackEndLabel" });
                 markers.addLayer(markerFinish);
 
                 map.setView(track.trackData[0], track.defaultScale ? track.defaultScale : 8, { animate: false });
@@ -2171,8 +2194,8 @@ function updateTrackStats() {
         add(T("StatDescent", "Total descent"), "↘ " + esc(track._elev.down + " " + m));
     }
     var first = pointToLatLng(track.trackData[0]), last = pointToLatLng(track.trackData[track.trackData.length - 1]);
-    add(T("StatStart", "Start"), esc(track._startName || first.lat.toFixed(4) + ", " + first.lng.toFixed(4)), true);
-    add(T("StatFinish", "Finish"), esc(track._endName || last.lat.toFixed(4) + ", " + last.lng.toFixed(4)), true);
+    add(T("StatStart", "Start"), esc(track.startName || track._startName || first.lat.toFixed(4) + ", " + first.lng.toFixed(4)), true);
+    add(T("StatFinish", "Finish"), esc(track.endName || track._endName || last.lat.toFixed(4) + ", " + last.lng.toFixed(4)), true);
     add(T("StatPoints", "Track points"), esc(track.trackData.length.toLocaleString()));
     if (track.category) add(T("StatCategory", "Category"), esc(T(track.category, track.category)));
     if (track.travelWith) add(T("StatTravelWith", "Travel with"), esc(track.travelWith));
@@ -2180,11 +2203,13 @@ function updateTrackStats() {
     if (track.copyright && track.copyright !== "(c)") add(T("StatCopyright", "Copyright"), esc(track.copyright), true);
 
     var title = track.name ? '<h3 class="ts-title">' + esc(track.name) + "</h3>" : "";
+    title += '<div id="tsLive" class="ts-live"></div>';
     var note = track._elev ? '<p class="ts-note">' + esc(T("StatElevationNote", "Elevations are estimated from a terrain model along the route.")) + "</p>" : "";
     $box.html(title + '<div class="ts-grid">' + items.join("") + "</div>" + note);
 
     // names of the start and finish places (once per track)
-    if (!track._namesRequested) {
+    updateLiveStats();
+    if (!track._namesRequested && !(track.startName && track.endName)) {
         track._namesRequested = true;
         var t = track;
         placeNameOf(first).then(function (n) { t._startName = n; if (t === track) updateTrackStats(); });
@@ -2192,4 +2217,50 @@ function updateTrackStats() {
     }
 }
 window.updateTrackStats = updateTrackStats;
+
+// where the marker is now: distance and time done and left, coordinates (refreshed every second while the Info tab is open)
+function trackProgress() {
+    var am = window.animatedMarker, t = window.track;
+    if (!am || !t || !t.trackData || !t.trackData.length || !am._latlngs) return null;
+    var pts = am._latlngs;
+    if (!t._cum || t._cum.length !== pts.length) {
+        var c = [0];
+        for (var i = 1; i < pts.length; i++) c.push(c[i - 1] + pts[i - 1].distanceTo(pts[i]));
+        t._cum = c;
+    }
+    var cum = t._cum, total = cum[cum.length - 1], ti = Math.min(Math.max((am._i || 1) - 1, 0), pts.length - 1), pos = pts[ti], done = cum[ti], seg = am._seg;
+    if (seg) {
+        var f = seg.dur > 0 ? Math.min(1, Math.max(0, (Date.now() - seg.start) / seg.dur)) : 1;
+        pos = new L.LatLng(seg.from.lat + f * (seg.to.lat - seg.from.lat), seg.from.lng + f * (seg.to.lng - seg.from.lng));
+        done = Math.max(0, cum[ti] - pos.distanceTo(seg.to));
+    }
+    return { pos: pos, done: done, left: Math.max(0, total - done), total: total };
+}
+
+function formatClock(sec) {   // h:mm:ss, so that the value visibly runs every second
+    sec = Math.max(0, Math.round(sec));
+    var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60;
+    if (h >= 48) return formatDuration(sec);
+    return (h ? h + ":" + ("0" + m).slice(-2) : m) + ":" + ("0" + x).slice(-2);
+}
+
+function updateLiveStats() {
+    var box = document.getElementById("tsLive");
+    if (!box) return;
+    var pr = trackProgress();
+    if (!pr) { box.innerHTML = ""; return; }
+    var speed = getSpeedMps(), pct = pr.total > 0 ? Math.round(pr.done / pr.total * 100) : 0;
+    var esc = function (x) { return $("<div>").text(x).html(); };
+    function cell(l, v) { return '<div class="ts-item"><span class="ts-label">' + esc(l) + '</span><span class="ts-value">' + esc(v) + "</span></div>"; }
+    box.innerHTML = '<div class="ts-progress"><i style="width:' + pct + '%"></i><span>' + pct + ' %</span></div><div class="ts-grid">' +
+        cell(T("StatDone", "Done"), formatDistance(pr.done) + " · " + formatClock(pr.done / speed)) +
+        cell(T("StatLeft", "Remaining"), formatDistance(pr.left) + " · " + formatClock(pr.left / speed)) +
+        '<div class="ts-item wide"><span class="ts-label">' + esc(T("StatPosition", "Current position")) + '</span><span class="ts-value">' +
+        pr.pos.lat.toFixed(5) + ", " + pr.pos.lng.toFixed(5) + "</span></div></div>";
+}
+setInterval(function () {
+    if (document.hidden) return;
+    var tab = document.getElementById("tab-info");
+    if (tab && tab.offsetParent !== null) updateLiveStats();
+}, 1000);
 //#endregion
