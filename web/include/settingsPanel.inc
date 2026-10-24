@@ -27,6 +27,9 @@
             <input id="flyInCheckBox" type="checkbox" checked="checked" title="Photos fly in on the map" onchange="SaveSettings();"/>
             <label for="flyInCheckBox" class="i" data-i18n="FlyIn">Photos fly in on the map</label>
             <br />
+            <input id="followCheckBox" type="checkbox" checked="checked" title="The map moves along with the marker" data-i18n="[title]FollowTrackHint" class="i" onchange="followChanged();"/>
+            <label for="followCheckBox" class="i" data-i18n="[title]FollowTrackHint;FollowTrack" title="The map moves along with the marker">Follow the track on the map</label>
+            <br />
             <input id="shareLocationCheckBox" type="checkbox" disabled="disabled" title="Sign in to share your position" />
             <label for="shareLocationCheckBox" class="i" data-i18n="ShareLocation">Share my position with others who share theirs</label>
             <div id="shareLocationNote" class="i" data-i18n="ShareLocationSignIn" style="font-size: 12px; color: #5a6675; margin: 0 0 4px 22px;">Sign in to use this. Off by default.</div>
@@ -51,6 +54,9 @@
                 <option>mapbox.emerald</option>
                 <option>mapbox.high-contrast</option>
             </select>
+            <br />
+            <input id="realisticSpeedCheckBox" type="checkbox" title="Overrides the speed of the track" data-i18n="[title]RealisticSpeedHint" class="i" onchange="onRealisticSpeedChange();"/>
+            <label for="realisticSpeedCheckBox" class="i" data-i18n="[title]RealisticSpeedHint;RealisticSpeed" title="Overrides the speed of the track">Realistic speed for the means of transport</label>
             <br />
             <label for="speedSlider" class="i" data-i18n="MovingSpeed">Moving speed:</label>
             <span id="speedValue">1800 km/h</span>

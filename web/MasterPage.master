@@ -211,6 +211,7 @@
     <script src="<%=Tools.V("js/OurTravel.Common.js")%>"></script>
     <script src="<%=Tools.V("js/api.js")%>"></script>
     <script src="<%=Tools.V("js/OurTravel.js")%>"></script>
+    <script src="<%=Tools.V("js/recorder.js")%>"></script>
     <script src="<%=Tools.V("js/AnimatedMarker.js")%>"></script>
     <script src="<%=Tools.V("js/get_text.js")%>"></script>
 

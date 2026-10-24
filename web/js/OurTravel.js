@@ -2,6 +2,18 @@
 //#region Variables
 var ATTRIBUTION = 'SeeYourTravel.app &copy; Map data &copy; <a target="_blank" href= "http://openstreetmap.org" > OpenStreetMap</a >, <a target="_blank" href= "http://creativecommons.org/licenses/by-sa/2.0/" > CC - BY - SA</a >, Imagery © <a target="_blank" href= "http://flickr.com" > Flickr</a>; Powered by <a target="_blank" href="https://darksky.net/poweredby/">DarkSky</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png" />';
 var tracksFolder = 'tracks/';
+// "Follow the track" (Settings): the map moves along with the marker; dragging the map yourself pauses it for 10 seconds
+var followPausedUntil = 0;
+function followsTrack() { return $('#followCheckBox').is(':checked') && Date.now() > followPausedUntil; }
+function followChanged() {
+    SaveSettings();
+    followPausedUntil = 0;
+    if ($('#followCheckBox').is(':checked') && typeof animatedMarker != 'undefined' && animatedMarker && typeof map != 'undefined')
+        map.panTo(animatedMarker.getLatLng());   // pick up the marker right away
+}
+// Small screens (phones): fewer, smaller and more strongly grouped markers, smaller photo cards
+function isCompact() { return window.innerWidth < 700 || window.innerHeight < 520; }
+if (document.documentElement) document.documentElement.classList.toggle('compact', isCompact());
 // translated text with the English text as the fallback (a missing key shows the English text)
 function T(key, def, opts) { return (window.$ && $.t) ? $.t(key, $.extend({ defaultValue: def }, opts || {})) : def; }
 //        var url = 'http://{s}.tile.cloudmade.com/5bcd2fc5d5714bd48096c7478324e0fe/997/256/{z}/{x}/{y}.png';
@@ -257,10 +269,28 @@ function changeSpeed(value) {
     }
 }
 
-// Without a saved setting, start at the track's own speed.
+// Realistic speeds (km/h) per means of transport ("Travel with" in the editor; older tracks: the vehicle picture saved with them).
+var REALISTIC_KMH = { WalkingMan: 5, Bike: 20, Car: 80, Bus: 60, Yacht: 15, Plane: 800 };
+var TRANSPORT_BY_ICON = { 'aman.gif': 'WalkingMan', 'man.png': 'WalkingMan', 'mybike.png': 'Bike', 'mycar.png': 'Car', 'mybus.png': 'Bus', 'myyacht.png': 'Yacht', 'myplane.png': 'Plane' };
+function realisticKmh(track) { return REALISTIC_KMH[track.travelWith] || REALISTIC_KMH[TRANSPORT_BY_ICON[track.icon]] || 0; }
+function trackOwnKmh(track) { return Math.round(track.velocityMetersPerSec * 3.6 / 5) * 5; }
+
+// When a track is loaded: with "Realistic speed" ticked in Settings the speed is the realistic one for its means of transport;
+// otherwise the speed saved in Settings, or - without one - the track's own (time-lapse) speed.
 function applyDefaultSpeed(track) {
+    if ($("#realisticSpeedCheckBox").is(":checked") && realisticKmh(track)) { changeSpeed(realisticKmh(track)); return; }
     if (parseFloat($.cookie("settings_speedKmh")) >= MIN_SPEED_KMH) return;
-    changeSpeed(Math.round(track.velocityMetersPerSec * 3.6 / 5) * 5);
+    changeSpeed(trackOwnKmh(track));
+}
+
+// Ticking / unticking the box takes effect at once for the loaded track
+function onRealisticSpeedChange() {
+    $.cookie("settings_realisticSpeed", $("#realisticSpeedCheckBox").is(":checked"), { expires: 365 });
+    if (typeof track != "undefined" && track && isTrackLoaded) {
+        if ($("#realisticSpeedCheckBox").is(":checked") && realisticKmh(track)) changeSpeed(realisticKmh(track));
+        else changeSpeed(trackOwnKmh(track));
+        SaveSettings();
+    }
 }
 
 function SaveSettings() {
@@ -273,6 +303,8 @@ function SaveSettings() {
     $.cookie("settings_useGooglePlacesCheckBox", $("#useGooglePlacesCheckBox").is(':checked'));
     $.cookie("settings_useSYTPlacesCheckBox", $("#useSYTPlacesCheckBox").is(':checked'));
     $.cookie("settings_flyIn", $("#flyInCheckBox").is(':checked'));
+    $.cookie("settings_follow", $("#followCheckBox").is(':checked'));
+    $.cookie("settings_realisticSpeed", $("#realisticSpeedCheckBox").is(':checked'));
 
     $.cookie("settings_mapStyle", $('#mapStyle option:selected').val());
     $.cookie("settings_volume", $('#slider').slider("value"));
@@ -299,6 +331,8 @@ function LoadSettings() {
         $("#useGooglePlacesCheckBox").prop("checked", $.cookie("settings_useGooglePlacesCheckBox") == "true");
         $("#useSYTPlacesCheckBox").prop("checked", $.cookie("settings_useSYTPlacesCheckBox") == "true");
         if (typeof $.cookie("settings_flyIn") != "undefined") $("#flyInCheckBox").prop("checked", $.cookie("settings_flyIn") == "true");
+        if (typeof $.cookie("settings_follow") != "undefined") $("#followCheckBox").prop("checked", $.cookie("settings_follow") == "true");   // on by default
+        $("#realisticSpeedCheckBox").prop("checked", $.cookie("settings_realisticSpeed") == "true");   // off by default
 
         // The Description panel is shown/hidden when a track is loaded (see loadTrack).
         if (!b)
@@ -689,7 +723,7 @@ function get_photos_success(photos, p, tolerancy, force) {
 // When the marker arrives at a new place, up to three photos that were taken nearby fly out of their exact spot on the map
 // into small cards around the marker, stay for a few seconds and shrink back into a round pin on the map.
 var flyIn = (function () {
-    var MAX_CARDS = 3, HOLD_MS = 6500, MAX_PINS = 60, MIN_GAP_MS = 2500, IDLE_GAP_MS = 15000;
+    var MAX_CARDS = 3, HOLD_MS = 6500, MAX_PINS = 60, MIN_GAP_MS = 2500, IDLE_GAP_MS = 15000, SHOWN_TTL_MS = 10 * 60 * 1000;   // a photo may fly in again after 10 minutes
     var layer = null, lastShow = 0, shown = {}, shownOrder = [], pins = [], pinPhotos = [], active = [], current = null;
 
     function enabled() {
@@ -704,7 +738,7 @@ var flyIn = (function () {
     // identity of a picture independent of the thumbnail size/URL it was found with (same file name = same photo)
     function key(ph) { return photoKey(ph); }
     function remember(ph) {
-        shown[key(ph)] = true; shownOrder.push(key(ph));
+        shown[key(ph)] = Date.now(); shownOrder.push(key(ph));
         while (shownOrder.length > 400) delete shown[shownOrder.shift()];
     }
 
@@ -723,7 +757,7 @@ var flyIn = (function () {
     function addPin(ph) {
         var thumb = (ph.photo_file_url || '').replace(/"/g, '%22');
         var m = L.marker([ph.latitude, ph.longitude], {
-            icon: L.divIcon({ className: 'photoPin', html: '<img src="' + thumb + '" alt="" loading="lazy"/>', iconSize: [38, 38], iconAnchor: [19, 19] }),
+            icon: L.divIcon({ className: 'photoPin', html: '<img src="' + thumb + '" alt="" loading="lazy"/>', iconSize: isCompact() ? [30, 30] : [38, 38], iconAnchor: isCompact() ? [15, 15] : [19, 19] }),
             title: ph.photo_title && ph.photo_title !== 'TBD' ? ph.photo_title : '', thumb: ph.photo_file_url
         });
         var idx = pinPhotos.push(ph) - 1;
@@ -741,7 +775,7 @@ var flyIn = (function () {
     function candidates(photos, here, maxDist) {
         var list = [];
         photos.forEach(function (ph) {
-            if (typeof ph.latitude !== 'number' || typeof ph.longitude !== 'number' || shown[key(ph)]) return;
+            if (typeof ph.latitude !== 'number' || typeof ph.longitude !== 'number' || (shown[key(ph)] && Date.now() - shown[key(ph)] < SHOWN_TTL_MS)) return;
             var d = here.distanceTo([ph.latitude, ph.longitude]);
             if (d <= maxDist) list.push({ ph: ph, d: d + (ph.source === 'own' ? 0 : 150) });
         });
@@ -750,9 +784,9 @@ var flyIn = (function () {
     }
 
     function fly(picks, here) {
-        var narrow = map.getSize().x < 640;
-        if (narrow) picks = picks.slice(0, map.getSize().x < 420 ? 1 : 2);   // three cards do not fit side by side on a phone
-        var W = 150, H = 106, c = map.latLngToContainerPoint(here), pos = anchors(picks.length, W, H, c), L0 = ensureLayer();
+        var narrow = map.getSize().x < 640, compact = isCompact();
+        if (narrow) picks = picks.slice(0, compact ? 1 : 2);   // cards do not fit side by side on a phone
+        var W = compact ? 112 : 150, H = compact ? 80 : 106, c = map.latLngToContainerPoint(here), pos = anchors(picks.length, W, H, c), L0 = ensureLayer();
         lastShow = Date.now();
         picks.forEach(function (ph, i) {
             remember(ph);
@@ -1030,6 +1064,7 @@ function init(filename, handler) {
         map = L.map('map', { zoomControl: false });
         // a sensible start view (Europe): without it the map stays blank when no track is chosen and the location is unavailable
         map.setView([48, 14], 4);
+        map.on('dragstart', function () { followPausedUntil = Date.now() + 10000; });
         if (trackRequested) {
             // keep the map hidden until the track has set the real view (no flash of Europe / the current location)
             var mapEl = map.getContainer();
@@ -1065,8 +1100,8 @@ function init(filename, handler) {
     // Places (Wikipedia/SYT/Google) are grouped only gently: nearby markers merge into a small round badge, and
     // the grouping stops completely when zoomed in (zoom 13+).
     placeCluster = L.markerClusterGroup({
-        maxClusterRadius: 38,
-        disableClusteringAtZoom: 13,
+        maxClusterRadius: isCompact() ? 90 : 38,
+        disableClusteringAtZoom: isCompact() ? 15 : 13,
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
         chunkedLoading: true,
@@ -1075,7 +1110,8 @@ function init(filename, handler) {
             for (var i = 0; i < kids.length && !thumb; i++) thumb = kids[i].options.thumb || '';
             var n = cluster.getChildCount();
             var html = (thumb ? '<img src="' + thumb.replace(/"/g, '%22') + '" alt="" onerror="this.style.display=\'none\'"/>' : '') + '<b>' + n + '</b>';
-            return L.divIcon({ html: html, className: 'sytCluster' + (thumb ? ' withThumb' : ''), iconSize: [50, 50] });
+            var cs = isCompact() ? 40 : 50;
+            return L.divIcon({ html: html, className: 'sytCluster' + (thumb ? ' withThumb' : ''), iconSize: [cs, cs] });
         }
     });
     markers.addLayer(placeCluster);
@@ -1149,6 +1185,7 @@ function init(filename, handler) {
                     autoStart: false,
                     onEnd: function () {
                         if ($("#loopTrackCheckBox").is(':checked')) {
+                            if (window.flyIn && flyIn.clear) flyIn.clear();   // a new round: the photos may fly in again
                             animatedMarker.start();
                         }
                     },
@@ -1168,7 +1205,7 @@ function init(filename, handler) {
                         var currentDate = new Date();
                         if ((currentDate.getTime() - lastUpdateTime.getTime()) / 1000 > updateIntervalSeconds) {
 
-                            map.setView([p.lat, p.lng], map.getZoom());
+                            if (followsTrack()) map.setView([p.lat, p.lng], map.getZoom());
                             showPhotos(track, p);
                             //                    animatedMarker.bindPopup("".concat(p.lat, ",", p.lng)).openPopup();
 
@@ -1274,7 +1311,7 @@ function addMarkersNearAll(allData, types) {
             step = 1;
         doSetTimeout(allData, types, from, to, step, i);
 
-        addWeatherMarkers(allData, from);
+        if (!isCompact() || i % 2 === 0) addWeatherMarkers(allData, from);   // fewer labels on a phone
     }
     addWeatherMarkers(allData, allData.length - 1);
 }
@@ -1383,8 +1420,8 @@ function weather_success(place) {
     var icon = L.divIcon({
         className: 'wxIcon',
         html: '<div class="wxLabel"><img src="img/weather/' + iconImg + '" alt=""/><span>' + tempText + '</span></div>',
-        iconSize: [112, 30],
-        iconAnchor: [56, 15]
+        iconSize: isCompact() ? [92, 24] : [112, 30],
+        iconAnchor: isCompact() ? [46, 12] : [56, 15]
     });
 
     var domelem = document.createElement('a');
@@ -1435,7 +1472,7 @@ function createPhotoMarker(place) {
         thumbIcon = L.divIcon({
             className: 'wikiThumbIcon',
             html: '<img src="' + safe + '" alt="" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\')"/><span>W</span>',
-            iconSize: [46, 46], iconAnchor: [23, 23]
+            iconSize: isCompact() ? [34, 34] : [46, 46], iconAnchor: isCompact() ? [17, 17] : [23, 23]
         });
     }
     var icon = thumbIcon || L.icon({

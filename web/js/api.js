@@ -91,7 +91,7 @@ syt.api.searchWikiPlaces = function (request) {
         // nearest first, but articles with a picture are preferred so the map shows previews rather than empty icons
         list.sort(function (a, b) { return (!!b.thumb - !!a.thumb) || (a.index - b.index); });
         var result = [];
-        var maxWiki = Math.round(MAX_GOOGLE_PLACES * 1.6);   // a few more than before: they are pictures now
+        var maxWiki = (window.isCompact && isCompact()) ? 4 : Math.round(MAX_GOOGLE_PLACES * 1.6);   // a few more than before: they are pictures now
         for (var i = 0; i < Math.min(maxWiki, list.length); i++) {
             var item = list[i];
             result.push({

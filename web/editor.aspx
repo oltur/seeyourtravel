@@ -143,7 +143,7 @@
                     <br />
                     <div id="fileOperations">
                         <label for="fileGpx" class="i" data-i18n="[title]ImportGpxFile;ImportGpxFile">Import Gpx file:</label>
-                        <input type="file" accept=".gpx" id="filesGpx" name="filesGpx" style="width: 180px;" />
+                        <input type="file" accept=".gpx,.kml,.kmz,.json,.geojson,application/json,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz,application/gpx+xml" id="filesGpx" name="filesGpx" style="width: 180px;" />
                         <%--multiple="multiple"--%>
                         <!--input type="button" value="Import data" id="importGpx"/-->
                     </div>
@@ -270,6 +270,7 @@
         </div>
     </div>
 
+    <script src="<%=Tools.V("js/trackimport.js")%>"></script>
     <script lang="JavaScript">
         var trackname;
     </script>
@@ -362,6 +363,20 @@
             var $c = $("#category"), keep = "";
             $c.on("focus mousedown", function () { if (this.value) { keep = this.value; this.value = ""; } })
               .on("blur change", function () { if (this.value === "") this.value = keep || "Other"; });
+        });
+
+        // A route recorded with the "Record route" button: bring it in as the track's points
+        $(function () {
+            if (!/[?&]recorded=1/.test(location.search) || !window.sytRecorder) return;
+            var r = sytRecorder._done();
+            if (!r || !r.points || r.points.length < 2) return;
+            setTimeout(function () {
+                var secs = Math.max(1, r.activeMs / 1000), mps = r.meters / secs;
+                applyImported({ label: T("RecordedName", "Recorded route") + " " + new Date(r.startedAt).toLocaleDateString(), points: r.points });
+                // the usual way of travel for the average speed: walking, bike, car or plane (also sets the picture and the speed)
+                $("#travelWith").val(mps < 2.5 ? "WalkingMan" : mps < 8 ? "Bike" : mps < 40 ? "Car" : "Plane").trigger("change");
+                sytRecorder.clearDone();
+            }, 900);
         });
 
         function deleteThisTrack() {
@@ -684,44 +699,42 @@
     </script>
 
     <script>
-        // Import a GPX file: uses the track points (or route points / waypoints if there is no track),
-        // replaces the current points and thins very long tracks.
+        // Import a track from a file: GPX, KML/KMZ (Google My Maps), GeoJSON or a Google Timeline export (see js/trackimport.js).
+        // A file with several tracks / days opens a small chooser; the chosen points replace the current ones
+        // and very long tracks are thinned to about 1,000 points.
+        function applyImported(c) {
+            var pts = c.points, total = pts.length;
+            if (total > 1000) pts = window.sytSimplifyPath(pts, 1000);
+            points.empty();
+            $.each(pts, function (i, p) {
+                var arr = [+p[0].toFixed(6), +p[1].toFixed(6)];
+                if (p[2]) arr.push(p[2]);
+                var v = JSON.stringify(arr);
+                points.append($("<option></option>").attr("value", v).text(v));
+            });
+            points[0].selectedIndex = 0;
+            points.change();
+            updateMap();
+            var nameBox = $("#name");
+            if (c.label && (!nameBox.val() || /^New track /.test(nameBox.val()))) nameBox.val(c.label);
+            toastr.success(T("GpxImported", "Imported {0} points").replace("{0}", pts.length) + (total > pts.length ? T("GpxReducedFrom", " (reduced from {0})").replace("{0}", total) : ""));
+        }
+
         function handleFileSelect(evt) {
             var input = evt.target, f = input.files && input.files[0];
             if (!f) return;
-
-            var reader = new FileReader();
-            reader.onload = function () {
-                var xml;
-                try { xml = $.parseXML(reader.result); }
-                catch (e) { toastr.error(T("GpxInvalid", "This does not look like a valid GPX file.")); input.value = ""; return; }
-
-                var nodes = $(xml).find("trkpt");
-                if (!nodes.length) nodes = $(xml).find("rtept");
-                if (!nodes.length) nodes = $(xml).find("wpt");
-                var pts = [];
-                nodes.each(function () {
-                    var lat = parseFloat($(this).attr("lat")), lon = parseFloat($(this).attr("lon"));
-                    if (isFinite(lat) && isFinite(lon)) pts.push([lat, lon]);
-                });
-                if (!pts.length) { toastr.error(T("GpxNone", "No track points found in this file.")); input.value = ""; return; }
-
-                var total = pts.length;
-                if (total > 1000) pts = window.sytSimplifyPath(pts, 1000);
-
-                points.empty();
-                $.each(pts, function (i, p) {
-                    var v = JSON.stringify([+p[0].toFixed(6), +p[1].toFixed(6)]);
-                    points.append($("<option></option>").attr("value", v).text(v));
-                });
-                points[0].selectedIndex = 0;
-                points.change();
-                updateMap();
-                toastr.success(T("GpxImported", "Imported {0} points").replace("{0}", pts.length) + (total > pts.length ? T("GpxReducedFrom", " (reduced from {0})").replace("{0}", total) : ""));
-                input.value = "";   // allow importing the same file again
-            };
-            reader.onerror = function () { toastr.error(T("GpxReadError", "Could not read the file.")); };
-            reader.readAsText(f);
+            var reset = function () { input.value = ""; };   // allows importing the same file again
+            sytTrackImport.read(f).then(function (list) {
+                if (!list.length) { toastr.error(T("GpxNone", "No track points found in this file.")); return null; }
+                return list.length === 1 ? list[0] : sytTrackImport.choose(list);
+            }).then(function (c) { if (c) applyImported(c); reset(); }).catch(function (err) {
+                var m = { toobig: ["ImportTooBig", "This file is too large to read in the browser (over 250 MB). Export a shorter period."],
+                          kmz: ["ImportKmz", "This browser cannot open KMZ files. Export plain KML or use a newer browser."],
+                          unknown: ["ImportUnknown", "This file type is not recognised. Supported: GPX, KML/KMZ, GeoJSON and Google Timeline (JSON)."] }[err && err.code]
+                        || ["ImportInvalid", "This file could not be read. Is it a valid GPX, KML, GeoJSON or Timeline file?"];
+                toastr.error(T(m[0], m[1]));
+                reset();
+            });
         }
     </script>
 
