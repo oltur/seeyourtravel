@@ -12,7 +12,6 @@
         var audio;
         var imageDiv;
         var tracksList;
-        var textToReadArea;
         var counter = 0;
         var markerSize = 30;
         var track;
@@ -104,7 +103,6 @@
             audio = document.getElementById("audio");
             imageDiv = $("#imageDiv");
             tracksList = $("#tracksList");
-            textToReadArea = document.getElementById("textToReadArea");
 
             if (errorMessage != "") {
                 toastr.error(errorMessage, "ERROR", { timeOut: 5000, extendedTimeOut: 10000 });
@@ -237,10 +235,6 @@
             <div id="map"></div>
             <div id="map2"></div>
 
-            <div id="textToReadArea0" class="ui-widget-content" style="z-index: 100; min-height: 50px; min-width: 50px; background: rgba(100,100,100,0.2); border-width: 0; width: 25%; height: 25%; position: absolute; left: 2%; top: 35%">
-                <div class="descHeader"><span class="i" data-i18n="Description">Description</span><button type="button" class="descClose i" data-i18n="[title]Close;[aria-label]Close" title="Close" aria-label="Close" onclick="$('#textToReadArea0').hide();">&times;</button></div>
-                <div id="textToReadArea" style="position: absolute; overflow: scroll; background: rgba(240,240,240,0.9); padding: 0; top: 2px; bottom: 2px; left: 2px; right: 2px; margin: 0 auto; resize: none;"></div>
-            </div>
 
             <div id="imageDiv0" class="ui-widget-content">
                 <div id="imageDiv" class="innerScrollArea">
@@ -285,7 +279,6 @@
             }
 
             // the photo strip is resized with its own top handle (see OurTravel.js)
-            $("#textToReadArea0").draggable().resizable({ minHeight: 50, minWidth: 50 }).hide();
             //$("#scriptTextCheckBox").button();
             //$("#imagesCheckBox").button();
             //$("#useFlickrImagesCheckBox").button();

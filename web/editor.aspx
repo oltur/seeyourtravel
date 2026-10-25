@@ -235,7 +235,7 @@
                 Text="Submit"
                 data-i18n="TrackDescription"
                 class="i"
-                OnClientClick="beforeSubmit()" />
+                OnClientClick="return beforeSubmit();" />
             &nbsp;
     <input type="button" value="Cancel" class="i" data-i18n="[title]Cancel;[value]Cancel" id="gotoMain" onclick="window.location = 'index.aspx?trackname=' + trackname" />
             <% if (IsExisting) { %>
@@ -286,6 +286,11 @@
 
         function beforeSubmit() {
             storePointText();
+            // a track that goes into a covered country is not saved
+            var pts = $("#points option").map(function () { return [JSON.parse(this.value)]; }).get().map(function (p) { return p.hasOwnProperty("lat") ? p : { lat: p[0], lng: p[1] }; });
+            var c = sytBlocked.trackCountry(pts);
+            if (c) { toastr.error(sytBlocked.message(c), "", { timeOut: 20000, closeButton: true }); return false; }
+            return true;
         }
 
         // floating editor panel: drag by its header, resize by any edge, size and place are remembered
@@ -418,6 +423,7 @@
             });
 
             map = L.map('map', { zoomControl: false }).setView([50.430981, 30.539267], 8);
+            sytBlocked.cover(map);
             L.control.zoom({ position: 'topright' }).addTo(map);
             L.control.scale({ position: 'bottomleft' }).addTo(map);
             tileLayer = L.tileLayer(mapTileUrl, {

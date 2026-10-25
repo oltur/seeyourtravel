@@ -1,6 +1,6 @@
 
         <div id="settingsPanel" style="display: none; position:absolute; padding: 10px; z-index: 1001; top: 60px; left: 60px; width: 300px; height: auto; background: rgba(255,255,255,0.8); border-radius: 12px; border: 0px solid #000;">
-            <input id="scriptTextCheckBox" type="checkbox" title="Description" onchange="SaveSettings();$('#textToReadArea0').toggle('fold', 1000);" />
+            <input id="scriptTextCheckBox" type="checkbox" checked="checked" title="Description" onchange="SaveSettings(); updateTrackStats();" />
             <label for="scriptTextCheckBox" class="i" data-i18n="Description">Description</label>
             <br />
             <input id="imagesCheckBox" type="checkbox" checked="checked" title="Images" onchange="SaveSettings(); $('#imageDiv0').toggle('fold', 1000);" />
@@ -61,7 +61,7 @@
             <label for="speedSlider" class="i" data-i18n="MovingSpeed">Moving speed:</label>
             <span id="speedValue">1800 km/h</span>
             <br />
-            <input id="speedSlider" type="range" min="5" max="3000" step="5" value="1800" style="width: 80%; margin-left: 10%" title="Moving speed"
+            <input id="speedSlider" type="range" min="5" max="5000" step="5" value="1800" style="width: 80%; margin-left: 10%" title="Moving speed"
                 oninput="changeSpeed(this.value)" onchange="SaveSettings();" />
             <br />
             <span class="i" data-i18n="Volume">Volume:</span>

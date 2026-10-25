@@ -74,6 +74,15 @@ L.AnimatedMarker = L.Marker.extend({
             if (self._seg) self.changeSpeed();
         });
 
+        // A resize (or coming back to the tab) can leave the icon standing where its CSS transition was interrupted
+        // until the next vertex: put it where it really is and carry on.
+        var resync = function () {
+            clearTimeout(self._resyncTid);
+            self._resyncTid = setTimeout(function () { if (self._seg && self._tid && self._icon) self.changeSpeed(); }, 120);
+        };
+        map.on('resize moveend', resync);
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) resync(); });
+
         // Start animating when added to the map
         if (this.options.autoStart) {
             this.start();

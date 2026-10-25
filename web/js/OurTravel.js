@@ -5,6 +5,28 @@ var tracksFolder = 'tracks/';
 // "Follow the track" (Settings): the map moves along with the marker; dragging the map yourself pauses it for 10 seconds
 var followPausedUntil = 0;
 function followsTrack() { return $('#followCheckBox').is(':checked') && Date.now() > followPausedUntil; }
+// Zoom a track is opened at: a track that fits the screen is shown whole; a longer one starts close enough for the
+// marker to be followed, the closer the slower its means of transport.
+var FOLLOW_ZOOM = { WalkingMan: 15, Bike: 14, Car: 11, Bus: 11, Yacht: 10, Plane: 6 };
+function setInitialTrackView(t) {
+    var pts = t.trackData, start = pts[0];
+    var bounds = L.latLngBounds(pts);
+    var how = t.travelWith || TRANSPORT_BY_ICON[t.icon] || 'Car';
+    var followZoom = FOLLOW_ZOOM[how] || 11;
+    // leave room for the photo strip at the bottom and the menus on top
+    var stripH = $('#imageDiv0').is(':visible') ? $('#imageDiv0').outerHeight() || 0 : 0;
+    var padTL = L.point(30, 60), padBR = L.point(30, 30 + stripH);
+    var fit = map.getBoundsZoom(bounds, false, padTL.add(padBR));
+    if (!isFinite(fit)) fit = followZoom;
+    if (fit >= followZoom || !followsTrack()) {
+        // the whole track fits (or following is off, so the whole track is the useful view)
+        map.fitBounds(bounds, { paddingTopLeft: padTL, paddingBottomRight: padBR, maxZoom: Math.max(followZoom + 2, 16), animate: false });
+        if (map.getZoom() < 3) map.setZoom(3, { animate: false });
+    } else {
+        map.setView(start, followZoom, { animate: false });
+    }
+}
+
 function followChanged() {
     SaveSettings();
     followPausedUntil = 0;
@@ -993,6 +1015,8 @@ function loadTrack(path, handler) {
             console.log("loadTrack error: " + textStatus); console.log("Error: " + errorThrown);
         },
         success: function (data) {
+          // the borders of the covered countries are needed to decide whether the track may be opened
+          sytBlocked.load().always(function () {
             var tempTrack = data;
             if (tempTrack.trackGpx) {
                 tempTrack.trackData = $.parseJSON(GPXtoLatLng(translateTracksContentPath(tempTrack.trackGpx)));
@@ -1000,36 +1024,43 @@ function loadTrack(path, handler) {
 
             fixTrackData(tempTrack);
 
-            if ($("#textToReadArea").length > 0) {
-                if (!isNullOrEmpty(tempTrack.textToRead)) {
-                    var descText = $.ajax(
-                        {
-                            url: translateTracksContentPath(tempTrack.textToRead + "?" + Math.random()),
-                            async: false
-                        }
-                    ).responseText;
-                    // plain text (no HTML tags) keeps its paragraphs
-                    if (!/<\/?[a-z][^>]*>/i.test(descText))
-                        descText = $("<div>").text(descText).html().replace(/\r?\n/g, "<br>");
-                    textToReadArea.innerHTML = descText;
-                    // COMMENTED THE AUTOREADING
-                    //get_id('textToReadArea', 'en', 'ml');
-                }
-                else {
-                    textToReadArea.innerHTML = "";
-                }
-
-                // Show the Description panel only when the track has a description.
-                var hasDescription = $.trim(textToReadArea.innerHTML) != "";
-                $('#scriptTextCheckBox').prop('disabled', !hasDescription);
-                $('label[for=scriptTextCheckBox]').css('opacity', hasDescription ? '' : '0.4');
-                if (hasDescription && $('#scriptTextCheckBox').is(':checked'))
-                    $('#textToReadArea0').show();
-                else
-                    $('#textToReadArea0').hide();
+            var blockedIn = sytBlocked.trackCountry(tempTrack.trackData);
+            if (blockedIn) {
+                if (window.sytRevealMap) window.sytRevealMap();
+                $("#trackLoading").remove();
+                toastr.error(sytBlocked.message(blockedIn), "", { timeOut: 20000, extendedTimeOut: 20000, closeButton: true });
+                return;
             }
 
+            // the description is shown in the track details (Track tab); "Description" in Settings shows or hides it
+            tempTrack._descHtml = "";
+            if (!isNullOrEmpty(tempTrack.textToRead)) {
+                var descText = $.ajax(
+                    {
+                        url: translateTracksContentPath(tempTrack.textToRead + "?" + Math.random()),
+                        async: false
+                    }
+                ).responseText || "";
+                // plain text (no HTML tags) keeps its paragraphs
+                if (!/<\/?[a-z][^>]*>/i.test(descText))
+                    descText = $("<div>").text(descText).html().replace(/\r?\n/g, "<br>");
+                // authors may use HTML, but no scripts or event handlers
+                var tmp = $("<div>").html(descText);
+                tmp.find("script,iframe,object,embed,style,link,meta").remove();
+                tmp.find("*").each(function () {
+                    var el = this;
+                    $.each(Array.prototype.slice.call(el.attributes), function (i, at) {
+                        if (/^on/i.test(at.name) || /^\s*javascript:/i.test(at.value)) el.removeAttribute(at.name);
+                    });
+                });
+                tempTrack._descHtml = tmp.html();
+            }
+            var hasDescription = $.trim(tempTrack._descHtml) != "";
+            $('#scriptTextCheckBox').prop('disabled', !hasDescription);
+            $('label[for=scriptTextCheckBox]').css('opacity', hasDescription ? '' : '0.4');
+
             handler(tempTrack);
+          });
         }
     });
 }
@@ -1066,6 +1097,7 @@ function init(filename, handler) {
     }
     else {
         map = L.map('map', { zoomControl: false });
+        sytBlocked.cover(map);
         // a sensible start view (Europe): without it the map stays blank when no track is chosen and the location is unavailable
         map.setView([48, 14], 4);
         map.on('dragstart', function () { followPausedUntil = Date.now() + 10000; });
@@ -1279,7 +1311,7 @@ function init(filename, handler) {
                 if (track.endName) markerFinish.bindTooltip(track.endName, { permanent: true, direction: "right", offset: [8, -20], className: "trackEndLabel" });
                 markers.addLayer(markerFinish);
 
-                map.setView(track.trackData[0], track.defaultScale ? track.defaultScale : 8, { animate: false });
+                setInitialTrackView(track);
                 if (window.sytRevealMap) window.sytRevealMap();
 
                 if (track.audioSrc && track.audioSrc.length > 0) {
@@ -2113,6 +2145,106 @@ $(function () {
 //#endregion
 
 
+//#region Track search
+// The track list (top left) opens as a small panel with a search box on top instead of the plain browser list.
+// The <select> stays the source of the entries and of the chosen track; a choice is passed on as an ordinary change.
+(function () {
+    function norm(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+    var panel = null;
+
+    function close() {
+        if (!panel) return;
+        $(document).off('.trackSearch');
+        panel.remove();
+        panel = null;
+    }
+
+    function open(sel) {
+        if (panel) { close(); return; }
+        var groups = [], cur = null;
+        $.each(sel.children, function (i, el) {
+            if (el.tagName === 'OPTGROUP') {
+                cur = { label: el.label, items: [] };
+                groups.push(cur);
+                $.each(el.children, function (j, o) { cur.items.push({ value: o.value, text: o.text }); });
+            } else if (el.tagName === 'OPTION' && i > 0) {   // entry 0 is "Choose a track"; the page adds the tracks after their category label
+                if (!cur) { cur = { label: '', items: [] }; groups.push(cur); }
+                cur.items.push({ value: el.value, text: el.text });
+            }
+        });
+        var r = sel.getBoundingClientRect();
+        panel = $('<div id="trackSearch" role="dialog"></div>').css({ left: Math.max(6, r.left), top: r.bottom + 4, width: Math.max(r.width, 300) });
+        var input = $('<input type="search" class="ts-q" autocomplete="off" spellcheck="false">')
+            .attr('placeholder', T('SearchTracks', 'Search tracks\u2026')).attr('aria-label', T('SearchTracks', 'Search tracks\u2026'));
+        var list = $('<div class="ts-list" role="listbox"></div>');
+        panel.append($('<div class="ts-head"></div>').append(input)).append(list).appendTo('body');
+        panel.css('max-height', Math.max(200, window.innerHeight - r.bottom - 16));
+        var active = -1;
+
+        function render() {
+            var q = norm(input.val()).split(/\s+/).filter(Boolean), shown = 0, html = '';
+            list.empty();
+            groups.forEach(function (g) {
+                var cat = norm(g.label);
+                var items = g.items.filter(function (it) {
+                    var hay = norm(it.text) + ' ' + cat;
+                    return q.every(function (w) { return hay.indexOf(w) >= 0; });
+                });
+                if (!items.length) return;
+                if (g.label) list.append($('<div class="ts-cat"></div>').text(g.label));
+                items.forEach(function (it) {
+                    shown++;
+                    $('<div class="ts-item" role="option"></div>').text(it.text).attr('data-v', it.value)
+                        .toggleClass('sel', it.value === sel.value).appendTo(list);
+                });
+            });
+            if (!shown) list.append($('<div class="ts-none"></div>').text(T('NoTracksFound', 'No tracks found')));
+            active = q.length && shown ? 0 : -1;
+            mark();
+        }
+        function mark(scroll) {
+            var items = list.children('.ts-item').removeClass('act');
+            if (active >= 0 && items.length) {
+                var el = items.eq(active).addClass('act')[0];
+                if (scroll !== false && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+            }
+        }
+        function choose(v) {
+            close();
+            if (v == null || v === sel.value) return;
+            sel.value = v;
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        input.on('input', render).on('keydown', function (e) {
+            var n = list.children('.ts-item').length;
+            if (e.key === 'ArrowDown') { active = Math.min(n - 1, active + 1); mark(); e.preventDefault(); }
+            else if (e.key === 'ArrowUp') { active = Math.max(0, active - 1); mark(); e.preventDefault(); }
+            else if (e.key === 'Enter') { var el = list.children('.ts-item').eq(Math.max(active, 0)); if (el.length) choose(el.attr('data-v')); e.preventDefault(); }
+            else if (e.key === 'Escape') { close(); sel.focus(); }
+        });
+        list.on('click', '.ts-item', function () { choose($(this).attr('data-v')); });
+        $(document).on('mousedown.trackSearch touchstart.trackSearch', function (e) {
+            if (!$(e.target).closest('#trackSearch, #tracksList').length) close();
+        }).on('keydown.trackSearch', function (e) { if (e.key === 'Escape') close(); });
+        render();
+        var cur = list.find('.ts-item.sel')[0];
+        if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
+        input.focus();
+    }
+
+    $(function () {
+        var sel = document.getElementById('tracksList');
+        if (!sel) return;
+        $(sel).on('mousedown click', function (e) { e.preventDefault(); if (e.type === 'mousedown') { sel.focus(); open(sel); } })
+            .on('keydown', function (e) {
+                if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); open(sel); }
+            });
+    });
+})();
+//#endregion
+
+
 //#region Track properties (Track tab of the information panel)
 function trackDistanceMeters(t) {
     if (t._distance != null) return t._distance;
@@ -2204,8 +2336,11 @@ function updateTrackStats() {
 
     var title = track.name ? '<h3 class="ts-title">' + esc(track.name) + "</h3>" : "";
     title += '<div id="tsLive" class="ts-live"></div>';
+    var desc = "";
+    if (track._descHtml && $("#scriptTextCheckBox").is(":checked"))
+        desc = '<div class="ts-desc"><h4 class="ts-desc-title">' + esc(T("Description", "Description")) + '</h4><div class="ts-desc-text">' + track._descHtml + "</div></div>";
     var note = track._elev ? '<p class="ts-note">' + esc(T("StatElevationNote", "Elevations are estimated from a terrain model along the route.")) + "</p>" : "";
-    $box.html(title + '<div class="ts-grid">' + items.join("") + "</div>" + note);
+    $box.html(title + '<div class="ts-grid">' + items.join("") + "</div>" + desc + note);
 
     // names of the start and finish places (once per track)
     updateLiveStats();
