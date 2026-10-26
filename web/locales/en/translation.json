@@ -229,7 +229,7 @@
   "Role": "Role",
   "RecentTracks": "Your tracks",
   "AllTracks": "All tracks",
-  "PhotosPrivate": "Your own photos are private: they are never shown to other visitors or on the map.",
+  "PhotosPrivate": "Photos with people in them are marked private. At the moment none of your photos are shown to other visitors.",
   "BackToMap": "Back to the map",
   "Open": "Open",
   "Delete": "Delete",
@@ -267,5 +267,11 @@
   "EditPlace": "Edit place",
   "SaveChanges": "Save changes",
   "PlaceUpdated": "Place is updated",
-  "YouAreHere": "You are here"
+  "YouAreHere": "You are here",
+  "All": "All",
+  "MakePublic": "Make public",
+  "MakePrivate": "Make private",
+  "MakePublicConfirm": "Make this photo public? Check that nobody is recognisable in it.",
+  "PickStart": "Click the map to place the start.",
+  "PickFinish": "Click the map to place the finish."
 }

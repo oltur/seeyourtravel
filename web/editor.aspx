@@ -143,12 +143,14 @@
                             <td>
                                 <input id="fromLocation" name="startName" type="text" value="" class="i" data-i18n="[placeholder]FromPlaceholder" placeholder="Champs-Élysées, Paris" style="width: 200px" />
                             </td>
+                            <td><button type="button" class="pickOnMap" data-for="from" title="Pick the start on the map"><i class="fa fa-map-marker"></i></button></td>
                         </tr>
                         <tr>
                             <td class="i" data-i18n="To">To:</td>
                             <td>
                                 <input id="toLocation" name="endName" type="text" value="" class="i" data-i18n="[placeholder]ToPlaceholder" placeholder="Buckingham Palace, London" style="width: 200px" />
                             </td>
+                            <td><button type="button" class="pickOnMap" data-for="to" title="Pick the finish on the map"><i class="fa fa-map-marker"></i></button></td>
                         </tr>
                     </table>
                     <button type="button" id="createByRoute" class="i" data-i18n="[title]CreateByRoute;CreateByRoute">Create by Route</button>
@@ -344,15 +346,15 @@
 
         function createTrackByRoute() {
 
-            if (!$.trim($("#fromLocation").val()) || !$.trim($("#toLocation").val())) {
+            if ((!picked.from && !$.trim($("#fromLocation").val())) || (!picked.to && !$.trim($("#toLocation").val()))) {
                 toastr.error(T("RouteNeedsPlaces", "Enter the start and the end place first."));
                 return;
             }
             var directionsService = new google.maps.DirectionsService();
 
             var request = {
-                origin: $("#fromLocation").val(),
-                destination: $("#toLocation").val(),
+                origin: picked.from ? new google.maps.LatLng(picked.from.lat, picked.from.lng) : $("#fromLocation").val(),
+                destination: picked.to ? new google.maps.LatLng(picked.to.lat, picked.to.lng) : $("#toLocation").val(),
                 provideRouteAlternatives: false,
                 travelMode: ({ WalkingMan: 'WALKING', Bike: 'BICYCLING' })[$("#travelWith").val()] || 'DRIVING',
                 unitSystem: google.maps.UnitSystem.METRIC
@@ -502,6 +504,11 @@
                 updateMap();
             });
 
+            $(".pickOnMap").click(function () { var k = $(this).data("for"); setPickMode(pickMode === k ? null : k); });
+            $(document).on("keydown", function (ev) { if (ev.key === "Escape" && pickMode) setPickMode(null); });
+            // typing a place name replaces a point picked on the map
+            $("#fromLocation").on("input", function () { pickAuto.from = false; clearPick("from"); });
+            $("#toLocation").on("input", function () { pickAuto.to = false; clearPick("to"); });
             $("#createByRoute").click(function () {
                 createTrackByRoute();
             });
@@ -693,7 +700,44 @@
         var markerFinish;
         var points;
 
+        // Start and finish can be picked on the map instead of typing a place name.
+        var pickMode = null, picked = { from: null, to: null }, pickPins = {}, pickAuto = { from: false, to: false };
+
+        function setPickMode(key) {
+            pickMode = key;
+            $(".pickOnMap").removeClass("on").filter(function () { return $(this).data("for") === key; }).addClass("on");
+            $("#map").css("cursor", key ? "crosshair" : "");
+            if (key) toastr.info(key === "from" ? T("PickStart", "Click the map to place the start.") : T("PickFinish", "Click the map to place the finish."));
+        }
+
+        function clearPick(key) {
+            picked[key] = null;
+            if (pickPins[key]) { map.removeLayer(pickPins[key]); pickPins[key] = null; }
+        }
+
+        function setPicked(key, latlng) {
+            picked[key] = { lat: latlng.lat, lng: latlng.lng };
+            if (pickPins[key]) map.removeLayer(pickPins[key]);
+            pickPins[key] = L.marker(latlng, {
+                draggable: true,
+                icon: L.divIcon({ className: "pickPinWrap", html: '<span class="pickPin ' + key + '">' + (key === "from" ? "A" : "B") + "</span>", iconSize: [28, 28], iconAnchor: [14, 14] })
+            }).addTo(map).on("dragend", function (ev) { setPicked(key, ev.target.getLatLng()); });
+            var field = $(key === "from" ? "#fromLocation" : "#toLocation");
+            // the place name is only filled in when the field is empty or still holds a name taken from the map
+            if (!$.trim(field.val()) || pickAuto[key]) {
+                field.val(latlng.lat.toFixed(5) + ", " + latlng.lng.toFixed(5)); pickAuto[key] = true;
+                if (window.sytReverseGeocode) sytReverseGeocode(latlng.lat, latlng.lng).then(function (name) {
+                    if (name && picked[key] && pickAuto[key]) field.val(name);
+                });
+            }
+        }
+
         function onMapClick(e) {
+            if (pickMode) {
+                setPicked(pickMode, e.latlng);
+                setPickMode(null);
+                return;
+            }
             updateTrackData(e);
             updateMap();
         }

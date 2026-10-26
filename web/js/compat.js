@@ -28,7 +28,16 @@
         return d.promise();
     }
 
+    // A point that was picked on the map (LatLng, {lat,lng} or "lat, lng") needs no search.
+    function asPoint(address) {
+        if (address && typeof address === "object") return toLatLng(address);
+        var m = /^\s*(-?\d+(?:\.\d+)?)\s*[,;]\s*(-?\d+(?:\.\d+)?)\s*$/.exec(String(address));
+        return m && Math.abs(m[1]) <= 90 && Math.abs(m[2]) <= 180 ? new LatLng(m[1], m[2]) : null;
+    }
+
     function geocodeOne(address) {
+        var pt = asPoint(address);
+        if (pt) return $.Deferred().resolve({ loc: pt, name: "" }).promise();
         var tries = [address];
         var simple = address.replace(/[0-9]+/g, " ").replace(/\s+/g, " ").trim();    // house numbers often confuse the search
         if (simple && simple !== address) tries.push(simple);
@@ -69,6 +78,19 @@
         while (out.length > max) { eps *= 1.5; out = rdp(eps); }
         return out;
     }
+
+    // Name of the place at a point (Nominatim reverse search, queued like the other requests). Resolves to a short text or "".
+    window.sytReverseGeocode = function (lat, lng) {
+        var d = $.Deferred();
+        geoQueue = geoQueue.then(function () {
+            var gap = $.Deferred();
+            $.getJSON("https://nominatim.openstreetmap.org/reverse", { lat: lat, lon: lng, format: "json", zoom: 16 })
+                .always(function () { setTimeout(gap.resolve, 1100); })
+                .then(function (r) { d.resolve((r && r.display_name ? r.display_name.split(",").slice(0, 3).join(",").trim() : "")); }, function () { d.resolve(""); });
+            return gap.promise();
+        });
+        return d.promise();
+    };
 
     function Geocoder() { }
     Geocoder.prototype.geocode = function (req, cb) {

@@ -319,8 +319,8 @@ syt.api.searchFlickrImages = function (track, p, tolerancy, low) {
 syt.api.searchSYTImages = function (track, p, tolerancy) {
     var deferred = $.Deferred();
 
-    // Our own photos are private and are never shown.
-    if (true) {
+    // Public photos are shown to everybody and private ones only to their owner (the server decides who sees what).
+    if (!$('#useSYTImagesCheckBox').is(':checked') || track.useSYTImages == "No") {
         var data = { photos: [] };
         deferred.resolve(data);
     }

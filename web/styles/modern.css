@@ -459,3 +459,11 @@ html.compact .sytPlace span { font-size: 8px; }
     content: ""; position: absolute; left: 50%; top: 100%; margin-left: -6px;
     border: 6px solid transparent; border-top: 8px solid #b00000; border-bottom: 0;
 }
+
+/* start / finish picked on the map in the editor */
+.pickOnMap { margin-left: 4px; border: 1px solid #b7c4d6; background: #fff; border-radius: 8px; width: 30px; height: 28px; cursor: pointer; color: #225EAC; }
+.pickOnMap:hover, .pickOnMap.on { background: #225EAC; color: #fff; border-color: #225EAC; }
+.pickPinWrap { background: none; border: 0; }
+.pickPin { display: flex; width: 28px; height: 28px; border-radius: 50%; align-items: center; justify-content: center; color: #fff; font: 700 14px system-ui, sans-serif; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
+.pickPin.from { background: #1f9d55; }
+.pickPin.to { background: #d83a3a; }

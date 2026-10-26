@@ -43,8 +43,14 @@ public partial class services_get_panoramas : System.Web.UI.Page
 
         string order = Request.QueryString["order"];
 
-        // Our own photos are private: never serve them to the map.
-        var Images = new List<GetUserAndPublicImagesByLocation_Result>();
+        // Public photos for everybody; a private photo only for the account it belongs to (administrators do not see other people's private photos here).
+        Guid userId = Tools.GetUserId(this);
+        var db = new SeeYourTravelEntities();
+        var Images = db.Images
+            .Where(i => i.Lat != null && i.Lng != null && i.Lat >= miny && i.Lat <= maxy && i.Lng >= minx && i.Lng <= maxx)
+            .Where(i => i.IsPublic || i.ImageUsers.Any(u => u.UserID == userId))
+            .Take(600)
+            .ToList();
 
         Shuffle(Images);
 
@@ -88,6 +94,8 @@ public partial class services_get_panoramas : System.Web.UI.Page
         //Response.AppendHeader("Pragma", "no-cache");
         //Response.AppendHeader("Expires", "0");
 
+        Response.Cache.SetCacheability(HttpCacheability.NoCache);   // the answer depends on who is asking
+        Response.Cache.SetNoStore();
         Response.ContentType = "application/javascript; charset=utf-8";
         Response.Headers.Add("X-Frame-Options", "SAMEORIGIN");
         Response.Headers.Add("Content-Disposition", "Attachment");

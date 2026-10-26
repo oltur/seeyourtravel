@@ -60,9 +60,9 @@ public partial class services_get_thumbnail : System.Web.UI.Page
                 case 8: bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone); break;
             }
         }
-        catch (ArgumentException)
+        catch (Exception)
         {
-            // no orientation tag
+            // no orientation tag (Mono reports that as a GDI+ "PropertyNotFound" error, not an ArgumentException)
         }
     }
 
@@ -102,8 +102,12 @@ public partial class services_get_thumbnail : System.Web.UI.Page
         }
 
         var lastModified = File.GetLastWriteTime(physicalPath);
+        // the ready-made 480 px copy (already rotated) is much quicker to decode than a full size original
+        string sourcePath = physicalPath;
+        string small = Path.Combine(context.Server.MapPath("../data/thumbs/480/"), Path.GetFileNameWithoutExtension(physicalPath) + ".jpg");
+        if (File.Exists(small)) sourcePath = small;
         // Build the thumbnail and send it to the output stream
-        using (var stream = new FileStream(physicalPath, FileMode.Open, FileAccess.Read))
+        using (var stream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
         {
             Bitmap target = null;
             try

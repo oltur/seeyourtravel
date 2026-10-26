@@ -35,10 +35,19 @@
             <div class="pfNote" style="margin-top: 0"><i class="fa fa-lock"></i> <span class="i" data-i18n="PhotosPrivate">Your own photos are private: they are never shown to other visitors or on the map.</span></div>
 
             <h3 class="i" data-i18n="MyPhotos">My photos</h3>
+            <div class="pfChips" id="photoFilter">
+                <button type="button" data-f="all" class="on"><span class="i" data-i18n="All">All</span> <em>0</em></button>
+                <button type="button" data-f="pub"><i class="fa fa-globe"></i> <span class="i" data-i18n="Public">Public</span> <em>0</em></button>
+                <button type="button" data-f="priv"><i class="fa fa-lock"></i> <span class="i" data-i18n="Private">Private</span> <em>0</em></button>
+            </div>
             <div class="pfGrid" id="photosGrid"></div>
             <div class="pfEmpty" id="noPhotos" style="display: none"><span class="i" data-i18n="NoPhotosYet">No photos yet.</span></div>
 
             <div id="photoInfo" style="display: none">
+                <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px">
+                    <span class="pfBadge" id="photoStatus"></span>
+                    <button type="button" class="pfBtn" id="buttonTogglePub" style="padding: 3px 10px; font-size: 12px"></button>
+                </div>
                 <label for="imageLatLng" class="i" data-i18n="Photocoordinates">Photo coordinates</label>
                 <input type="text" readonly="readonly" id="imageLatLng" value="" />
                 <div class="pfNote"><i class="fa fa-map-marker"></i> <span class="i" data-i18n="ClickMapToPlace">Click the map to set where this photo was taken.</span></div>
@@ -79,7 +88,7 @@
             $.ajax({
                 url: 'services/update_photodata.aspx?data=' + encodeURIComponent([p.id, String(p.desc).replace(/;/g, ','), p.pub, p.lat, p.lng].join(';')),
                 success: function () { toastr.info(T('PhotoUpdated', 'Photo is updated'), '', { timeOut: 3000 }); },
-                error: function (x, s, e) { toastr.error(s + ',' + e, 'ERROR', { timeOut: 5000 }); }
+                error: function (x, s, e) { toastr.error((x.responseText && x.responseText.length < 200 ? x.responseText : s + ',' + e), 'ERROR', { timeOut: 8000 }); }
             });
         }
 
@@ -96,9 +105,50 @@
             current = p;
             $('#photosGrid button').removeClass('sel').filter(function () { return $(this).data('id') === p.id; }).addClass('sel');
             $('#photoInfo').show();
+            var isPub = p.pub == '1';
+            $('#photoStatus').attr('class', 'pfBadge ' + (isPub ? 'pub' : 'priv'))
+                .html('<i class="fa fa-' + (isPub ? 'globe' : 'lock') + '"></i> ' + esc(isPub ? T('Public', 'Public') : T('Private', 'Private')));
+            $('#buttonTogglePub').text(isPub ? T('MakePrivate', 'Make private') : T('MakePublic', 'Make public'));
             $('#imageLatLng').val(hasLoc(p) ? parseFloat(p.lat).toFixed(5) + '; ' + parseFloat(p.lng).toFixed(5) : T('NoLocation', 'no location yet'));
             $('#buttonOpenPhoto').attr('href', 'data/images/' + p.id);
             showPhoto(p);
+        }
+
+        // thousands of photos: only the thumbnails that are (nearly) visible are requested
+        function lazyThumbs(grid) {
+            var set = function (el) { el.style.backgroundImage = 'url(' + el.getAttribute('data-bg') + ')'; };
+            var btns = grid.querySelectorAll('button[data-bg]');
+            if (!('IntersectionObserver' in window)) { btns.forEach(set); return; }
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) { if (e.isIntersecting) { set(e.target); io.unobserve(e.target); } });
+            }, { root: grid, rootMargin: '300px' });
+            btns.forEach(function (b) { io.observe(b); });
+        }
+
+        var filter = 'all';
+        var isPub = function (p) { return p.pub == '1'; };
+
+        // the grid and the map pins show the current filter; every photo carries a public (globe) or private (lock) flag
+        function renderGrid(fit) {
+            var nPub = photos.filter(isPub).length;
+            $('#photoFilter [data-f=all] em').text(photos.length);
+            $('#photoFilter [data-f=pub] em').text(nPub);
+            $('#photoFilter [data-f=priv] em').text(photos.length - nPub);
+            var shown = photos.filter(function (p) { return filter === 'all' || (filter === 'pub') === isPub(p); });
+            var grid = $('#photosGrid').empty();
+            markersImages.clearLayers();
+            shown.forEach(function (p) {
+                var pub = isPub(p);
+                $('<button type="button">').data('id', p.id).attr('title', p.desc + ' (' + (pub ? T('Public', 'Public') : T('Private', 'Private')) + ')')
+                    .toggleClass('noloc', !hasLoc(p)).toggleClass('sel', !!current && current.id === p.id)
+                    .attr('data-bg', 'data/thumbs/480/' + encodeURIComponent(p.id.replace(/\.[^.]*$/, '')) + '.jpg')   // ready-made copy, loaded when scrolled into view
+                    .append('<span class="pfFlag ' + (pub ? 'pub' : 'priv') + '"><i class="fa fa-' + (pub ? 'globe' : 'lock') + '"></i></span>')
+                    .click(function () { select(p); }).appendTo(grid);
+                if (hasLoc(p)) L.marker([parseFloat(p.lat), parseFloat(p.lng)], { icon: L.divIcon({ className: 'pfDot ' + (pub ? 'pub' : 'priv'), iconSize: [14, 14] }) })
+                    .on('click', function () { select(p); }).addTo(markersImages);
+            });
+            lazyThumbs(grid[0]);
+            if (fit && markersImages.getLayers().length) map.fitBounds(markersImages.getBounds(), { paddingTopLeft: [40, 40], paddingBottomRight: [440, 40], maxZoom: 12 });
         }
 
         function fillPhotos() {
@@ -115,24 +165,21 @@
                 var seen = {};
                 $.each($.trim(data) ? data.split('\n') : [], function (_, r) {
                     var q = r.split(';');
-                    if (seen[q[0]]) return;
+                    if (q.length < 5 || seen[q[0]]) return;   // a description with a line break leaves a broken fragment
                     seen[q[0]] = 1;
                     photos.push({ id: q[0], desc: q[1], pub: q[2], lat: q[3], lng: q[4] });
                 });
-                var grid = $('#photosGrid').empty();
-                photos.forEach(function (p) {
-                    $('<button type="button">').data('id', p.id).attr('title', p.desc).toggleClass('noloc', !hasLoc(p))
-                        .css('background-image', 'url(services/get_thumbnail.aspx?size=small&p=' + encodeURIComponent(p.id) + ')')
-                        .click(function () { select(p); }).appendTo(grid);
-                    if (hasLoc(p)) L.marker([parseFloat(p.lat), parseFloat(p.lng)], { icon: L.icon({ iconUrl: 'img/picture.png', iconSize: [20, 20], iconAnchor: [10, 10] }) })
-                        .on('click', function () { select(p); }).addTo(markersImages);
-                });
+                renderGrid(true);
                 $('#noPhotos').toggle(!photos.length);
-                if (markersImages.getLayers().length) map.fitBounds(markersImages.getBounds(), { paddingTopLeft: [40, 40], paddingBottomRight: [440, 40], maxZoom: 12 });
             });
         }
 
         $(function () {
+            $('#photoFilter').on('click', 'button', function () {
+                filter = $(this).data('f');
+                $('#photoFilter button').removeClass('on'); $(this).addClass('on');
+                renderGrid(true);
+            });
             init(null);
             map.setView([50.430981, 30.539267], 6);
             markers = L.featureGroup().addTo(map);
@@ -155,6 +202,16 @@
             }
 
             fillPhotos();
+
+            $('#buttonTogglePub').click(function () {
+                if (!current) return;
+                var making = current.pub != '1';
+                if (making && !confirm(T('MakePublicConfirm', 'Make this photo public? Check that nobody is recognisable in it.'))) return;
+                current.pub = making ? '1' : '0';
+                updatePhotoData(current);
+                select(current);
+                renderGrid(false);
+            });
 
             $('#buttonDelete').click(function () {
                 if (!current) return;

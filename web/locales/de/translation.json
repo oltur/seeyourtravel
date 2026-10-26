@@ -229,7 +229,7 @@
   "Role": "Rolle",
   "RecentTracks": "Deine Strecken",
   "AllTracks": "Alle Strecken",
-  "PhotosPrivate": "Deine eigenen Fotos sind privat: Sie werden anderen Besuchern nie gezeigt und erscheinen nicht auf der Karte.",
+  "PhotosPrivate": "Fotos mit Personen sind als privat markiert. Im Moment wird keines deiner Fotos anderen Besuchern gezeigt.",
   "BackToMap": "Zurück zur Karte",
   "Open": "Öffnen",
   "Delete": "Löschen",
@@ -267,5 +267,11 @@
   "EditPlace": "Ort bearbeiten",
   "SaveChanges": "Änderungen speichern",
   "PlaceUpdated": "Ort aktualisiert",
-  "YouAreHere": "Du bist hier"
+  "YouAreHere": "Du bist hier",
+  "All": "Alle",
+  "MakePublic": "Öffentlich machen",
+  "MakePrivate": "Privat machen",
+  "MakePublicConfirm": "Dieses Foto öffentlich machen? Prüfe, dass niemand darauf erkennbar ist.",
+  "PickStart": "Klicke auf die Karte, um den Start zu setzen.",
+  "PickFinish": "Klicke auf die Karte, um das Ziel zu setzen."
 }

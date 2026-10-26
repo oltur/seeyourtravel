@@ -110,3 +110,16 @@
 .profilePanel .ui-resizable-ne { top: 0; right: 0; } .profilePanel .ui-resizable-nw { top: 0; left: 0; }
 .profilePanel .ui-resizable-se { bottom: 0; right: 0; } .profilePanel .ui-resizable-sw { bottom: 0; left: 0; }
 .profilePanel .ui-resizable-ne, .profilePanel .ui-resizable-nw, .profilePanel .ui-resizable-se, .profilePanel .ui-resizable-sw { width: 14px; height: 14px; }
+
+/* public / private marks on photos */
+.pfChips { display: flex; gap: 6px; margin: 0 0 8px; flex-wrap: wrap; }
+.pfChips button { border: 1px solid #cfd9e6; background: #fff; border-radius: 14px; padding: 4px 10px; font-size: 12px; color: #3a4a5e; cursor: pointer; }
+.pfChips button em { font-style: normal; color: #7a8aa0; margin-left: 2px; }
+.pfChips button.on { background: #225EAC; border-color: #225EAC; color: #fff; }
+.pfChips button.on em { color: #cfe1f7; }
+.pfFlag { position: absolute; left: 4px; top: 4px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.pfFlag.pub { background: #23a455; }
+.pfFlag.priv { background: rgba(60, 70, 85, .85); }
+.pfDot { border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.pfDot.pub { background: #23a455; }
+.pfDot.priv { background: #5b6b80; }
