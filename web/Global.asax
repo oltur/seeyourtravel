@@ -67,6 +67,13 @@
         return autoUserId;
     }
 
+    // photo files are served by PhotoHandler, which checks who may see a private photo (App_Code/PhotoGuard.cs)
+    protected void Application_PostMapRequestHandler(Object sender, EventArgs e)
+    {
+        var h = PhotoRoute.HandlerFor(HttpContext.Current);
+        if (h != null) HttpContext.Current.Handler = h;
+    }
+
     protected void Application_PostAcquireRequestState(Object sender, EventArgs e)
     {
         var session = HttpContext.Current.Session;

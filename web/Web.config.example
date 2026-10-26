@@ -29,7 +29,7 @@
         <allow roles="admins" />
         <deny users="*" />
       </authorization>
-    </system.web>
+  </system.web>
   </location>
   <location path="profile">
     <system.web>

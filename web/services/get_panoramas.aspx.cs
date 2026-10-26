@@ -45,14 +45,16 @@ public partial class services_get_panoramas : System.Web.UI.Page
 
         // Public photos for everybody; a private photo only for the account it belongs to (administrators do not see other people's private photos here).
         Guid userId = Tools.GetUserId(this);
+        double kx = Math.Cos(y * Math.PI / 180);   // a degree of longitude is shorter than one of latitude
         var db = new SeeYourTravelEntities();
         var Images = db.Images
             .Where(i => i.Lat != null && i.Lng != null && i.Lat >= miny && i.Lat <= maxy && i.Lng >= minx && i.Lng <= maxx)
             .Where(i => i.IsPublic || i.ImageUsers.Any(u => u.UserID == userId))
-            .Take(600)
+            .OrderBy(i => (i.Lat.Value - y) * (i.Lat.Value - y) + (i.Lng.Value - x) * kx * (i.Lng.Value - x) * kx)   // nearest to the centre of the box first
+            .Take(400)
             .ToList();
 
-        Shuffle(Images);
+        // (no shuffle: nearest first)
 
         //XmlDocument doc = new XmlDocument();
         //    doc.Load(Server.MapPath(@"..\data\photos.xml"));
@@ -78,7 +80,7 @@ public partial class services_get_panoramas : System.Web.UI.Page
                 string fileUrl = d != null ? PhotoDerivatives.UrlFor(480, file) : urlThumbnail;
                 string bigUrl = File.Exists(PhotoDerivatives.PathFor(Server, 1600, file)) ? PhotoDerivatives.UrlFor(1600, file) : url;
                 int pw = d != null ? d[0] : 100, ph = d != null ? d[1] : 100;
-                items.Append("{\"height\":" + ph + ",\"latitude\":" + ((decimal)Image.Lat).ToString() + ",\"longitude\":" + ((decimal)Image.Lng).ToString() + ",\"owner_id\":999999,\"owner_name\":\"-----\",\"owner_url\":\"http://www.example.com/\",\"photo_file_url\":\"" + fileUrl + "\",\"big_url\":\"" + bigUrl + "\",\"photo_id\":9999999999,\"photo_title\":\"TBD\",\"photo_url\":\"" + url + "\",\"upload_date\":\"1 January 1901\",\"width\":" + pw + "}");
+                items.Append("{\"syt_public\":" + (Image.IsPublic ? "true" : "false") + ",\"height\":" + ph + ",\"latitude\":" + ((decimal)Image.Lat).ToString() + ",\"longitude\":" + ((decimal)Image.Lng).ToString() + ",\"owner_id\":999999,\"owner_name\":\"-----\",\"owner_url\":\"http://www.example.com/\",\"photo_file_url\":\"" + fileUrl + "\",\"big_url\":\"" + bigUrl + "\",\"photo_id\":9999999999,\"photo_title\":\"TBD\",\"photo_url\":\"" + url + "\",\"upload_date\":\"1 January 1901\",\"width\":" + pw + "}");
             }
         }
 

@@ -24,6 +24,6 @@
     place.Lat = lat;
     place.Lng = lng;
     place.IsPublic = Request["isPublic"] == "1";
-    db.SaveChanges();
+    db.SaveChanges(); PhotoGuard.Invalidate();
     Response.Write("OK");
 %>

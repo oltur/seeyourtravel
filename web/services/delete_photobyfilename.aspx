@@ -12,7 +12,7 @@
     global::Image image = new global::Image() { ImageID = imageId };
     db.Images.Attach(image);
     db.Images.Remove(image);
-    db.SaveChanges();
+    db.SaveChanges(); PhotoGuard.Invalidate();
 
     Response.Write(sb);
 %>    

@@ -90,6 +90,12 @@ public partial class services_get_thumbnail : System.Web.UI.Page
             throw new HttpException("Invalid photo name.");
         }
         string physicalPath = FindPhoto(context.Server.MapPath("../data/images/"), Path.GetFileNameWithoutExtension(photo));
+        if (!PhotoGuard.CanView(context, photo))
+        {
+            context.Response.StatusCode = 404;      // private photo of somebody else: behave as if it did not exist
+            context.Response.Cache.SetCacheability(HttpCacheability.NoCache);
+            return;
+        }
 
         if (!File.Exists(physicalPath))
         {

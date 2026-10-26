@@ -654,22 +654,128 @@ function arrangePhotos(photos) {
     return out;
 }
 
-// Size every photo to the strip height and place them side by side (cheap: no reloading, used live while resizing)
-function layoutStrip(h) {
-    var x = 0;
-    scrollerContent.children().each(function () {
-        var img = this.getElementsByTagName("img")[0];
-        if (!img) return;
-        var ar = parseFloat(img.getAttribute("data-ar")) || (img.width / img.height) || 1.5;
-        var w = Math.round(ar * h);
-        img.style.width = w + "px"; img.style.height = h + "px";
-        img.width = w; img.height = h;
-        this.style.left = x + "px";
-        x += w;
-    });
-    curX = x;
-    fullW = x / 2;
+// ---- The strip is an endless queue -----------------------------------------------------------------------------
+// Photos scroll past from right to left. A new batch of photos is not shown by rebuilding the strip: what is on screen stays,
+// the photos that have not come into view yet are replaced by the new ones, the new ones are added behind the visible
+// photos, and photos that have scrolled out of sight are removed. When the queue gets short the current photos are queued again.
+var stripCycleIdx = 0;      // next photo of stripPhotos to queue again
+var stripH = 0;             // height the photos were laid out for
+var lastStripTrim = 0;
+
+function stripItems() { return scrollerContent.children('li').get(); }
+
+// one photo as a strip item (not placed yet)
+function makeStripItem(ph, i, divHeight) {
+    var nextLi = document.createElement("li");
+    var nextLink = document.createElement("a");
+    var nextImage = document.createElement("img");
+    nextLink.href = ph.photo_url;
+    nextLink.target = "_blank";
+    nextLink.setAttribute("data-index", i);
+    nextLink.setAttribute("aria-label", ph.photo_title && ph.photo_title !== "TBD" ? ph.photo_title : "Photo " + (i + 1));
+
+    nextImage.width = ph.width * divHeight / ph.height;
+    nextImage.height = divHeight;
+    nextImage.alt = ph.photo_title && ph.photo_title !== "TBD" ? ph.photo_title : "";
+    nextImage.loading = "lazy";
+    if (cacheImages == true) {
+        getFromCacheOrServer(ph.photo_file_url, nextImage, function (obj, data) {
+            obj.src = data;
+        });
+    }
+    else {
+        nextImage.src = ph.photo_file_url;
+    }
+
+    nextImage.title = photoCredit(ph);
+    nextImage.classList.add("photo");
+    nextImage.setAttribute("data-ar", ph.width / ph.height);
+    // Own photos: the original file; public photos (Commons): a large version.
+    var full = ph.big_url || ph.photo_file_url;
+    nextImage.setAttribute("data-full", full);
+    nextImage.setAttribute("data-credit", photoCredit(ph));
+    nextLink.appendChild(nextImage);
+    nextLi.appendChild(nextLink);
+    var badge = document.createElement("span");
+    var ownPrivate = ph.source === "own" && ph.syt_public === false;   // our own photo that only its owner may see
+    badge.className = "photoBadge " + (ph.source === "own" ? (ownPrivate ? "own priv" : "own") : "pub");
+    if (ph.source === "own") badge.innerHTML = '<i class="fa fa-map-marker"></i>';     // green pin: public, red pin: private
+    else badge.textContent = "🌍";
+    badge.title = ph.source === "own" ? (ownPrivate ? T("BadgeOwnPrivate", "Your photo: private, only you can see it") : T("BadgeOwnPublic", "Your photo: public")) : T("BadgePublic", "Public photo (Wikimedia Commons)");
+    nextLi.appendChild(badge);
+    nextLi._ph = ph;
+    return nextLi;
 }
+
+function placeStripItem(li, x, h) {
+    var img = li.getElementsByTagName("img")[0];
+    var ar = parseFloat(img.getAttribute("data-ar")) || (img.width / img.height) || 1.5;
+    var w = Math.round(ar * h);
+    img.style.width = w + "px"; img.style.height = h + "px";
+    img.width = w; img.height = h;
+    li.style.left = x + "px";
+    li._left = x; li._w = w;
+    return w;
+}
+
+// Size every photo to the strip height and place them side by side (cheap: no reloading, used live while resizing).
+// The first photo keeps its position, so the part of the strip in view can be kept.
+function layoutStrip(h) {
+    var items = stripItems(), x = items.length ? (items[0]._left || 0) : 0;
+    items.forEach(function (li) { x += placeStripItem(li, x, h); });
+    stripH = h;
+    curX = x;
+    fullW = x;       // "something to scroll" for the code that only needs to know that
+}
+
+function stripEnd() {
+    var items = stripItems(), last = items[items.length - 1];
+    return last ? last._left + last._w : 0;
+}
+
+// append photos behind the last one
+function appendToStrip(list, h) {
+    var ul = scrollerContent[0], x = stripEnd(), first = !stripItems().length;
+    list.forEach(function (ph, k) {
+        var li = makeStripItem(ph, k, h);
+        ul.appendChild(li);
+        x += placeStripItem(li, x, h);
+    });
+    curX = x; fullW = x;
+    return first;
+}
+
+// keep about two viewport widths of photos in front of the viewer: the queue never runs dry
+function ensureStripAhead() {
+    if (!stripPhotos.length) return;
+    var el = scroller[0], h = stripH || $("#imageDiv").height();
+    var need = el.scrollLeft + el.clientWidth * 2, guard = 0, add = [];
+    var end = stripEnd();
+    while (end < need && guard++ < 60) {
+        var ph = stripPhotos[stripCycleIdx++ % stripPhotos.length];
+        add.push(ph);
+        end += Math.round((ph.width / ph.height) * h);
+    }
+    if (add.length) appendToStrip(add, h);
+}
+
+// remove photos that have scrolled out of sight (a viewport is kept behind, so dragging back still works)
+function trimStripPassed() {
+    var el = scroller[0], limit = el.scrollLeft - el.clientWidth, items = stripItems(), shift = 0;
+    while (items.length > 1 && items[0]._left + items[0]._w < limit) {
+        var li = items.shift();
+        li.parentNode.removeChild(li);
+    }
+    // the positions would grow for ever: move everything back to the start now and then
+    if (items.length && items[0]._left > 4000) {
+        shift = items[0]._left;
+        items.forEach(function (li) { li._left -= shift; li.style.left = li._left + "px"; });
+        el.scrollLeft = el.scrollLeft - shift;
+        stripShifted = shift;
+        curX = stripEnd(); fullW = curX;
+    }
+}
+var stripShifted = 0;   // set when the positions were moved, so the scroller code can follow
 
 var lastStripArgs = null;
 function get_photos_success(photos, p, tolerancy, force) {
@@ -683,63 +789,47 @@ function get_photos_success(photos, p, tolerancy, force) {
     var divHeight = $("#imageDiv").height();
 
     photos = arrangePhotos(photos);
-    stripPhotos = photos;
-    count = photos.length;
     $("#lblCoord").text(p.lat + " " + p.lng);
     if (window.flyInPhotos) window.flyInPhotos(photos, p, tolerancy);
+
     var imageUl = imageDiv.children();
-    imageUl.fadeOut(100);
-    imageUl.empty();
+    var current = stripItems();
+
+    if (!photos.length && current.length) {
+        // nothing new here: the photos on their way keep scrolling
+        return;
+    }
+    stripPhotos = photos;
+    count = photos.length;
+    stripCycleIdx = 0;
     $("#photoEmpty").remove();
-    for (var i = 0; i < photos.length; i++) {
-        var ph = photos[i];
-        var nextLi = document.createElement("li");
-        var nextLink = document.createElement("a");
-        var nextImage = document.createElement("img");
-        nextLink.href = ph.photo_url;
-        nextLink.target = "_blank";
-        nextLink.setAttribute("data-index", i);
-        nextLink.setAttribute("aria-label", ph.photo_title && ph.photo_title !== "TBD" ? ph.photo_title : "Photo " + (i + 1));
 
-        nextImage.width = ph.width * divHeight / ph.height;
-        nextImage.height = divHeight;
-        nextImage.alt = ph.photo_title && ph.photo_title !== "TBD" ? ph.photo_title : "";
-        nextImage.loading = "lazy";
-        if (cacheImages == true) {
-            getFromCacheOrServer(ph.photo_file_url, nextImage, function (obj, data) {
-                obj.src = data;
-            });
-        }
-        else {
-            nextImage.src = ph.photo_file_url;
-        }
-
-        nextImage.title = photoCredit(ph);
-        nextImage.classList.add("photo");
-        nextImage.setAttribute("data-ar", ph.width / ph.height);
-        // Own photos: the original file; public photos (Commons): a large version.
-        var full = ph.big_url || ph.photo_file_url;
-        nextImage.setAttribute("data-full", full);
-        nextImage.setAttribute("data-credit", photoCredit(ph));
-        nextLink.appendChild(nextImage);
-        nextLi.appendChild(nextLink);
-        var badge = document.createElement("span");
-        badge.className = "photoBadge " + (ph.source === "own" ? "own" : "pub");
-        badge.textContent = ph.source === "own" ? "📍" : "🌍";
-        badge.title = ph.source === "own" ? T("BadgeOwn", "Photo taken here") : T("BadgePublic", "Public photo (Wikimedia Commons)");
-        nextLi.appendChild(badge);
-
-        imageUl[0].appendChild(nextLi);
+    if (force || !current.length) {
+        // first batch (or a re-layout): build the queue from scratch
+        imageUl.empty();
+        appendToStrip(photos, divHeight);
+        stripH = divHeight;
+        if (!photos.length) $('<div id="photoEmpty"></div>').text($.t("No photos here yet")).appendTo(scroller);
+        viewportW = scroller.width();
+        return;
     }
 
-    if (!photos.length) {
-        $('<div id="photoEmpty"></div>').text($.t("No photos here yet")).appendTo(scroller);
-    }
-
-    scrollerContent.children().clone().appendTo(scrollerContent);
-    layoutStrip(divHeight);
+    // a new batch while photos are scrolling: what is in view stays; what has not come into view yet is replaced
+    var el = scroller[0], right = el.scrollLeft + el.clientWidth, keep = {};
+    current.forEach(function (li) {
+        if (li._left > right + 4) li.parentNode.removeChild(li);       // not seen yet: the new batch takes its place
+        else keep[photoKey(li._ph)] = true;                            // in view or just passed: do not show it again right away
+    });
+    appendToStrip(photos.filter(function (ph) { return !keep[photoKey(ph)]; }), divHeight);
+    ensureStripAhead();
     viewportW = scroller.width();
-    imageUl.fadeIn(100);
+}
+
+// the photos of the strip in the order they are queued, each photo once (the viewer pages through these)
+function stripViewerList() {
+    var seen = {}, list = [];
+    stripItems().forEach(function (li) { var k = photoKey(li._ph); if (!seen[k]) { seen[k] = true; list.push(li._ph); } });
+    return list;
 }
 
 //#region Fly-in photos
@@ -932,6 +1022,7 @@ var photoViewer = (function () {
             html += ' · <a href="' + esc(ph.photo_url) + '" target="_blank" rel="noopener">' + esc(T("SourceCommons", "Source: Wikimedia Commons")) + '</a>';
         }
         if (ph.source === "own" && ph.photo_url) html += ' \u00b7 <a href="' + esc(ph.photo_url) + '" target="_blank" rel="noopener">' + esc(T("Original", "Original")) + '</a>';
+        if (ph.source === "own" && typeof ph.syt_public === "boolean") html += ' \u00b7 <i class="fa fa-map-marker" style="color:' + (ph.syt_public ? '#2fbf6c' : '#ff5a52') + '"></i> ' + esc(ph.syt_public ? T("Public", "Public") : T("Private", "Private"));
         if (typeof ph.latitude === "number" && typeof ph.longitude === "number" && typeof map !== "undefined")
             html += ' · <a href="#" class="pv-map">' + esc(T("ShowOnMap", "Show on map")) + '</a>';
         html += '<span class="pv-count">' + (idx + 1) + ' / ' + list.length + '</span>';
@@ -1814,7 +1905,8 @@ $(function () {
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2) return;
         e.preventDefault();
         if (dragMoved) return;
-        photoViewer.open(parseInt(this.getAttribute('data-index'), 10));
+        var li = $(this).closest('li')[0], list = stripViewerList();
+        photoViewer.open(Math.max(0, list.indexOf(li && li._ph)), list);
     });
 });
 
@@ -1833,10 +1925,7 @@ $(function () {
         var dx = e.clientX - startX;
         if (!dragMoved && Math.abs(dx) > 6) { dragMoved = true; $('#photoPreview').hide(); try { el.setPointerCapture(pid); } catch (x) { } }
         if (dragMoved) {
-            var max = (fullW * 2) - el.clientWidth;
-            var v = startLeft - dx;
-            if (fullW > 0) { if (v < 0) v += fullW; if (v > max) v -= fullW; }
-            el.scrollLeft = v;
+            el.scrollLeft = Math.max(0, startLeft - dx);
         }
     });
     function end() { down = false; setTimeout(function () { dragMoved = false; }, 0); }
@@ -1879,9 +1968,9 @@ $(function () {
     var raf = 0, pendingH = null;
     // resize the photos with the strip, keeping the same part of the strip in view
     function applyLive(h) {
-        var oldFull = fullW, left = scroller.scrollLeft();
+        var oldH = stripH, left = scroller.scrollLeft(), items = stripItems(), base = items.length ? items[0]._left : 0;
         layoutStrip(h);
-        if (oldFull > 0 && fullW > 0) scroller.scrollLeft(left * fullW / oldFull);
+        if (oldH > 0 && h > 0) scroller.scrollLeft(base + (left - base) * h / oldH);
     }
     $(window).on('resize', function () {
         var h = $strip.height(); if (h > maxH()) { applyLive(setH(maxH(), false)); }
@@ -1963,8 +2052,13 @@ $(function () {
         if (Math.abs(cur - Math.round(scrollPos)) > 2)
             scrollPos = cur;   // something else moved it (drag, photos were reloaded)
         scrollPos += controller.curSpeed * dt / 20;   // curSpeed is "pixels per 20ms"
-        if (scrollPos > fullW * 2 - scrollEl.clientWidth)
-            scrollPos -= fullW;
+        if (time - lastStripTrim > 400) {             // keep the queue: photos ahead are added, photos long passed are removed
+            lastStripTrim = time;
+            ensureStripAhead();
+            stripShifted = 0;
+            trimStripPassed();
+            if (stripShifted) { scrollPos -= stripShifted; cur = scrollEl.scrollLeft; }
+        }
         var next = Math.round(scrollPos);
         if (next !== cur) scrollEl.scrollLeft = next;
     };

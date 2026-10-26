@@ -273,5 +273,7 @@
   "MakePrivate": "Privat machen",
   "MakePublicConfirm": "Dieses Foto öffentlich machen? Prüfe, dass niemand darauf erkennbar ist.",
   "PickStart": "Klicke auf die Karte, um den Start zu setzen.",
-  "PickFinish": "Klicke auf die Karte, um das Ziel zu setzen."
+  "PickFinish": "Klicke auf die Karte, um das Ziel zu setzen.",
+  "BadgeOwnPrivate": "Dein Foto: privat, nur du siehst es",
+  "BadgeOwnPublic": "Dein Foto: öffentlich"
 }

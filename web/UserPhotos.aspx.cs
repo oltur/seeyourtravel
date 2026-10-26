@@ -49,7 +49,7 @@ public partial class UserPhotos : System.Web.UI.Page
                 image.Created = DateTime.Now;
                 db.Images.Add(image);
 
-                db.SaveChanges();
+                db.SaveChanges(); PhotoGuard.Invalidate();
 
                 ImageUser imageUser = new ImageUser();
                 imageUser.ImageUserID = Guid.NewGuid();
@@ -57,7 +57,7 @@ public partial class UserPhotos : System.Web.UI.Page
                 imageUser.UserID = userId;
                 db.ImageUsers.Add(imageUser);
 
-                db.SaveChanges();
+                db.SaveChanges(); PhotoGuard.Invalidate();
             }
         }
     }

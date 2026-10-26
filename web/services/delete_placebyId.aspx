@@ -28,7 +28,7 @@
         db.PlaceImages.RemoveRange(db.PlaceImages.Where(x => x.PlaceID == placeId));
         db.PlaceTypePlaces.RemoveRange(db.PlaceTypePlaces.Where(x => x.PlaceID == placeId));
         db.Places.Remove(place);
-        db.SaveChanges();
+        db.SaveChanges(); PhotoGuard.Invalidate();
     }
     Response.Write("OK");
 %>

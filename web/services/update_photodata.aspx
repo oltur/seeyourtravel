@@ -24,7 +24,7 @@
     image.IsPublic = isPublic;
 
 //    db.Images.Attach(image);
-    int nt = db.SaveChanges();
+    int nt = db.SaveChanges(); PhotoGuard.Invalidate();
 
     Response.Write(sb);
 %>    

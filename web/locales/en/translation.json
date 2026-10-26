@@ -273,5 +273,7 @@
   "MakePrivate": "Make private",
   "MakePublicConfirm": "Make this photo public? Check that nobody is recognisable in it.",
   "PickStart": "Click the map to place the start.",
-  "PickFinish": "Click the map to place the finish."
+  "PickFinish": "Click the map to place the finish.",
+  "BadgeOwnPrivate": "Your photo: private, only you can see it",
+  "BadgeOwnPublic": "Your photo: public"
 }

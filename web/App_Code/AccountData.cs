@@ -201,6 +201,7 @@ public static class AccountData
         db.Database.ExecuteSqlCommand("DELETE FROM UserRole WHERE UserID = @p0", userId);
         db.Database.ExecuteSqlCommand("DELETE FROM [User] WHERE UserID = @p0", userId);
 
+        PhotoGuard.Invalidate();
         return nTracks + " tracks, " + nPhotos + " photos, " + nPlaces + " places";
     }
 }

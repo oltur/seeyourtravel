@@ -325,24 +325,26 @@ syt.api.searchSYTImages = function (track, p, tolerancy) {
         deferred.resolve(data);
     }
     else {
-
-        var set = "full";
-        var count = 0;
-
+        // Relevance: our photos must really be near the current point. The search box is given in degrees and grows when
+        // few photos are found (up to 16 x); about 15 % of it, at most 8 km, is used as the distance (a street or a quarter, not a region).
+        var radius = Math.max(500, Math.min(8000, tolerancy * 111320 * 0.15));
+        var dLat = radius / 111320, dLng = dLat / Math.max(0.05, Math.cos(p.lat * Math.PI / 180));
         var divHeight = $("#imageDiv").height();
         var size = divHeight > 150 ? "medium" : "small";
-        var urlp = "services/get_panoramas.aspx?set=" + set + "&from=0&to=" + Math.max(track.numOfPhotos, 30).toString() + "&miny="
-            + (p.lat - tolerancy).toString()
-            + "&minx=" + (p.lng - tolerancy).toString()
-            + "&maxy=" + (p.lat + tolerancy).toString()
-            + "&maxx=" + (p.lng + tolerancy).toString()
+        var urlp = "services/get_panoramas.aspx?set=full&from=0&to=" + Math.max(track.numOfPhotos, 30).toString()
+            + "&miny=" + (p.lat - dLat) + "&minx=" + (p.lng - dLng) + "&maxy=" + (p.lat + dLat) + "&maxx=" + (p.lng + dLng)
             + "&size=" + size + "&mapfilter=true&order=popularity&callback=?";
+        var here = L.latLng(p.lat, p.lng);
 
         $.ajax({
             dataType: "jsonp",
             url: urlp,
             success: function (data) {
-                deferred.resolve(data);
+                // the box is a square: drop the corners and keep the nearest first
+                var near = (data.photos || []).map(function (ph) { ph._d = here.distanceTo(L.latLng(ph.latitude, ph.longitude)); return ph; })
+                    .filter(function (ph) { return ph._d <= radius; })
+                    .sort(function (a, b) { return a._d - b._d; });
+                deferred.resolve({ photos: near });
             },
             error: function (XMLHttpRequest, textStatus, errorThrown) {
                 console.log("SYT images status: " + textStatus); console.log("Error: " + errorThrown);

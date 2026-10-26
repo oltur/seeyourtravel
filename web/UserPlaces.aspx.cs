@@ -59,7 +59,7 @@ public partial class UserPlaces : System.Web.UI.Page
                 image.Created = DateTime.Now;
                 db.Images.Add(image);
 
-                db.SaveChanges();
+                db.SaveChanges(); PhotoGuard.Invalidate();
 
                 ImageUser imageUser = new ImageUser();
                 imageUser.ImageUserID = Guid.NewGuid();
@@ -67,7 +67,7 @@ public partial class UserPlaces : System.Web.UI.Page
                 imageUser.UserID = userId;
                 db.ImageUsers.Add(imageUser);
 
-                db.SaveChanges();
+                db.SaveChanges(); PhotoGuard.Invalidate();
             }
 
             Place place = new Place();
@@ -83,7 +83,7 @@ public partial class UserPlaces : System.Web.UI.Page
             place.Description = "";
             db.Places.Add(place);
 
-            db.SaveChanges();
+            db.SaveChanges(); PhotoGuard.Invalidate();
 
             PlaceUser placeUser = new PlaceUser();
             placeUser.PlaceUserID = Guid.NewGuid();
@@ -91,7 +91,7 @@ public partial class UserPlaces : System.Web.UI.Page
             placeUser.UserID = userId;
             db.PlaceUsers.Add(placeUser);
 
-            db.SaveChanges();
+            db.SaveChanges(); PhotoGuard.Invalidate();
 
             if (imageId.HasValue)
             {
@@ -101,7 +101,7 @@ public partial class UserPlaces : System.Web.UI.Page
                 placeImage.ImageID = imageId.Value;
                 db.PlaceImages.Add(placeImage);
 
-                db.SaveChanges();
+                db.SaveChanges(); PhotoGuard.Invalidate();
             }
         }
     }
