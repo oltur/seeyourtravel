@@ -3,6 +3,8 @@
 <%@ Import Namespace="System.IO" %>
 
 <asp:Content ID="headContent" ContentPlaceHolderID="HeadPlaceholder" runat="Server">
+    <link rel="stylesheet" href="<%=Tools.V("styles/profile.css")%>" />
+
 
     <script>
         function clickCancel() {
@@ -27,37 +29,32 @@
     <!-- #Include virtual="include/profileHelpPanel.inc" -->
     <!-- #Include virtual="include/settingsPanel.inc" -->
 
+    <div id="textToReadArea0" class="profilePanel">
+        <!-- #Include virtual="include/profileTabs.inc" -->
+        <div class="pfBody">
+            <div class="pfRow" style="margin-top: 0">
+                <a class="pfBtn primary" id="buttonNew" href="editor.aspx"><i class="fa fa-plus"></i> <span class="i" data-i18n="New">New</span></a>
+                <button type="button" class="pfBtn" id="buttonEdit" disabled="disabled"><i class="fa fa-pencil"></i> <span class="i" data-i18n="Edit">Edit</span></button>
+                <button type="button" class="pfBtn" id="buttonOpen" disabled="disabled"><i class="fa fa-play"></i> <span class="i" data-i18n="Open">Open</span></button>
+                <button type="button" class="pfBtn danger" id="buttonDelete" disabled="disabled"><i class="fa fa-trash-o"></i> <span class="i" data-i18n="Delete">Delete</span></button>
+            </div>
+            <input type="search" id="trackFilter" placeholder="Search my tracks" />
+            <ul class="pfList" id="tracksList"></ul>
+            <div class="pfRow" style="justify-content: space-between; font-size: 12px; color: #7a8aa0; margin: 4px 0">
+                <span id="trackCount"></span>
+                <a href="#" id="selectAll" class="i" data-i18n="SelectAll">Select all</a>
+            </div>
 
-    <div id="textToReadArea0" class="ui-widget-content" style="position: absolute; padding: 10px; z-index: 1001; top: 40px; right: 50px; width: 350px; height: 950px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 0 solid #000;">
-        <table border="0">
-            <tr>
-                <td>
-                    <div><%=Tools.GetUserName(this)%>: <span class="i" data-i18n="[title]MyTracks;MyTracks">My Tracks</span></div>
-                    <br />
-                    <a href="UserProfile.aspx" class="i" data-i18n="[title]MyProfile;MyProfile">My Profile</a>
-                    <b href="UserTracks.aspx" class="i" data-i18n="[title]MyTracks;MyTracks">My Tracks</b>
-                    <a href="UserPhotos.aspx" class="i" data-i18n="[title]MyPhotos;MyPhotos">My photos</a>
-                    <a href="UserPlaces.aspx" class="i" data-i18n="[title]MyPlaces;MyPlaces">My Places</a>
-                    <br />
-                    <br />
-                    <span class="i" data-i18n="MyTracks">My Tracks</span>
-                    <br />
-                    <select style="vertical-align: central; width: 330px;" id="tracksList" size="15"></select>
-                    <br />
-                    <button type="button" id="buttonNew" class="i" data-i18n="[title]New;New">New</button>
-                    <button type="button" id="buttonEdit" class="i" data-i18n="[title]Edit;Edit">Edit</button>
-                    <button type="button" id="buttonDelete" class="i" data-i18n="[title]DeleteSelected;DeleteSelected">Delete Selected</button>
-                    <br />
-                    <br />
-                    <div id="elevationChartDiv">
-                    </div>
-                    <input type="text" id="frameUrl" value="" style="width: 250px" />
-                    <button type="button" id="buttonShow" class="i" data-i18n="[title]Show;Show">Show</button>
-                    <br />
-                    <div id="divframe"></div>
-                </td>
-            </tr>
-        </table>
+            <div id="embedBox" style="display: none">
+                <h3 class="i" data-i18n="EmbedTitle">Embed on your site</h3>
+                <input type="text" id="frameUrl" readonly="readonly" value="" />
+                <div class="pfRow">
+                    <button type="button" class="pfBtn" id="buttonCopy"><i class="fa fa-clipboard"></i> <span class="i" data-i18n="Copy">Copy</span></button>
+                    <button type="button" class="pfBtn" id="buttonShow"><i class="fa fa-eye"></i> <span class="i" data-i18n="Preview">Preview</span></button>
+                </div>
+                <div id="divframe"></div>
+            </div>
+        </div>
     </div>
 
     <div id="imageDiv0" class="ui-widget-content" style="visibility: hidden;">
@@ -68,159 +65,108 @@
 
     <div id="map"></div>
 
-    <%--    <div style="position: absolute; left: 10px; top: 50px; z-index: 101;">
-    </div>--%>
     <script>
-        var tracksList;
-        var imageDiv = $("#imageDiv");
-        var polyline;
-        var map;
-        var markers;
-        var markersTracks;
-        var line;
+        var map, markers;   // shadow the #map element so init() creates the map
+        var markersTracks, line, rows = [], selected = [];
+        var iconTrack = L.icon({ iconUrl: 'img/track.png', iconSize: [40, 40], iconAnchor: [20, 20] });
 
-        function onMapClick(e) {
-            //updateTrackData(e);
-            //updateMap();
+        function esc(t) { return $('<div>').text(t).html(); }
+
+        function loadRows() {
+            $.get('services/get_mytracks.aspx?' + Math.random(), function (data) {
+                rows = [];
+                $.each($.trim(data) ? data.split('\n') : [], function (_, r) {
+                    var p = r.split(';');
+                    var loc = null;
+                    try {
+                        var j = JSON.parse(p.slice(3).join(';'));
+                        var la = parseFloat($.isArray(j) ? j[0] : j.lat), ln = parseFloat($.isArray(j) ? j[1] : j.lng);
+                        if (isFinite(la) && isFinite(ln)) loc = { lat: la, lng: ln };
+                    } catch (e) { }
+                    if (!rows.some(function (x) { return x.id === p[0]; })) rows.push({ id: p[0], name: p[1], pub: p[2] == 1, loc: loc });
+                });
+                markersTracks.clearLayers();
+                rows.forEach(function (t) {
+                    if (!t.loc) return;
+                    var a = document.createElement('a');
+                    a.innerHTML = '<p>' + esc(t.name) + '</p>';
+                    a.href = './index.aspx?trackname=' + encodeURIComponent(t.id);
+                    a.target = '_blank';
+                    L.marker([t.loc.lat, t.loc.lng], { icon: iconTrack }).bindPopup(a).addTo(markersTracks);
+                });
+                selected = [];
+                render();
+            }).fail(function (x, s, e) { toastr.error(s + "," + e, "ERROR", { timeOut: 5000 }); });
         }
 
-        var icon = L.icon({
-            iconUrl: ("tracks/content/currentposition.png"),
-            iconSize: [50, 50],
-            iconAnchor: [1, 50],
-            shadowUrl: null
-        });
+        function matches(t) {
+            var q = $.trim($('#trackFilter').val()).toLowerCase();
+            return !q || t.name.toLowerCase().indexOf(q) >= 0;
+        }
 
-        function fillTracks() {
-            $.ajax(
-            {
-                url: ('services/get_mytracks.aspx' + "?" + Math.random()),
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    console.log("fillTracks error: " + textStatus); console.log("Error: " + errorThrown);
-                    toastr.error(textStatus + "," + errorThrown, "ERROR", { timeOut: 5000, extendedTimeOut: 10000 });
-                },
-                success: function (data) {
-                    var fileListString = data;
-                    markersTracks.clearLayers();
+        function render() {
+            var ul = $('#tracksList').empty();
+            var shown = rows.filter(matches);
+            shown.forEach(function (t) {
+                var on = selected.indexOf(t.id) >= 0;
+                var li = $('<li>').toggleClass('sel', on).data('id', t.id);
+                $('<input type="checkbox">').prop('checked', on).appendTo(li);
+                $('<span class="nm">').text(t.name).attr('title', t.name).appendTo(li);
+                $('<span class="pfBadge">').addClass(t.pub ? 'pub' : 'priv').text(t.pub ? T('Public', 'Public') : T('Private', 'Private')).appendTo(li);
+                ul.append(li);
+            });
+            if (!shown.length) ul.append($('<li class="pfEmpty" style="display:block;cursor:default">').text(rows.length ? T('NothingFound', 'Nothing found') : T('NoTracksYet', 'No tracks yet. Create your first one!')));
+            $('#trackCount').text(shown.length + ' / ' + rows.length);
+            var one = selected.length === 1;
+            $('#buttonEdit,#buttonOpen').prop('disabled', !one);
+            $('#buttonDelete').prop('disabled', !selected.length);
+            $('#embedBox').toggle(one);
+        }
 
-                    var fileList = fileListString.split('\n');
-                    tracksList
-                            .find('option')
-                            .remove()
-                            .end();
-                    for (var i = 0; i < fileList.length; i++) {
-                        if (!isNullOrEmpty(fileList[i])) {
-                            var parts = fileList[i].split(';');
-                            tracksList.append('<option value="' + parts[0] + '">' + (parts[2] == 1 ? "" : "*") + parts[1] + '</option>');
-
-                            var location = JSON.parse(parts[3]);
-
-                            var text = parts[1];
-                            var fileName = parts[0];
-                            var imgPath = (parts[4]) ? ("tracks/content/" + parts[4]) : ("img/track.png");
-                            var domelem = document.createElement('a');
-                            //domelem.href = place.name;
-                            domelem.innerHTML = "<p>" + text + "</p><img height='100px' width='100px' src='" + imgPath + "'/>";
-                            domelem.alt = text;
-                            domelem.href = "./index.aspx?trackname=" + fileName;
-                            domelem.target = "_blank";
-
-                            var iconTrack = L.icon({
-                                iconUrl: ('img/track.png'),
-                                iconSize: [40, 40],
-                                iconAnchor: [20, 20],
-                                //shadowUrl: null
-                            });
-
-                            var markerTrack = L.marker(new L.LatLng(location.lat - 0.0002 + Math.random() * 0.0004, location.lng - 0.0002 + Math.random() * 0.0004),
-                                { icon: iconTrack })
-                                    .bindPopup(domelem);
-
-                            markersTracks.addLayer(markerTrack);
-                        }
-                    }
-                }
+        function showOnMap(id) {
+            $('#frameUrl').val('<iframe style="width: 330px; height: 250px;" src="' + location.href.replace(/[?#].*$/, '').replace(/[^\/]*$/, '') + 'frame.aspx?trackname=' + encodeURIComponent(id) + '"></iframe>');   // the address the browser used (the server only sees the internal http://host:8080 behind the tunnel)
+            $('#divframe').html('');
+            loadTrack(translateTracksPath(id + '.js'), function (tr) {
+                if (line) { map.removeLayer(line); line = null; }
+                if (selected.length !== 1 || selected[0] !== id) return;
+                line = L.polyline(tr.trackData, { color: '#e8452c', weight: 4 }).addTo(map);
+                map.fitBounds(line.getBounds(), { paddingTopLeft: [60, 60], paddingBottomRight: [440, 60] });
             });
         }
 
         $(function () {
-
             init(null);
-            map.setView([50.430981, 30.539267], 8);
+            map.setView([50.430981, 30.539267], 6);
+            markersTracks = L.featureGroup().addTo(map);
+            loadRows();
 
-            //map = L.map('map', { zoomControl: false }).setView([50.430981, 30.539267], 8);
-            //L.control.zoom({ position: 'topright' }).addTo(map);
-            //L.control.scale({ position: 'bottomleft' }).addTo(map);
-            //tileLayer = L.tileLayer(mapTileUrl, {
-            //    attribution: 'SeeYourTravel.com &copy; Map data &copy; <a href="https://www.mapbox.com/">MapBox</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a> <img src="img/poweredbygoolge/desktop/powered-by-google-on-white.png"/>',
-            //    maxZoom: 18,
-            //    id: "mapbox.streets"
-            //});
-
-            //tileLayer.addTo(map);
-            markerPosition = L.marker(new L.LatLng(1000, 1000), { icon: icon }).addTo(map);
-
-            //markers = new L.FeatureGroup();
-            //map.addLayer(markers);
-
-            map.on('click', onMapClick);
-
-            $("#imageDiv0").draggable().resizable({ minHeight: 50, minWidth: 50 });
-            $("#textToReadArea0").draggable();
-            $("#slider").slider({
-                value: 0.8,
-                min: 0,
-                max: 1,
-                step: 0.1,
-                slide: function (event, ui) {
-                    audio.volume = ui.value;
-                }
+            $('#tracksList').on('click', 'li', function (e) {
+                var id = $(this).data('id');
+                if (!id) return;
+                var i = selected.indexOf(id);
+                var multi = e.ctrlKey || e.metaKey || e.shiftKey || $(e.target).is('input');
+                if (multi) { if (i >= 0) selected.splice(i, 1); else selected.push(id); }
+                else selected = (i >= 0 && selected.length === 1) ? [] : [id];
+                render();
+                if (selected.length === 1) showOnMap(selected[0]); else if (line) { map.removeLayer(line); line = null; }
             });
-
-            tracksList = $("#tracksList");
-
-            fillTracks();
-
-            tracksList.change(function () {
-                var s = '<iframe style="width: 330px; height: 250px;" src="' + '<%=Request.Url.GetLeftPart(UriPartial.Authority) + Request.ApplicationPath%>' + "frame.aspx?trackname=" + tracksList.val() + '"></iframe>'
-                $("#frameUrl").val(s);
-                $("#divframe").html("");
-
-                var path = translateTracksPath(tracksList.val() + ".js");
-                track = loadTrack(path,
-                    function (tempTrack) {
-                        track = tempTrack;
-                        //markers.clearLayers();
-                        if (line)
-                            markers.removeLayer(line);
-
-                        var elevator = new google.maps.ElevationService;
-                        elevator.getElevationAlongPath({
-                            'path': compactTrackData(track.trackData),
-                            'samples': 128
-                        }, plotElevation);
-
-                        line = L.polyline(track.trackData, { color: 'green' });
-                        markers.addLayer(line);
-
-                        map.panTo(track.trackData[0]);
-
-                    });
+            $('#trackFilter').on('input', render);
+            $('#selectAll').click(function (e) {
+                e.preventDefault();
+                selected = rows.filter(matches).map(function (t) { return t.id; });
+                render();
             });
-            $("#buttonShow").click(function () {
-                $("#divframe").html($("#frameUrl").val());
+            $('#buttonEdit').click(function () { window.location = 'editor.aspx?trackname=' + selected[0]; });
+            $('#buttonOpen').click(function () { window.location = 'index.aspx?trackname=' + selected[0]; });
+            $('#buttonShow').click(function () { $('#divframe').html($('#frameUrl').val()); });
+            $('#buttonCopy').click(function () {
+                var f = $('#frameUrl')[0]; f.select();
+                try { document.execCommand('copy'); toastr.info(T('Copied', 'Copied'), '', { timeOut: 2000 }); } catch (e) { }
             });
-            $("#buttonNew").click(function () {
-                window.location = "editor.aspx";
-            });
-            $("#buttonEdit").click(function () {
-                window.location = "editor.aspx?trackname=" + tracksList.val();
-            });
-            $("#buttonDelete").click(function () {
-                var names = tracksList.val();
-                if (names == null || names.length === 0) return;
-                if (!$.isArray(names)) names = [names];
-                var labels = tracksList.find('option:selected').map(function () { return $(this).text(); }).get();
+            $('#buttonDelete').click(function () {
+                var names = selected.slice();
+                if (!names.length) return;
+                var labels = rows.filter(function (t) { return names.indexOf(t.id) >= 0; }).map(function (t) { return t.name; });
                 var what = names.length === 1 ? '"' + labels[0] + '"' : T("TracksCount", "{0} tracks").replace("{0}", names.length);
                 if (!confirm(T("DeleteTracksConfirm", "Delete {0} permanently? This cannot be undone.").replace("{0}", what))) return;
                 var done = 0, failed = [];
@@ -228,9 +174,8 @@
                     if (!names.length) {
                         if (done) toastr.info(done === 1 ? T("TrackDeleted", "Track is deleted") : T("TracksDeleted", "{0} tracks are deleted").replace("{0}", done), "", { timeOut: 5000, extendedTimeOut: 10000 });
                         failed.forEach(function (f) { toastr.error(T("DeleteTrackFailedWhy", "Could not delete the track: {0}").replace("{0}", f), "", { timeOut: 8000 }); });
-                        fillTracks();
-                        $("#frameUrl").val("");
-                        $("#divframe").html("");
+                        if (line) { map.removeLayer(line); line = null; }
+                        loadRows();
                         return;
                     }
                     var name = names.shift();
@@ -241,6 +186,5 @@
                 })();
             });
         });
-
     </script>
 </asp:Content>

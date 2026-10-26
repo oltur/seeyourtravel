@@ -442,3 +442,20 @@ html.compact #photoToggle { font-size: 11px; padding: 2px 10px 1px; }
 #trackSearch .ts-item:hover, #trackSearch .ts-item.act { background: #e8eef7; }
 #trackSearch .ts-item.sel { font-weight: 700; color: #225EAC; }
 #trackSearch .ts-none { padding: 18px 14px; color: #6a7686; text-align: center; }
+
+/* places added by SeeYourTravel users: the same round thumbnails as the Wikipedia ones, with a blue star badge */
+.sytPlace span { background: #225EAC; font: 700 10px/17px system-ui, sans-serif; }
+.sytPlace.noimg { background: #225EAC; }
+html.compact .sytPlace span { font-size: 8px; }
+
+/* "you are here" label (replaces the picture with the English words in it) */
+.youHere { background: none; border: 0; }
+.youHere .yhBox {
+    position: absolute; left: 50%; bottom: 9px; transform: translateX(-50%); white-space: nowrap;
+    background: #b00000; color: #fff; font: 700 12px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 6px 10px; border-radius: 12px; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+.youHere .yhBox::after {
+    content: ""; position: absolute; left: 50%; top: 100%; margin-left: -6px;
+    border: 6px solid transparent; border-top: 8px solid #b00000; border-bottom: 0;
+}

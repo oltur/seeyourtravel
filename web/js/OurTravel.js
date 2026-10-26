@@ -66,11 +66,12 @@ var myBarChart = null;
 
 var versionUrl = "services/get_version.aspx";
 
-var iconWhereIAm = L.icon({
-    iconUrl: ("img/youarehere.png"),
-    iconSize: [30, 50],
-    iconAnchor: [15, 50],
-    //shadowUrl: null
+// a label instead of the old picture: the words are translated ("i" + data-i18n is picked up by every $(".i").i18n())
+var iconWhereIAm = L.divIcon({
+    className: 'youHere',
+    html: '<span class="yhBox i" data-i18n="YouAreHere">You are here</span>',
+    iconSize: [90, 40],
+    iconAnchor: [45, 40]
 });
 
 var iconFriend = L.icon({
@@ -1163,6 +1164,7 @@ function init(filename, handler) {
 
     markerWhereIAm = L.marker(new L.LatLng(1000, 1000), { icon: iconWhereIAm, zIndexOffset: 100 }).bindPopup(globalUserName);
     markers.addLayer(markerWhereIAm);
+    if ($.fn.i18n) $('.youHere .i').i18n();   // otherwise the next $(".i").i18n() (translateAll) does it once the language is loaded
 
     //markerWhereIAmCircle = L.circleMarker(new L.LatLng(1000, 1000),
     //    {
@@ -1290,9 +1292,9 @@ function init(filename, handler) {
                 var startPopup = $("<div>").addClass("trackStartPopup");
                 startPopup.append($("<b>").text(track.startName || "Start"));
                 markerStart = L.marker(track.trackData[0]).bindPopup(startPopup[0]);
-                if (track.trackImage && /^[\w.\- ]+\.(png|gif|jpe?g|webp)$/i.test(track.trackImage)) {
+                if (track.trackImage && /^[^\/\\?#<>"']+\.(png|gif|jpe?g|webp)$/i.test(track.trackImage)) {
                     // the picture of the track: it is the start marker (round thumbnail), a click shows it large
-                    var imgUrl = translateTracksContentPath(track.trackImage), startMarker = markerStart, probeImg = new Image();
+                    var imgUrl = encodeURI(translateTracksContentPath(track.trackImage)), startMarker = markerStart, probeImg = new Image();
                     probeImg.onload = function () {
                         startPopup.prepend($("<img>").attr("src", imgUrl).addClass("trackStartImg"));
                         startMarker.setZIndexOffset(500);
@@ -1519,14 +1521,15 @@ function createPhotoMarker(place) {
 
     var isGoogle = photos[0].getUrl ? true : false;
     var isWiki = place.types.indexOf("wiki") >= 0;
+    var isSyt = place.types.indexOf("syt") >= 0;   // a place added by a SeeYourTravel user
 
     var isPremium = Math.random() < 0.1;
     var thumbIcon = null;
-    if (isWiki && place.thumb) {
-        var safe = place.thumb.replace(/"/g, '%22');
+    if ((isWiki && place.thumb) || isSyt) {
+        var safe = (place.thumb || 'img/something.png').replace(/"/g, '%22');
         thumbIcon = L.divIcon({
-            className: 'wikiThumbIcon',
-            html: '<img src="' + safe + '" alt="" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\')"/><span>W</span>',
+            className: isSyt ? 'wikiThumbIcon sytPlace' : 'wikiThumbIcon',
+            html: '<img src="' + safe + '" alt="" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\')"/><span>' + (isSyt ? '&#9733;' : 'W') + '</span>',
             iconSize: isCompact() ? [34, 34] : [46, 46], iconAnchor: isCompact() ? [17, 17] : [23, 23]
         });
     }
@@ -1565,22 +1568,23 @@ function createPhotoMarker(place) {
     }
     var pic = document.createElement('img');
     pic.alt = place.name;
-    pic.src = isGoogle ? photos[0].getUrl({ 'maxWidth': 100, 'maxHeight': 100 }) : photos[0].raw_reference.fife_url;
+    if (isSyt && !place.thumb) pic = document.createElement('span');   // no photo to show
+    if (pic.tagName == "IMG") pic.src = isGoogle ? photos[0].getUrl({ 'maxWidth': 100, 'maxHeight': 100 }) : photos[0].raw_reference.fife_url;
     pic.style.maxWidth = '160px'; pic.style.maxHeight = '120px'; pic.style.borderRadius = '6px';
     domelem.appendChild(pic);
     var go = document.createElement('p');
     var link = document.createElement('a');
     link.target = '_blank'; link.rel = 'noopener';
-    link.href = isWiki ? wikiLink : "https://www.google.com/search?q=" + encodeURIComponent(place.name);
-    link.textContent = isWiki ? T('OpenInWikipedia', 'Open in Wikipedia') : T('SearchOnGoogle', 'Search on Google');
-    go.appendChild(link);
+    link.href = isWiki ? wikiLink : isSyt ? place.link : "https://www.google.com/search?q=" + encodeURIComponent(place.name);
+    link.textContent = isWiki ? T('OpenInWikipedia', 'Open in Wikipedia') : isSyt ? T('OpenLink', 'Open link') : T('SearchOnGoogle', 'Search on Google');
+    if (!isSyt || place.link) go.appendChild(link);
     domelem.appendChild(go);
     return domelem;
     };
     var marker = L.marker(new L.LatLng(
         isGoogle ? place.geometry.location.lat() : place.geometry.location.lat,
         isGoogle ? place.geometry.location.lng() : place.geometry.location.lng),
-        { icon: icon, title: place.name, thumb: (isWiki && place.thumb) ? place.thumb : '' }).bindPopup(buildPopup);
+        { icon: icon, title: place.name, thumb: ((isWiki || isSyt) && place.thumb) ? place.thumb : '' }).bindPopup(buildPopup);
     myMarkers.push(marker);
 
     placeCluster.addLayer(marker);
@@ -2135,7 +2139,7 @@ $(function () {
     $(function () {
         setInterval(function () {      // the selection is also set by script (no change event), so look for changes
             var sel = document.getElementById('tracksList');
-            if (!sel) return;
+            if (!sel || !sel.options) return;
             var now = sel.selectedIndex + '|' + sel.options.length + '|' + window.innerWidth;
             if (now !== last) { last = now; fit(); }
         }, 400);

@@ -103,6 +103,35 @@ public static class Tools
         var db = new SeeYourTravelEntities();
         return db.IsGuest(GetUserId(page)).First().Result == 1;
     }
+    /// <summary>Counts shown on the profile tabs: tracks, photos, places (the same sets the lists show; administrators see everybody's).</summary>
+    public static int[] GetUserCounts(Page page)
+    {
+        var id = GetUserId(page);
+        var db = new SeeYourTravelEntities();
+        return new[] {
+            db.GetUserTracks(id).Select(x => x.TrackID).Distinct().Count(),
+            db.GetUserImages(id).Select(x => x.ImageID).Distinct().Count(),
+            db.GetUserPlaces(id).Select(x => x.PlaceID).Distinct().Count() };
+    }
+    public static string GetUserRole(Page page)
+    {
+        var db = new SeeYourTravelEntities();
+        var id = GetUserId(page);
+        if (db.IsAdmin(id).First().Result == 1) return "Administrator";
+        return IsGuest(page) ? "Guest" : "Member";
+    }
+    /// <summary>How the user signed in, for the profile page.</summary>
+    public static string GetUserSignIn(Page page)
+    {
+        var id = GetUserId(page);
+        var db = new SeeYourTravelEntities();
+        var user = db.Users.FirstOrDefault(x => x.UserID == id);
+        if (user == null) return "";
+        var f = user.FacebookId ?? "";
+        if (f.StartsWith("google:")) return "Google|" + f.Substring(7);
+        if (f.Length > 0) return "Facebook";
+        return "Local";
+    }
     public static string GetUserInformation(Page page)
     {
         var db = new SeeYourTravelEntities();

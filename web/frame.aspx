@@ -47,9 +47,6 @@
             <input id="useFlickrImagesCheckBox" type="checkbox" checked="checked" title="Use Flickr images" onchange="" />
             <label for="useFlickrImagesCheckBox" class="i" data-i18n="useFlickrImages">Use public photos (Wikimedia Commons)</label>
             <br />
-            <input id="useSYTImagesCheckBox" type="checkbox" checked="checked" title="Use SeeYourTravel images" onchange="" />
-            <label for="useSYTImagesCheckBox" class="i" data-i18n="UseCYTImages">Use SeeYourTravel images</label>
-            <br />
             <input id="useGooglePlacesCheckBox" type="checkbox" checked="checked" title="Use Google Places" onchange="" />
             <label for="useGooglePlacesCheckBox" class="i" data-i18n="UseGooglePlaces">Use Google Places</label>
             <br />

@@ -235,7 +235,7 @@
                 Text="Submit"
                 data-i18n="TrackDescription"
                 class="i"
-                OnClientClick="return beforeSubmit();" />
+                OnClientClick="if (!beforeSubmit()) return false;" />
             &nbsp;
     <input type="button" value="Cancel" class="i" data-i18n="[title]Cancel;[value]Cancel" id="gotoMain" onclick="window.location = 'index.aspx?trackname=' + trackname" />
             <% if (IsExisting) { %>

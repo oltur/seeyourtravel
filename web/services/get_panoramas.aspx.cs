@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Web;
@@ -43,10 +43,8 @@ public partial class services_get_panoramas : System.Web.UI.Page
 
         string order = Request.QueryString["order"];
 
-        Guid userId = Tools.GetUserId(this);
-
-        var db = new SeeYourTravelEntities();
-        var Images = (from t in db.GetUserAndPublicImagesByLocation(userId,miny,minx,maxy,maxx,0,10000) select t).ToList();
+        // Our own photos are private: never serve them to the map.
+        var Images = new List<GetUserAndPublicImagesByLocation_Result>();
 
         Shuffle(Images);
 

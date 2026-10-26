@@ -9,7 +9,7 @@
     string name = parts[1];
     double lat = double.Parse(parts[3]);
     double lng = double.Parse(parts[4]);
-    bool isPublic = (parts[2]!="0");
+    bool isPublic = false;   // our own photos are private
 
     var db = new SeeYourTravelEntities();
     var image = (from t in db.GetUserImages(userId) where t.FileName==fileName select t).FirstOrDefault();

@@ -3,6 +3,8 @@
 <%@ Import Namespace="System.IO" %>
 
 <asp:Content ID="headContent" ContentPlaceHolderID="HeadPlaceholder" runat="Server">
+    <link rel="stylesheet" href="<%=Tools.V("styles/profile.css")%>" />
+
 
     <script>
         function clickCancel() {
@@ -27,52 +29,41 @@
     <!-- #Include virtual="include/profileHelpPanel.inc" -->
     <!-- #Include virtual="include/settingsPanel.inc" -->
 
-    <div id="textToReadArea0" class="ui-widget-content" style="position: absolute; padding: 10px; z-index: 1001; top: 40px; right: 50px; width: 350px; height: 800px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 0px solid #000;">
-        <table border="0">
-            <tr>
-                <td>
-                    <div><%=Tools.GetUserName(this)%>: <span class="i" data-i18n="[title]MyPlaces;MyPlaces">My Places</span></div>
-                    <br />
-                    <a href="UserProfile.aspx" class="i" data-i18n="[title]MyProfile;MyProfile">My Profile</a>
-                    <a href="UserTracks.aspx" class="i" data-i18n="[title]MyTracks;MyTracks">My Tracks</a>
-                    <a href="UserPhotos.aspx" class="i" data-i18n="[title]MyPhotos;MyPhotos">My photos</a>
-                    <b href="UserPlaces.aspx" class="i" data-i18n="[title]MyPlaces;MyPlaces">My Places</b>
-                    <br />
-                    <br />
-                    <span class="i" data-i18n="MyPlaces">My Places</span>
-                    <br />
-                    <select style="vertical-align: central; width: 330px;" id="placesList" class="i" size="15"></select>
-                    <br />
-                    <br />
-                    <button type="button" id="buttonDelete" class="i" data-i18n="[title]DeleteSelected ;DeleteSelected">Delete Selected</button>
-                    <br />
-                    <br />
-                    <span class="i" data-i18n="Placedescription">Place description</span><br />
-                    <input type="text" name="placeDescription" id="placeDescription" value="" style="width: 330px" />
-                    <br />
-                    <br />
-                    <span class="i" data-i18n="Placelink">Place Link</span><br />
-                    <input type="text" name="placeLink" id="placeLink" value="" style="width: 240px" />&nbsp;
-                    <button type="button" id="buttonCheckLink" class="i" data-i18n="[title]Checklink;Checklink">Check link</button>
-                    <br />
-                    <br />
-                    <span class="i" data-i18n="Placecoordinates">Place coordinates</span><br />
-                    <input type="text" name="placeLatLng" id="placeLatLng" value="" style="width: 330px" />
-                    <br />
-                    <br />
-                    <span class="i" data-i18n="UploadPhoto">Upload photo:</span>
-                    <br />
-                    <input name="file" type="file" id="files" />
-                    <br />
-                    <br />
-                    <input id="isPublic" name="isPublic" type="checkbox" value="isPublic" checked="checked" />
-                    <label for="isPublic" class="i" data-i18n="Makepublic">Make public</label>
-                    <br />
-                    <br />
-                    <input type="submit" id="buttonUpload" class="i" data-i18n="[title]Save;[value]Save" value="Save" />
-                </td>
-            </tr>
-        </table>
+    <div id="textToReadArea0" class="profilePanel">
+        <!-- #Include virtual="include/profileTabs.inc" -->
+        <div class="pfBody">
+            <h3 class="i" data-i18n="MyPlaces">My Places</h3>
+            <ul class="pfList" id="placesList"></ul>
+            <div class="pfRow" id="placeActions" style="display: none">
+                <button type="button" class="pfBtn" id="buttonEditPlace"><i class="fa fa-pencil"></i> <span class="i" data-i18n="Edit">Edit</span></button>
+                <button type="button" class="pfBtn danger" id="buttonDelete"><i class="fa fa-trash-o"></i> <span class="i" data-i18n="Delete">Delete</span></button>
+            </div>
+
+            <h3 id="formTitle"><span class="i" data-i18n="AddPlace">Add a place</span></h3>
+            <div class="pfNote" style="margin-top: 0"><i class="fa fa-map-marker"></i> <span class="i" data-i18n="ClickMapForPlace">Click the map to choose where the place is.</span></div>
+            <label for="placeDescription" class="i" data-i18n="Placedescription">Place description</label>
+            <input type="text" name="placeDescription" id="placeDescription" value="" />
+            <label for="placeLink" class="i" data-i18n="Placelink">Place Link</label>
+            <div style="display: flex; gap: 6px">
+                <input type="text" name="placeLink" id="placeLink" value="" placeholder="https://" />
+                <button type="button" id="buttonCheckLink" class="pfBtn" title="Check link"><i class="fa fa-external-link"></i></button>
+            </div>
+            <label for="placeLatLng" class="i" data-i18n="Placecoordinates">Place coordinates</label>
+            <input type="text" name="placeLatLng" id="placeLatLng" value="" readonly="readonly" />
+            <div id="photoField">
+                <label class="i" data-i18n="UploadPhoto">Upload photo:</label>
+                <div class="pfFile"><input name="file" type="file" id="files" accept="image/*" /></div>
+            </div>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #1d2a3a; margin-top: 12px">
+                <input id="isPublic" name="isPublic" type="checkbox" value="isPublic" style="width: auto" />
+                <span class="i" data-i18n="PlacePublicHint">Show this place (and its photo) to all visitors on the map</span>
+            </label>
+            <div class="pfRow">
+                <button type="submit" id="buttonUpload" class="pfBtn primary" disabled="disabled"><i class="fa fa-check"></i> <span class="i" data-i18n="Save">Save</span></button>
+                <button type="button" id="buttonSaveEdit" class="pfBtn primary" style="display: none"><i class="fa fa-check"></i> <span class="i" data-i18n="SaveChanges">Save changes</span></button>
+                <button type="button" id="buttonCancelEdit" class="pfBtn" style="display: none"><span class="i" data-i18n="Cancel">Cancel</span></button>
+            </div>
+        </div>
     </div>
 
     <div id="imageDiv0" class="ui-widget-content" style="visibility: hidden;">
@@ -83,212 +74,117 @@
 
     <div id="map"></div>
 
-    <%--    <div style="position: absolute; left: 10px; top: 50px; z-index: 101;">
-    </div>--%>
     <script>
+        var map, markers;   // shadow the #map element so init() creates the map
+        var places = [], current = null, newMarker = null, editing = null;
 
-        var placesList;
-        var places = {};
-        var imageDiv = $("#imageDiv");
-        var polyline;
-        var map;
-        var markers;
-
-        $(function () {
-
-            function onMapClick(e) {
-                $("#placeLatLng").val("".concat(e.latlng.lat, ";", e.latlng.lng));
-
-                var imgPath = "";
-                var placeId = placesList.val();
-                if (placeId) {
-                    var place = places[placeId];
-                    //place.Name + ";" + place.Vicinity + ";" + (place.IsPublic ? 1 : 0) + ";" + place.Lat + ";" + place.Lng + ";" + place.Rating + place.FileName
-                    imgPath = "services/get_thumbnail.aspx?size=small&p=" + place.FileName;
-                    place.Name = $("#placeDescription").val();
-                    place.IsPublic = $("#isPublic").prop('checked') ? "1" : "0";
-                    place.Lat = e.latlng.lat.toString();
-                    place.Lng = e.latlng.lng.toString();
-
-                    updatePlaceData(placeId);
-                }
-                updateMap(e.latlng, imgPath);
-            }
-
-            var icon = L.icon({
-                iconUrl: ("tracks/content/currentposition.png"),
-                iconSize: [50, 50],
-                iconAnchor: [1, 50],
-                shadowUrl: null
-            });
-
-            map = L.map('map', { zoomControl: false }).setView([50.430981, 30.539267], 8);
-            L.control.zoom({ position: 'topright' }).addTo(map);
-            L.control.scale({ position: 'bottomleft' }).addTo(map);
-            tileLayer = L.tileLayer(mapTileUrl, {
-        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
-        tileSize: 512,
-        maxZoom: 18,
-        zoomOffset: -1,
-        id: 'mapbox/streets-v11',
-        accessToken: 'pk.eyJ1Ijoib2x0dXJ1YSIsImEiOiJlODQ4ZTI2MWI4OGZkZjUyNDRiNjY4MDFkZGI0ODc4NyJ9.iiCb_tZgs_ipvEv3s6Zx0A'
-        });
-
-
-            tileLayer.addTo(map);
-            markerPosition = L.marker(new L.LatLng(1000, 1000), { icon: icon }).addTo(map);
-
-            markers = new L.FeatureGroup();
-            map.addLayer(markers);
-
-            map.on('click', onMapClick);
-
-            $("#imageDiv0").draggable().resizable({ minHeight: 50, minWidth: 50 });
-            $("#textToReadArea0").draggable();
-            $("#slider").slider({
-                value: 0.8,
-                min: 0,
-                max: 1,
-                step: 0.1,
-                slide: function (event, ui) {
-                    audio.volume = ui.value;
-                }
-            });
-
-            placesList = $("#placesList");
-
-            fillPlaces();
-
-            placesList.change(function () {
-                var ddl = $(this);
-                var previous = ddl.data('previous');
-                ddl.data('previous', ddl.val());
-
-                //var oldImageLatLng = $("#imageLatLng").val();
-                var key = placesList.val();
-                var place = places[key];
-                var imgPath = "services/get_thumbnail.aspx?size=small&p=" + place.FileName;
-                $("#isPublic").prop('checked', place.IsPublic);
-                $("#placeDescription").val(place.Name);
-                $("#placeLink").val(place.Link);
-                $("#placeLatLng").val(place.Lat + ";" + place.Lng);
-                var ll;
-                try {
-                    ll = new L.LatLng(parseFloat(place.Lat), parseFloat(place.Lng));
-                }
-                catch (error) {
-                    ll = new L.LatLng(0, 0);
-                }
-
-                updateMap(ll, imgPath);
-            });
-
-            $("#buttonCheckLink").click(function () {
-                window.open($("#placeLink").val(), "linkPreview");
-            });
-
-            $("#isPublic").change(function () {
-                var options = placesList.val();
-                var parts = options.toString().split(';');
-                //var imgPath = "services/get_thumbnail.aspx?size=small&p=" + parts[0];
-                parts[2] = $("#isPublic").prop('checked') ? "1" : "0";
-                var data = parts.join(';');
-                $("#placesList option:selected").val(data);
-                updatePlaceData(data);
-
-                //var latlng = new L.LatLng(parseFloat(parts[3]), parseFloat(parts[4]));
-                //updateMap(latlng, imgPath);
-            });
-
-            function updatePlaceData(placeId) {
-                //var url = "services/update_placedata.aspx?data=" + data;
-                //$.ajax({
-                //    //                    dataType: "jsonp",
-                //    url: url,
-                //    success: function (data) {
-                //        toastr.info("Place is updated", "", { timeOut: 5000, extendedTimeOut: 10000 });
-                //    },
-                //    error: function (XMLHttpRequest, textStatus, errorThrown) {
-                //        console.log("update place error: " + textStatus); console.log("Error: " + errorThrown);
-                //        toastr.error(textStatus + "," + errorThrown, "ERROR", { timeOut: 5000, extendedTimeOut: 10000 });
-                //    }
-                //});
-            }
-
-            $("#buttonDelete").click(function () {
-                if (placesList.val() != null) {
-                    var options = placesList.val();
-                    markers.clearLayers();
-                    var parts = options.toString().split(';');
-                    var url = "services/delete_placebyId.aspx?fileName=" + parts[7];
-                    $.ajax({
-                        //                    dataType: "jsonp",
-                        url: url,
-                        success: function (data) {
-                            toastr.info("Place is deleted", "", { timeOut: 5000, extendedTimeOut: 10000 });
-                            fillPlaces();
-                            $("#imageLatLng").val('');
-                        },
-                        error: function (XMLHttpRequest, textStatus, errorThrown) {
-                            console.log("delete place error: " + textStatus); console.log("Error: " + errorThrown);
-                            toastr.error(textStatus + "," + errorThrown, "ERROR", { timeOut: 5000, extendedTimeOut: 10000 });
-                        }
-                    });
-                }
-            });
-
-        });
+        function showPlace(p) {
+            markers.clearLayers();
+            var ll = new L.LatLng(p.Lat, p.Lng);
+            var icon = p.FileName
+                ? L.icon({ iconUrl: 'services/get_thumbnail.aspx?size=small&p=' + encodeURIComponent(p.FileName), iconSize: [90, 90], iconAnchor: [45, 45], className: 'photoPin' })
+                : new L.Icon.Default();
+            L.marker(ll, { icon: icon }).bindPopup($('<div>').text(p.Name).html()).addTo(markers);
+            map.panTo(ll);
+        }
 
         function fillPlaces() {
-            var placesListString = $.ajax(
-            {
-                url: ('services/get_myplaces.aspx' + "?" + Math.random()),
-                async: false,
-                dataType: 'json'
-            }).responseText;
-
-            //var fileList = fileListString.split('\n');
-            placesList
-                    .find('option')
-                    .remove()
-                    .end();
-            places = JSON.parse(placesListString);
-            for (var key in places) {
-                var place = places[key];
-                //var parts = fileList[i].split(';');
-                placesList.append('<option value="' + place.PlaceID + '">' + (place.IsPublic ? "" : "*") + place.Name + '</option>');
-            }
+            $.getJSON('services/get_myplaces.aspx?' + Math.random(), function (data) {
+                places = $.map(data, function (v) { return v; });
+                var ul = $('#placesList').empty();
+                places.forEach(function (p) {
+                    var li = $('<li>').data('id', p.PlaceID);
+                    $('<span class="nm">').text(p.Name).attr('title', p.Name).appendTo(li);
+                    $('<span class="pfBadge">').addClass(p.IsPublic ? 'pub' : 'priv').text(p.IsPublic ? T('Public', 'Public') : T('Private', 'Private')).appendTo(li);
+                    ul.append(li);
+                });
+                if (!places.length) ul.append($('<li class="pfEmpty" style="display:block;cursor:default">').text(T('NoPlacesYet', 'No places yet.')));
+                current = null;
+                setEditing(null);
+                $('#placeActions').hide();
+            });
         }
 
-        function updateMap(ll, imgPath) {
+        function canSave() {
+            var ok = !!($.trim($('#placeDescription').val()) && $('#placeLatLng').val());
+            $('#buttonUpload,#buttonSaveEdit').prop('disabled', !ok);
+        }
 
-            if (!imgPath)
-                imgPath = "img/photoNotFound.png";
+        function setEditing(p) {
+            editing = p;
+            $('#formTitle').html('<span>' + (p ? T('EditPlace', 'Edit place') : T('AddPlace', 'Add a place')) + '</span>');
+            $('#photoField,#buttonUpload').toggle(!p);
+            $('#buttonSaveEdit,#buttonCancelEdit').toggle(!!p);
+            if (p) {
+                $('#placeDescription').val(p.Name);
+                $('#placeLink').val(p.Link || '');
+                $('#placeLatLng').val(p.Lat + ';' + p.Lng);
+                $('#isPublic').prop('checked', !!p.IsPublic);
+                if (newMarker) map.removeLayer(newMarker);
+                newMarker = L.marker([p.Lat, p.Lng]).addTo(map);
+            } else {
+                $('#placeDescription,#placeLink,#placeLatLng').val('');
+                $('#isPublic').prop('checked', false);
+                if (newMarker) { map.removeLayer(newMarker); newMarker = null; }
+            }
+            canSave();
+        }
 
-            //markers.clearLayers();
-            map.panTo(ll);
+        $(function () {
+            init(null);
+            map.setView([50.430981, 30.539267], 6);
+            markers = L.featureGroup().addTo(map);
+            fillPlaces();
 
-            var icon = L.icon({
-                iconUrl: imgPath,
-                //    shadowUrl: 'leaf-shadow.png',
-
-                iconSize: [100, 100] // size of the icon
-                //    shadowSize:   [50, 64], // size of the shadow
-                    , iconAnchor: [50, 100] // point of the icon which will correspond to marker's location
-                //    shadowAnchor: [4, 62],  // the same for the shadow
-                //    popupAnchor:  [0, 0] // point from which the popup should open relative to the iconAnchor
+            $('#placesList').on('click', 'li', function () {
+                var id = $(this).data('id');
+                if (!id) return;
+                current = places.filter(function (p) { return p.PlaceID === id; })[0];
+                $('#placesList li').removeClass('sel'); $(this).addClass('sel');
+                $('#placeActions').show();
+                showPlace(current);
             });
 
-            //var text = '<img src>';
-            //var domelem = document.createElement('div');
-            //domelem.innerHTML = text;
+            map.on('click', function (e) {
+                $('#placeLatLng').val(e.latlng.lat + ';' + e.latlng.lng);
+                if (newMarker) map.removeLayer(newMarker);
+                newMarker = L.marker(e.latlng).addTo(map);
+                canSave();
+            });
+            $('#placeDescription').on('input', canSave);
+            $('#buttonCheckLink').click(function () { if ($.trim($('#placeLink').val())) window.open($('#placeLink').val(), 'linkPreview'); });
 
-            var marker = L.marker(ll,
-                { icon: icon })
-            //.bindPopup(domelem);
-            markers.addLayer(marker);
-        }
+            $('#buttonEditPlace').click(function () { if (current) { setEditing(current); $('#placeDescription').focus(); } });
+            $('#buttonCancelEdit').click(function () { setEditing(null); });
+            $('#buttonSaveEdit').click(function () {
+                if (!editing) return;
+                var ll = $('#placeLatLng').val().split(';');
+                $.ajax({
+                    url: 'services/update_place.aspx', type: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    data: { id: editing.PlaceID, name: $('#placeDescription').val(), link: $('#placeLink').val(), lat: ll[0], lng: ll[1], isPublic: $('#isPublic').prop('checked') ? 1 : 0 },
+                    success: function () {
+                        toastr.info(T('PlaceUpdated', 'Place is updated'), '', { timeOut: 3000 });
+                        markers.clearLayers();
+                        fillPlaces();
+                    },
+                    error: function (x, s, e) { toastr.error((x.responseText || s) + '', 'ERROR', { timeOut: 6000 }); }
+                });
+            });
 
-
+            $('#buttonDelete').click(function () {
+                if (!current) return;
+                if (!confirm(T('DeletePlaceConfirm', 'Delete this place permanently? This cannot be undone.'))) return;
+                $.ajax({
+                    url: 'services/delete_placebyId.aspx?id=' + encodeURIComponent(current.PlaceID),
+                    success: function (r) {
+                        if ($.trim(String(r)) !== 'OK') { toastr.error(String(r)); return; }
+                        toastr.info(T('PlaceDeleted', 'Place is deleted'), '', { timeOut: 3000 });
+                        markers.clearLayers();
+                        fillPlaces();
+                    },
+                    error: function (x, s, e) { toastr.error((x.responseText || s) + '', 'ERROR', { timeOut: 5000 }); }
+                });
+            });
+        });
     </script>
 </asp:Content>

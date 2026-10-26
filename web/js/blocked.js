@@ -42,16 +42,25 @@
         return "";
     }
 
+    // inside by a margin: the borders are drawn on a 1:10 000 000 scale (off by a kilometre or two), so a point that only touches
+    // the border (a track running along it) is not counted; the point and four points about 2 km around it must all be inside
+    function deepAt(lat, lng) {
+        var c = countryAt(lat, lng);
+        if (!c) return "";
+        var d = 0.02;
+        return (countryAt(lat + d, lng) === c && countryAt(lat - d, lng) === c && countryAt(lat, lng + d) === c && countryAt(lat, lng - d) === c) ? c : "";
+    }
+
     // pts: [{lat,lng}] or [[lat,lng,...]]; every point of a short track, an even sample (always with both ends) of a long one
     function trackCountry(pts) {
         if (!pts || !pts.length) return "";
         var step = Math.max(1, Math.floor(pts.length / 1500));
         for (var i = 0; i < pts.length; i += step) {
-            var p = pts[i], found = p.lat !== undefined ? countryAt(p.lat, p.lng) : countryAt(p[0], p[1]);
+            var p = pts[i], found = p.lat !== undefined ? deepAt(p.lat, p.lng) : deepAt(p[0], p[1]);
             if (found) return found;
         }
         var l = pts[pts.length - 1];
-        return l.lat !== undefined ? countryAt(l.lat, l.lng) : countryAt(l[0], l[1]);
+        return l.lat !== undefined ? deepAt(l.lat, l.lng) : deepAt(l[0], l[1]);
     }
 
     // blank white cover (dashed border) over the base map (below the markers and the track), at every zoom level

@@ -23,8 +23,13 @@
     var places = (from t in db.GetUserPlaces(userId) orderby t.Created select t).ToList();
     StringBuilder sb = new StringBuilder();
 
-    var dict = places.Select(value => new { value, value.PlaceID })
-                      .ToDictionary(pair => pair.PlaceID, pair => pair.value);
+    var ids = places.Select(x => x.PlaceID).Distinct().ToList();
+    var links = db.Places.Where(x => ids.Contains(x.PlaceID)).ToList().ToDictionary(x => x.PlaceID, x => x.Link);
+    var dict = places.GroupBy(x => x.PlaceID).ToDictionary(g => g.Key, g => new
+    {
+        g.First().PlaceID, g.First().Name, g.First().Lat, g.First().Lng, g.First().IsPublic, g.First().FileName,
+        Link = links.ContainsKey(g.Key) ? links[g.Key] : ""
+    });
     string json = JsonConvert.SerializeObject(dict);
     //foreach (var place in Places)
     //{

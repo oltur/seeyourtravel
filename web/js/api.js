@@ -182,30 +182,32 @@ syt.api.searchGooglePlaces = function (googlePlacesService, request) {
 
 syt.api.searchSYTPlaces = function (request) {
     var deferred = $.Deferred();
-    var urlp = "services/get_places.aspx?callback=?";
 
-    if (!$('#useSYTPlacesCheckBox').is(':checked') || track.useSYTPlaces == "No") {
+    if (!$('#useSYTPlacesCheckBox').is(':checked') || (window.track && track.useSYTPlaces == "No")) {
         deferred.resolve([]);
+        return deferred.promise();
     }
+
+    // the box around the point: radius metres either way
+    var lat = request.location.lat(), lng = request.location.lng();
+    var dLat = request.radius / 111320;
+    var dLng = dLat / Math.max(0.05, Math.cos(lat * Math.PI / 180));
+    var urlp = "services/get_places.aspx?callback=?&minx=" + (lng - dLng) + "&maxx=" + (lng + dLng) + "&miny=" + (lat - dLat) + "&maxy=" + (lat + dLat);
+    var key = "syt|" + lat.toFixed(2) + "|" + lng.toFixed(2) + "|" + request.radius;
+
+    if (!syt.api._sytPlacesCache) syt.api._sytPlacesCache = {};
+    var cache = syt.api._sytPlacesCache;
+    if (cache[key]) { deferred.resolve(cache[key]); return deferred.promise(); }
 
     $.ajax({
         dataType: "jsonp",
         url: urlp,
         success: function (data2) {
-            //console.log("get_places success");
-            deferred.resolve(data2.results.slice(0, MAX_GOOGLE_PLACES));
+            var list = (data2 && data2.results) ? data2.results.slice(0, MAX_GOOGLE_PLACES) : [];
+            cache[key] = list;
+            deferred.resolve(list);
         },
-        error: function (XMLHttpRequest, textStatus, errorThrown) {
-            if (errorThrown.toString().indexOf("not called") == -1) {
-                var err = "get_places error status: " + textStatus + ", error: " + errorThrown;
-                console.log(err);
-                deferred.resolve([]);
-            }
-            else {
-                //console.log("get_places success");
-                deferred.resolve([]);
-            }
-        }
+        error: function () { deferred.resolve([]); }
     });
 
     return deferred.promise();
@@ -317,7 +319,8 @@ syt.api.searchFlickrImages = function (track, p, tolerancy, low) {
 syt.api.searchSYTImages = function (track, p, tolerancy) {
     var deferred = $.Deferred();
 
-    if (!$('#useSYTImagesCheckBox').is(':checked') || track.useSYTImages == "No") {
+    // Our own photos are private and are never shown.
+    if (true) {
         var data = { photos: [] };
         deferred.resolve(data);
     }
