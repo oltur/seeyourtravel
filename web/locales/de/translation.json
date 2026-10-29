@@ -275,5 +275,14 @@
   "PickStart": "Klicke auf die Karte, um den Start zu setzen.",
   "PickFinish": "Klicke auf die Karte, um das Ziel zu setzen.",
   "BadgeOwnPrivate": "Dein Foto: privat, nur du siehst es",
-  "BadgeOwnPublic": "Dein Foto: öffentlich"
+  "BadgeOwnPublic": "Dein Foto: öffentlich",
+  "BackToPhotos": "Zurück zu den Fotos",
+  "ScopeAll": "Ganze Liste",
+  "ScopeView": "Im Kartenausschnitt",
+  "PhotosInView": "Fotos im Kartenausschnitt",
+  "BulkPrivate": "Alle privat machen",
+  "BulkDelete": "Alle löschen",
+  "BulkPrivateConfirm": "Diese Fotos privat machen? Nur Sie sehen sie.",
+  "MovePhotoConfirm": "Dieses Foto an die angeklickte Stelle der Karte verschieben?",
+  "BulkDeleteConfirm": "Diese Fotos endgültig löschen? Das kann nicht rückgängig gemacht werden."
 }

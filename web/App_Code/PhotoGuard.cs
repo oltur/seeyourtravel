@@ -62,9 +62,22 @@ public static class PhotoGuard
         try { return new SeeYourTravelEntities().IsAdmin(userId).First().Result == 1; } catch (Exception) { return false; }
     }
 
+    /// <summary>While the file data/photos-admin-only.flag exists, every photo (public ones too) is opened by administrators only.</summary>
+    public static bool AdminOnly(HttpContext ctx)
+    {
+        return File.Exists(ctx.Server.MapPath("~/data/photos-admin-only.flag"));
+    }
+
+    /// <summary>True when photos must not be listed at all for this request (admin-only mode and the visitor is no administrator).</summary>
+    public static bool HideAll(HttpContext ctx)
+    {
+        return AdminOnly(ctx) && !IsAdmin(UserId(ctx));
+    }
+
     /// <summary>May the person behind this request open the photo with this file name (the extension is ignored)?</summary>
     public static bool CanView(HttpContext ctx, string fileName)
     {
+        if (AdminOnly(ctx)) return IsAdmin(UserId(ctx));
         string key = Path.GetFileNameWithoutExtension(fileName ?? "").ToLowerInvariant();
         Entry e;
         if (Load().TryGetValue(key, out e))
@@ -132,7 +145,7 @@ public class PhotoHandler : IHttpHandler, IReadOnlySessionState
         var modified = File.GetLastWriteTimeUtc(physical);
         modified = new DateTime(modified.Year, modified.Month, modified.Day, modified.Hour, modified.Minute, modified.Second, DateTimeKind.Utc);
         res.Cache.SetLastModified(modified);
-        if (PhotoGuard.IsPublic(name)) { res.Cache.SetCacheability(HttpCacheability.Public); res.Cache.SetMaxAge(TimeSpan.FromMinutes(5)); }
+        if (!PhotoGuard.AdminOnly(ctx) && PhotoGuard.IsPublic(name)) { res.Cache.SetCacheability(HttpCacheability.Public); res.Cache.SetMaxAge(TimeSpan.FromMinutes(5)); }
         else { res.Cache.SetCacheability(HttpCacheability.Private); res.Cache.SetNoStore(); }   // a private photo is never stored by shared caches
 
         DateTime since;

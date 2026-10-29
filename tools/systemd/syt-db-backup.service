@@ -1,0 +1,6 @@
+[Unit]
+Description=SeeYourTravel database backup
+
+[Service]
+Type=oneshot
+ExecStart=%h/projects/seeyourtravel/tools/db_backup.sh

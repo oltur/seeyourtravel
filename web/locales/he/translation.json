@@ -275,5 +275,14 @@
   "PickStart": "לחצו על המפה כדי למקם את נקודת ההתחלה.",
   "PickFinish": "לחצו על המפה כדי למקם את נקודת הסיום.",
   "BadgeOwnPrivate": "התמונה שלך: פרטית, רק אתם רואים אותה",
-  "BadgeOwnPublic": "התמונה שלך: ציבורית"
+  "BadgeOwnPublic": "התמונה שלך: ציבורית",
+  "BackToPhotos": "חזרה לתמונות",
+  "ScopeAll": "כל הרשימה",
+  "ScopeView": "בתצוגת המפה",
+  "PhotosInView": "תמונות בתצוגת המפה",
+  "BulkPrivate": "הפוך הכול לפרטי",
+  "BulkDelete": "מחק הכול",
+  "BulkPrivateConfirm": "להפוך את התמונות האלה לפרטיות? רק אתה תראה אותן.",
+  "MovePhotoConfirm": "להעביר את התמונה למקום שנלחץ במפה?",
+  "BulkDeleteConfirm": "למחוק את התמונות האלה לצמיתות? אי אפשר לבטל."
 }

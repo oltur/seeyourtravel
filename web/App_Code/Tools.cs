@@ -12,7 +12,13 @@ public static class Tools
     // Google sign-in is on when GoogleClientId is set in Web.config; otherwise everybody is auto-signed-in (local dev mode).
     public static string GoogleClientId
     {
-        get { return (System.Configuration.ConfigurationManager.AppSettings["GoogleClientId"] ?? "").Trim(); }
+        get
+        {
+            // the separate test container (127.0.0.1:8089, see tools/test_site.sh) runs in local mode without touching Web.config,
+            // which the public site shares
+            if (Environment.GetEnvironmentVariable("SYT_FORCE_LOCAL") == "1") return "";
+            return (System.Configuration.ConfigurationManager.AppSettings["GoogleClientId"] ?? "").Trim();
+        }
     }
     /// <summary>
     /// Address of a static file (relative to the site root) with a version taken from its modification time,

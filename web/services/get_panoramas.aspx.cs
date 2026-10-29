@@ -45,11 +45,13 @@ public partial class services_get_panoramas : System.Web.UI.Page
 
         // Public photos for everybody; a private photo only for the account it belongs to (administrators do not see other people's private photos here).
         Guid userId = Tools.GetUserId(this);
+        bool hideAll = PhotoGuard.HideAll(Context);
         double kx = Math.Cos(y * Math.PI / 180);   // a degree of longitude is shorter than one of latitude
         var db = new SeeYourTravelEntities();
         var Images = db.Images
             .Where(i => i.Lat != null && i.Lng != null && i.Lat >= miny && i.Lat <= maxy && i.Lng >= minx && i.Lng <= maxx)
             .Where(i => i.IsPublic || i.ImageUsers.Any(u => u.UserID == userId))
+            .Where(i => !hideAll)   // admin-only mode (data/photos-admin-only.flag): no photos for visitors, so no empty slots either
             .OrderBy(i => (i.Lat.Value - y) * (i.Lat.Value - y) + (i.Lng.Value - x) * kx * (i.Lng.Value - x) * kx)   // nearest to the centre of the box first
             .Take(400)
             .ToList();

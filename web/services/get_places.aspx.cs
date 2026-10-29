@@ -37,7 +37,7 @@ public partial class services_get_places : System.Web.UI.Page
             {
                 // only a place that its owner made public shows its photo to everybody
                 string thumb = "";
-                if (place.IsPublic)
+                if (place.IsPublic && !PhotoGuard.HideAll(Context))
                 {
                     var file = (from pi in db.PlaceImages where pi.PlaceID == place.PlaceID join i in db.Images on pi.ImageID equals i.ImageID select i.FileName).FirstOrDefault();
                     if (!string.IsNullOrEmpty(file)) thumb = "services/get_thumbnail.aspx?size=small&p=" + Uri.EscapeDataString(file);

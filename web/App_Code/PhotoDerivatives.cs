@@ -45,6 +45,13 @@ public static class PhotoDerivatives
         });
     }
 
+    /// <summary>Drops the cached sizes of a photo's web copies (after they were turned).</summary>
+    public static void ForgetDimensions(HttpServerUtility server, string fileName)
+    {
+        int[] old;
+        foreach (var size in Sizes) dims.TryRemove(PathFor(server, size, fileName), out old);
+    }
+
     /// <summary>Creates the derivatives of a freshly uploaded photo. Never throws (the original is already saved).</summary>
     public static void Create(HttpServerUtility server, string originalPath)
     {
@@ -89,7 +96,7 @@ public static class PhotoDerivatives
         }
     }
 
-    static void ApplyExifOrientation(Bitmap bitmap)
+    public static void ApplyExifOrientation(Bitmap bitmap)
     {
         try
         {
@@ -105,6 +112,6 @@ public static class PhotoDerivatives
                 case 8: bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone); break;
             }
         }
-        catch (ArgumentException) { }
+        catch (Exception) { }   // no orientation tag (Mono reports that as an ExternalException)
     }
 }
