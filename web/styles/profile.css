@@ -134,3 +134,43 @@
 .pvNav:disabled { opacity: .25; cursor: default; }
 .pvCaption { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #3a4a5e; }
 .pvCaption #pvTitle { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* people */
+.pfTabs { margin-bottom: 10px; }
+.pfTabs button { padding: 5px 14px; font-size: 13px; }
+#peopleSearch { width: 100%; box-sizing: border-box; margin: 0 0 8px; }
+.pfPeople { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.pcard { position: relative; border: 1px solid #cfd9e6; background: #fff; border-radius: 10px; padding: 0 0 6px; cursor: pointer; text-align: center; overflow: hidden; }
+.pcard:hover { border-color: #225EAC; box-shadow: 0 2px 8px rgba(34,94,172,.2); }
+.pcard img, .pcard .noface { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: #e8eef6; }
+.pcard .noface { display: flex; align-items: center; justify-content: center; font-size: 36px; color: #9fb2c9; }
+.pcard .pn { display: block; font-size: 12px; margin: 4px 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1d2b3e; }
+.pcard.unnamed .pn { color: #7a8aa0; font-style: italic; }
+.pcard .pc { position: absolute; top: 4px; right: 4px; background: rgba(15,23,32,.7); color: #fff; font-size: 11px; border-radius: 9px; padding: 1px 6px; }
+.pcard .pb { position: absolute; top: 4px; left: 4px; color: #fff; background: #b3261e; border-radius: 9px; font-size: 11px; padding: 1px 5px; }
+.pcard.blocked img { filter: grayscale(1) opacity(.5); }
+.pfPerson { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; padding: 6px; background: #eef4fc; border: 1px solid #cfd9e6; border-radius: 10px; }
+.pfPerson img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.pfPerson .pnm { flex: 1 1 120px; min-width: 0; }
+#pvFaces { position: absolute; inset: 0; pointer-events: none; }
+.fbox { position: absolute; border: 2px dashed #f5a623; border-radius: 4px; pointer-events: auto; cursor: pointer; box-sizing: border-box; }
+.fbox.known { border-style: solid; border-color: #3ec97b; }
+.fbox.blk { border-color: #e5484d; }
+.fbox:hover { background: rgba(255,255,255,.15); }
+.fbox span { position: absolute; left: -2px; top: 100%; margin-top: 2px; background: rgba(15,23,32,.8); color: #fff; font-size: 11px; padding: 1px 5px; border-radius: 4px; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+#pvFacesBtn.on { background: #225EAC; border-color: #225EAC; color: #fff; }
+#picker { position: fixed; z-index: 100000; left: 50%; top: 80px; transform: translateX(-50%); width: 340px; max-width: calc(100vw - 24px); max-height: calc(100vh - 120px); overflow: auto; background: #fff; border: 1px solid #9fbbe0; border-radius: 12px; box-shadow: 0 12px 40px rgba(15,23,32,.35); padding: 10px; }
+#picker .pkHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+#picker input { width: 100%; box-sizing: border-box; margin: 0 0 6px; }
+#pkActions { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+#pkList { max-height: 260px; overflow: auto; margin-bottom: 8px; }
+.pkItem { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; text-align: left; padding: 4px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.pkItem:hover { background: #eef4fc; }
+.pkItem img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+.pkNew { display: flex; gap: 6px; } .pkNew input { margin: 0; }
+
+/* names of the people on a photo: only on hover in the list, plain text under the title in the preview */
+#photosGrid button { position: relative; }
+#photosGrid .pfWho { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 6px 3px; font-size: 11px; line-height: 1.2; color: #fff; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: linear-gradient(transparent, rgba(0,0,0,.6)); opacity: 0; transition: opacity .15s; pointer-events: none; }
+#photosGrid button:hover .pfWho, #photosGrid button.sel .pfWho { opacity: 1; }
+.pvCaption .pvWho { color: #7a8aa0; font-size: 12px; white-space: nowrap; }

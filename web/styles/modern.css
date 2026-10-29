@@ -471,3 +471,7 @@ html.compact .sytPlace span { font-size: 8px; }
 /* our own photos in the strip: a green pin = public, a red pin = private */
 .photoBadge.own i { color: #1f9d55; font-size: 16px; padding: 0 3px; }
 .photoBadge.own.priv i { color: #d83a3a; }
+
+/* names of the people on one's own photo: hover only, top edge of the strip photo */
+.photoWho { position: absolute; left: 0; right: 0; top: 0; z-index: 3; padding: 3px 8px 10px; font-size: 12px; line-height: 1.2; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: linear-gradient(rgba(0,0,0,.55), transparent); opacity: 0; transition: opacity .15s; pointer-events: none; }
+#imageDiv li:hover .photoWho { opacity: 1; }

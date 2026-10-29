@@ -216,6 +216,7 @@ function showLocation() {
 function errorPosition(err) {
     console.warn('Cannot get position(' + err.code + '): ' + err.message);
 };
+var centeredOnMe = false;
 var lastSent = { t: 0, pos: null };
 var shareLocation = false;   // the user's consent, kept on the server
 function showPosition(position) {
@@ -229,8 +230,11 @@ function showPosition(position) {
         //        markerWhereIAmCircle.setLatLng(newLatLng);
         //        markerWhereIAmCircle.setRadius(position.coord.accuracy);
 
-        if (typeof track == "undefined" && !trackRequested)
+        // go to the user's position once (the fix is repeated every minute and must not undo where the user has moved the map to);
+        // pages that keep their own view (My photos) set keepMapView
+        if (typeof track == "undefined" && !trackRequested && !centeredOnMe && !window.keepMapView)
             map.setView(newLatLng, 8);
+        centeredOnMe = true;
 
         //console.log(window.navigator.standalone);
         // only signed-in users share their position, and only if it changed or a minute passed (guests: nothing is sent)
@@ -703,6 +707,11 @@ function makeStripItem(ph, i, divHeight) {
     else badge.textContent = "🌍";
     badge.title = ph.source === "own" ? (ownPrivate ? T("BadgeOwnPrivate", "Your photo: private, only you can see it") : T("BadgeOwnPublic", "Your photo: public")) : T("BadgePublic", "Public photo (Wikimedia Commons)");
     nextLi.appendChild(badge);
+    if (ph.people && ph.people.length) {   // the owner's own photos: who is on it, shown on hover only
+        var who = document.createElement("span");
+        who.className = "photoWho"; who.textContent = ph.people.join(", ");
+        nextLi.appendChild(who);
+    }
     nextLi._ph = ph;
     return nextLi;
 }
@@ -905,7 +914,7 @@ var flyIn = (function () {
             remember(ph);
             var card = document.createElement('div');
             card.className = 'flyCard';
-            var credit = photoCredit(ph).replace(/</g, '&lt;');
+            var credit = (ph.people && ph.people.length ? ph.people.join(', ') : photoCredit(ph)).replace(/</g, '&lt;');   // the owner's own photo shows who is on it instead of the generic credit
             card.innerHTML = '<img alt="" src="' + (ph.photo_file_url || '').replace(/"/g, '%22') + '"/><span>' + credit + '</span>';
             card.style.left = (pos[i].x - W / 2) + 'px'; card.style.top = (pos[i].y - H / 2) + 'px';
             var origin = map.latLngToContainerPoint([ph.latitude, ph.longitude]);
@@ -1022,6 +1031,7 @@ var photoViewer = (function () {
             html += ' · <a href="' + esc(ph.photo_url) + '" target="_blank" rel="noopener">' + esc(T("SourceCommons", "Source: Wikimedia Commons")) + '</a>';
         }
         if (ph.source === "own" && ph.photo_url) html += ' \u00b7 <a href="' + esc(ph.photo_url) + '" target="_blank" rel="noopener">' + esc(T("Original", "Original")) + '</a>';
+        if (ph.people && ph.people.length) html += ' \u00b7 <i class="fa fa-user"></i> ' + esc(ph.people.join(", "));
         if (ph.source === "own" && typeof ph.syt_public === "boolean") html += ' \u00b7 <i class="fa fa-map-marker" style="color:' + (ph.syt_public ? '#2fbf6c' : '#ff5a52') + '"></i> ' + esc(ph.syt_public ? T("Public", "Public") : T("Private", "Private"));
         if (typeof ph.latitude === "number" && typeof ph.longitude === "number" && typeof map !== "undefined")
             html += ' · <a href="#" class="pv-map">' + esc(T("ShowOnMap", "Show on map")) + '</a>';

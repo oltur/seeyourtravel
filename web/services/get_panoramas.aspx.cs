@@ -55,6 +55,10 @@ public partial class services_get_panoramas : System.Web.UI.Page
             .OrderBy(i => (i.Lat.Value - y) * (i.Lat.Value - y) + (i.Lng.Value - x) * kx * (i.Lng.Value - x) * kx)   // nearest to the centre of the box first
             .Take(400)
             .ToList();
+        var blockedKeys = People.BlockedPhotoKeys();   // photos that show a blocked person are never listed
+        Images = Images.Where(i => !blockedKeys.Contains(Path.GetFileNameWithoutExtension(i.FileName).ToLowerInvariant())).ToList();
+
+        var names = People.NamesByPhoto(userId);   // the owner sees who is on the photo; nobody else does
 
         // (no shuffle: nearest first)
 
@@ -82,7 +86,9 @@ public partial class services_get_panoramas : System.Web.UI.Page
                 string fileUrl = d != null ? PhotoDerivatives.UrlFor(480, file) : urlThumbnail;
                 string bigUrl = File.Exists(PhotoDerivatives.PathFor(Server, 1600, file)) ? PhotoDerivatives.UrlFor(1600, file) : url;
                 int pw = d != null ? d[0] : 100, ph = d != null ? d[1] : 100;
-                items.Append("{\"syt_public\":" + (Image.IsPublic ? "true" : "false") + ",\"height\":" + ph + ",\"latitude\":" + ((decimal)Image.Lat).ToString() + ",\"longitude\":" + ((decimal)Image.Lng).ToString() + ",\"owner_id\":999999,\"owner_name\":\"-----\",\"owner_url\":\"http://www.example.com/\",\"photo_file_url\":\"" + fileUrl + "\",\"big_url\":\"" + bigUrl + "\",\"photo_id\":9999999999,\"photo_title\":\"TBD\",\"photo_url\":\"" + url + "\",\"upload_date\":\"1 January 1901\",\"width\":" + pw + "}");
+                List<string> who; names.TryGetValue(Path.GetFileNameWithoutExtension(file).ToLowerInvariant(), out who);
+                string whoJson = who == null ? "" : ",\"people\":" + new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(who);
+                items.Append("{\"syt_public\":" + (Image.IsPublic ? "true" : "false") + ",\"height\":" + ph + ",\"latitude\":" + ((decimal)Image.Lat).ToString() + ",\"longitude\":" + ((decimal)Image.Lng).ToString() + ",\"owner_id\":999999,\"owner_name\":\"-----\",\"owner_url\":\"http://www.example.com/\",\"photo_file_url\":\"" + fileUrl + "\",\"big_url\":\"" + bigUrl + "\",\"photo_id\":9999999999,\"photo_title\":\"TBD\",\"photo_url\":\"" + url + "\",\"upload_date\":\"1 January 1901\",\"width\":" + pw + whoJson + "}");
             }
         }
 

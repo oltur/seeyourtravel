@@ -12,7 +12,7 @@ using System.Web.SessionState;
 /// </summary>
 public static class PhotoGuard
 {
-    class Entry { public bool Public; public HashSet<Guid> Owners = new HashSet<Guid>(); }
+    class Entry { public bool Public; public bool Blocked; public HashSet<Guid> Owners = new HashSet<Guid>(); }
 
     static Dictionary<string, Entry> cache;          // file name without extension (lower case) -> who may open it
     static DateTime loadedAt = DateTime.MinValue;
@@ -39,6 +39,8 @@ public static class PhotoGuard
                 if (key.Length == 0) continue;
                 map[key] = new Entry { Public = i.IsPublic || publicPlaceImages.Contains(i.ImageID) };
             }
+            var blocked = People.BlockedPhotoKeys();
+            foreach (var kv in map) kv.Value.Blocked = blocked.Contains(kv.Key);
             foreach (var iu in (from u in db.ImageUsers join i in db.Images on u.ImageID equals i.ImageID select new { u.UserID, i.FileName }).ToList())
             {
                 Entry e;
@@ -82,7 +84,7 @@ public static class PhotoGuard
         Entry e;
         if (Load().TryGetValue(key, out e))
         {
-            if (e.Public) return true;
+            if (e.Public && !e.Blocked) return true;   // a photo that shows a blocked person is never public
             Guid uid = UserId(ctx);
             // the owner, and administrators (who moderate: they see every photo in the My photos list)
             return uid != Guid.Empty && (e.Owners.Contains(uid) || IsAdmin(uid));
@@ -93,7 +95,7 @@ public static class PhotoGuard
     public static bool IsPublic(string fileName)
     {
         Entry e;
-        return Load().TryGetValue(Path.GetFileNameWithoutExtension(fileName ?? "").ToLowerInvariant(), out e) && e.Public;
+        return Load().TryGetValue(Path.GetFileNameWithoutExtension(fileName ?? "").ToLowerInvariant(), out e) && e.Public && !e.Blocked;
     }
 }
 

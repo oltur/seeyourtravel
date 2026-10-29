@@ -35,7 +35,28 @@
             <div id="listView">
             <div class="pfNote" style="margin-top: 0"><i class="fa fa-lock"></i> <span class="i" data-i18n="PhotosPrivate">Your own photos are private: they are never shown to other visitors or on the map.</span></div>
 
-            <h3 class="i" data-i18n="MyPhotos">My photos</h3>
+            <div class="pfChips pfTabs" id="viewTabs">
+                <button type="button" data-t="photos" class="on"><i class="fa fa-picture-o"></i> <span class="i" data-i18n="MyPhotos">My photos</span></button>
+                <button type="button" data-t="people"><i class="fa fa-users"></i> <span class="i" data-i18n="People">People</span> <em>0</em></button>
+            </div>
+
+            <div id="peoplePane" style="display: none">
+                <div class="pfNote" style="margin-top: 0"><i class="fa fa-info-circle"></i> <span class="i" data-i18n="PeopleHint">Faces are found and grouped automatically. Open a person to see their photos, give a name, merge groups that are the same person or block someone: blocked people disappear from all photos. To fix a single face, open the photo and click the face.</span></div>
+                <input type="text" id="peopleSearch" placeholder="Search" data-i18n="[placeholder]SearchPeople" />
+                <div class="pfPeople" id="peopleGrid"></div>
+                <div class="pfEmpty" id="noPeople" style="display: none"><span class="i" data-i18n="NoPeople">No people found yet.</span></div>
+            </div>
+
+            <div id="personBar" class="pfPerson" style="display: none">
+                <img id="personCover" alt="" />
+                <div class="pnm"><b id="personName"></b> <span class="pfBadge" id="personBlocked" style="display: none"><i class="fa fa-ban"></i> <span class="i" data-i18n="Blocked">Blocked</span></span></div>
+                <button type="button" class="pfBtn" id="personRename"><i class="fa fa-pencil"></i> <span class="i" data-i18n="Rename">Rename</span></button>
+                <button type="button" class="pfBtn" id="personMerge"><i class="fa fa-compress"></i> <span class="i" data-i18n="MergeInto">Merge into…</span></button>
+                <button type="button" class="pfBtn danger" id="personBlock"></button>
+                <button type="button" class="pfBtn" id="personClose" title="Back"><i class="fa fa-times"></i></button>
+            </div>
+
+            <div id="photosPane">
             <div class="pfChips" id="photoFilter">
                 <button type="button" data-f="all" class="on"><span class="i" data-i18n="All">All</span> <em>0</em></button>
                 <button type="button" data-f="pub"><i class="fa fa-globe"></i> <span class="i" data-i18n="Public">Public</span> <em>0</em></button>
@@ -60,7 +81,6 @@
                 </div>
                 <label for="imageLatLng" class="i" data-i18n="Photocoordinates">Photo coordinates</label>
                 <input type="text" readonly="readonly" id="imageLatLng" value="" />
-                <div class="pfNote"><i class="fa fa-map-marker"></i> <span class="i" data-i18n="ClickMapToPlace">Click the map to set where this photo was taken.</span></div>
                 <div class="pfRow">
                     <button type="button" class="pfBtn primary" id="buttonPreview"><i class="fa fa-search-plus"></i> <span class="i" data-i18n="Preview">Preview</span></button>
                     <a class="pfBtn" id="buttonOpenPhoto" target="_blank" href="#"><i class="fa fa-eye"></i> <span class="i" data-i18n="Open">Open</span></a>
@@ -77,6 +97,7 @@
                     <button type="submit" id="buttonUpload" class="pfBtn primary"><i class="fa fa-upload"></i> <span class="i" data-i18n="Upload">Upload</span></button>
                 </div>
             </div>
+            </div><!-- /photosPane -->
             </div>
 
             <div id="photoView" style="display: none">
@@ -86,12 +107,14 @@
                 </div>
                 <div class="pvStage">
                     <img id="pvImg" alt="" />
+                    <div id="pvFaces"></div>
                     <button type="button" class="pvNav prev" id="pvPrev" title="Previous"><i class="fa fa-chevron-left"></i></button>
                     <button type="button" class="pvNav next" id="pvNext" title="Next"><i class="fa fa-chevron-right"></i></button>
                 </div>
-                <div class="pvCaption"><span id="pvTitle"></span> <span class="pfBadge" id="pvStatus"></span></div>
+                <div class="pvCaption"><span id="pvTitle"></span> <span class="pvWho" id="pvWho"></span> <span class="pfBadge" id="pvStatus"></span></div>
                 <div class="pfRow" style="margin-bottom: 0">
                     <button type="button" class="pfBtn" id="pvToggle"></button>
+                    <button type="button" class="pfBtn" id="pvFacesBtn" title="Show / hide faces"><i class="fa fa-user-circle-o"></i> <span class="i" data-i18n="Faces">Faces</span></button>
                     <a class="pfBtn" id="pvOpen" target="_blank" href="#"><i class="fa fa-eye"></i> <span class="i" data-i18n="Open">Open</span></a>
                     <button type="button" class="pfBtn" id="pvRotL" title="Rotate left (Shift+R)"><i class="fa fa-rotate-left"></i></button>
                     <button type="button" class="pfBtn" id="pvRotR" title="Rotate right (R)"><i class="fa fa-rotate-right"></i></button>
@@ -107,9 +130,18 @@
         </div>
     </div>
 
+    <div id="picker" style="display: none">
+        <div class="pkHead"><b id="pkTitle"></b><button type="button" id="pkClose" class="pfBtn" style="padding: 2px 8px">&times;</button></div>
+        <div id="pkActions"></div>
+        <input type="text" id="pkSearch" placeholder="Search" data-i18n="[placeholder]SearchPeople" />
+        <div id="pkList"></div>
+        <div class="pkNew"><input type="text" id="pkNewName" maxlength="100" placeholder="New person" data-i18n="[placeholder]NewPerson" /><button type="button" class="pfBtn primary" id="pkNewBtn"><i class="fa fa-plus"></i> <span class="i" data-i18n="Create">Create</span></button></div>
+    </div>
+
     <div id="map"></div>
 
     <script>
+        window.keepMapView = true;   // the shared location code must not re-centre this map on the user's position
         var map, markers;   // shadow the #map element so init() creates the map
         var markersImages, markerPhoto, photos = [], current = null;
 
@@ -181,13 +213,17 @@
 
         var scope = 'all';   // 'view' = only the photos inside the current map view
         function inView(p) { return hasLoc(p) && map.getBounds().contains([parseFloat(p.lat), parseFloat(p.lng)]); }
-        function isShown(p) { return (filter === 'all' || (filter === 'pub') === isPub(p)) && (scope !== 'view' || inView(p)); }
+        // people: a photo that shows a blocked person is hidden everywhere (except in that person's own list, so the block can be undone)
+        var photoNames = {}, people = [], personFilter = null, personFiles = null, tab = 'photos', pvFacesOn = true, curFaces = [];
+        function vis(p) { return p.blk !== '1' || (personFilter && personFilter.blocked); }
+        function isShown(p) { return vis(p) && (personFiles === null || personFiles[p.id]) && (filter === 'all' || (filter === 'pub') === isPub(p)) && (scope !== 'view' || inView(p)); }
         function shownPhotos() { return photos.filter(isShown); }
 
         // ---- one photo, big ----
         function renderPreview() {
             var p = current; if (!p) return;
             var list = shownPhotos(), i = list.indexOf(p);
+            loadFaces(p);
             var base = encodeURIComponent(p.id.replace(/\.[^.]*$/, ''));
             var img = document.getElementById('pvImg'), big = 'data/thumbs/1600/' + base + '.jpg' + (p.v ? '?v=' + p.v : '');
             var vq = p.v ? '?v=' + p.v : '';
@@ -196,7 +232,7 @@
             loader.onload = function () { if (current === p && inPreview) img.src = big; };   // ... then the large one
             loader.onerror = function () { if (current === p && inPreview) img.src = 'data/images/' + encodeURIComponent(p.id); };
             loader.src = big;
-            $('#pvTitle').text(p.desc);
+            $('#pvTitle').text(p.desc); showWho();
             var pub = isPub(p);
             $('#pvStatus').attr('class', 'pfBadge ' + (pub ? 'pub' : 'priv')).html('<i class="fa fa-' + (pub ? 'globe' : 'lock') + '"></i> ' + esc(pub ? T('Public', 'Public') : T('Private', 'Private')));
             $('#pvToggle').text(pub ? T('MakePrivate', 'Make private') : T('MakePublic', 'Make public'));
@@ -232,12 +268,13 @@
 
         // the grid and the map pins show the current filter; every photo carries a public (globe) or private (lock) flag
         function renderGrid(fit) {
-            var nPub = photos.filter(isPub).length;
-            $('#photoFilter [data-f=all] em').text(photos.length);
+            var pool = photos.filter(function (p) { return vis(p) && (personFiles === null || personFiles[p.id]); });
+            var nPub = pool.filter(isPub).length;
+            $('#photoFilter [data-f=all] em').text(pool.length);
             $('#photoFilter [data-f=pub] em').text(nPub);
-            $('#photoFilter [data-f=priv] em').text(photos.length - nPub);
+            $('#photoFilter [data-f=priv] em').text(pool.length - nPub);
             var shown = shownPhotos();
-            $('#scopeFilter [data-s=view] em').text(photos.filter(inView).length);
+            $('#scopeFilter [data-s=view] em').text(pool.filter(inView).length);
             $('#bulkBar').css('display', scope === 'view' ? 'flex' : 'none');
             $('#bulkCount').text(shown.length + ' ' + T('PhotosInView', 'photos in the map view'));
             $('#bulkPrivate, #bulkDelete').prop('disabled', !shown.length);
@@ -245,9 +282,10 @@
             markersImages.clearLayers();
             shown.forEach(function (p) {
                 var pub = isPub(p);
-                $('<button type="button">').data('id', p.id).attr('title', p.desc + ' (' + (pub ? T('Public', 'Public') : T('Private', 'Private')) + ')')
+                $('<button type="button">').data('id', p.id).attr('title', p.desc + ' (' + (pub ? T('Public', 'Public') : T('Private', 'Private')) + ')' + (photoNames[p.id] ? ' — ' + photoNames[p.id].join(', ') : ''))
                     .toggleClass('noloc', !hasLoc(p)).toggleClass('sel', !!current && current.id === p.id)
                     .attr('data-bg', 'data/thumbs/480/' + encodeURIComponent(p.id.replace(/\.[^.]*$/, '')) + '.jpg' + (p.v ? '?v=' + p.v : ''))   // ready-made copy, loaded when scrolled into view
+                    .append(photoNames[p.id] ? $('<span class="pfWho">').text(photoNames[p.id].join(', ')) : null)
                     .append('<span class="pfFlag ' + (pub ? 'pub' : 'priv') + '"><i class="fa fa-' + (pub ? 'globe' : 'lock') + '"></i></span>')
                     .click(function () { select(p); }).appendTo(grid);
                 if (hasLoc(p)) L.marker([parseFloat(p.lat), parseFloat(p.lng)], { icon: L.divIcon({ className: 'pfDot ' + (pub ? 'pub' : 'priv'), iconSize: [14, 14] }) })
@@ -273,13 +311,154 @@
                     var q = r.split(';');
                     if (q.length < 5 || seen[q[0]]) return;   // a description with a line break leaves a broken fragment
                     seen[q[0]] = 1;
-                    photos.push({ id: q[0], desc: q[1], pub: q[2], lat: q[3], lng: q[4] });
+                    photos.push({ id: q[0], desc: q[1], pub: q[2], lat: q[3], lng: q[4], blk: q[5] });
                 });
                 var fit = firstFit; firstFit = false;   // fit the map to the photos only when the address did not say where to look
                 renderGrid(fit);
                 $('#noPhotos').toggle(!photos.length);
             });
         }
+
+
+        // ---------------- people ----------------
+        function personLabel(p) { return p.name || T('Unnamed', 'Unnamed'); }
+        function coverUrl(id) { return 'services/face_crop.aspx?id=' + encodeURIComponent(id); }
+
+        function loadNames() {
+            $.getJSON('services/people.aspx?action=names&_=' + Date.now(), function (d) {
+                photoNames = d.names || {};
+                renderGrid(false); showWho();
+            });
+        }
+        function showWho() { var n = current && photoNames[current.id]; $('#pvWho').text(n ? '· ' + n.join(', ') : ''); }
+
+        function loadPeople(done) {
+            loadNames();
+            $.getJSON('services/people.aspx?action=list&_=' + Date.now(), function (d) {
+                people = d.people || [];
+                $('#viewTabs [data-t=people] em').text(people.filter(function (p) { return !p.blocked; }).length);
+                if (tab === 'people') renderPeople();
+                if (personFilter) { var again = people.filter(function (p) { return p.id === personFilter.id; })[0]; if (again) { personFilter = again; showPersonBar(); } }
+                if (done) done();
+            });
+        }
+
+        function renderPeople() {
+            var q = $.trim($('#peopleSearch').val()).toLowerCase();
+            var list = people.filter(function (p) { return !q || personLabel(p).toLowerCase().indexOf(q) >= 0; });
+            list.sort(function (a, b) { return (a.blocked - b.blocked) || ((!!b.name) - (!!a.name)) || (b.count - a.count); });   // named first, blocked last
+            var g = $('#peopleGrid').empty();
+            list.forEach(function (p) {
+                $('<button type="button" class="pcard">').toggleClass('blocked', p.blocked).toggleClass('unnamed', !p.name).attr('title', personLabel(p))
+                    .append(p.cover ? $('<img alt="" loading="lazy">').attr('src', coverUrl(p.cover)) : '<span class="noface"><i class="fa fa-user"></i></span>')
+                    .append($('<span class="pn">').text(personLabel(p))).append($('<span class="pc">').text(p.count))
+                    .append(p.blocked ? '<span class="pb"><i class="fa fa-ban"></i></span>' : '')
+                    .click(function () { openPerson(p); }).appendTo(g);
+            });
+            $('#noPeople').toggle(!list.length);
+        }
+
+        function setTab(t) {
+            tab = t;
+            $('#viewTabs button').removeClass('on').filter('[data-t=' + t + ']').addClass('on');
+            $('#peoplePane').toggle(t === 'people'); $('#photosPane').toggle(t === 'photos');
+            if (t === 'people') { closePersonFilter(); loadPeople(); }
+        }
+
+        function showPersonBar() {
+            var p = personFilter; if (!p) { $('#personBar').hide(); return; }
+            $('#personBar').show();
+            $('#personName').text(personLabel(p) + ' (' + p.count + ')');
+            if (p.cover) $('#personCover').attr('src', coverUrl(p.cover)).show(); else $('#personCover').hide();
+            $('#personBlocked').toggle(p.blocked);
+            $('#personBlock').html(p.blocked ? '<i class="fa fa-check"></i> ' + esc(T('Unblock', 'Unblock')) : '<i class="fa fa-ban"></i> ' + esc(T('Block', 'Block')));
+        }
+
+        function openPerson(p) {
+            personFilter = p; personFiles = null;
+            $.getJSON('services/people.aspx?action=photos&person=' + encodeURIComponent(p.id), function (d) {
+                personFiles = {}; (d.files || []).forEach(function (f) { personFiles[f] = 1; });
+                setTab('photos'); showPersonBar();
+                filter = 'all'; $('#photoFilter button').removeClass('on').filter('[data-f=all]').addClass('on');
+                renderGrid(false); saveState();
+            });
+        }
+
+        function closePersonFilter() {
+            if (!personFilter && personFiles === null) return;
+            personFilter = null; personFiles = null; $('#personBar').hide();
+            if (typeof renderGrid === 'function' && markersImages) renderGrid(false);
+        }
+
+        // a small window to pick a person (or type a new name); used for merging and for naming a face
+        function pickPerson(title, opts, done) {
+            var $p = $('#picker'); $p.data('done', done);
+            $('#pkTitle').text(title); $('#pkSearch').val(''); $('#pkNewName').val('');
+            var acts = $('#pkActions').empty();
+            (opts.actions || []).forEach(function (a) { $('<button type="button" class="pfBtn">').toggleClass('danger', !!a.danger).html(a.html).click(function () { $p.hide(); a.run(); }).appendTo(acts); });
+            function fill() {
+                var q = $.trim($('#pkSearch').val()).toLowerCase(), l = $('#pkList').empty();
+                people.filter(function (x) { return x.id !== opts.exclude && (!q || personLabel(x).toLowerCase().indexOf(q) >= 0); })
+                    .sort(function (a, b) { return ((!!b.name) - (!!a.name)) || (b.count - a.count); }).slice(0, 80).forEach(function (x) {
+                        $('<button type="button" class="pkItem">').append(x.cover ? $('<img alt="">').attr('src', coverUrl(x.cover)) : '').append($('<span>').text(personLabel(x) + ' (' + x.count + ')'))
+                            .click(function () { $p.hide(); done({ person: x.id }); }).appendTo(l);
+                    });
+            }
+            $('#pkSearch').off('input').on('input', fill);
+            $('#pkNewBtn').off('click').on('click', function () { var n = $.trim($('#pkNewName').val()); if (!n) return; $p.hide(); done({ name: n }); });
+            $('#pkNewName').off('keydown').on('keydown', function (e) { if (e.key === 'Enter') $('#pkNewBtn').click(); });
+            $('.pkNew').toggle(!opts.noNew);
+            fill(); $p.show(); $('#pkSearch').focus();
+        }
+
+        function peopleCall(data, ok) {
+            $.ajax({ url: 'services/people.aspx', type: 'POST', data: data, dataType: 'json', success: function (r) { if (ok) ok(r); },
+                error: function (x) { toastr.error((x.responseJSON && x.responseJSON.error) || x.statusText, 'ERROR', { timeOut: 5000 }); } });
+        }
+
+        // ---- faces on the big photo ----
+        function layoutFaces() {
+            var img = document.getElementById('pvImg'), box = $('#pvFaces').empty();
+            if (!pvFacesOn || !img.naturalWidth || !curFaces.length) return;
+            var cw = img.clientWidth, ch = img.clientHeight, sc = Math.min(cw / img.naturalWidth, ch / img.naturalHeight);
+            var w = img.naturalWidth * sc, h = img.naturalHeight * sc, ox = (cw - w) / 2, oy = (ch - h) / 2;
+            curFaces.forEach(function (f) {
+                var $f = $('<div class="fbox">').toggleClass('known', !!f.person).toggleClass('blk', !!f.blocked).css({ left: ox + f.x * w, top: oy + f.y * h, width: f.w * w, height: f.h * h })
+                    .attr('title', f.name || T('Unnamed', 'Unnamed'));
+                $('<span>').text(f.name || '?').appendTo($f);
+                $f.on('click', function (e) { e.stopPropagation(); faceMenu(f); }).appendTo(box);
+            });
+        }
+
+        function loadFaces(p) {
+            curFaces = []; $('#pvFaces').empty();
+            $.getJSON('services/people.aspx?action=faces&file=' + encodeURIComponent(p.id), function (d) {
+                if (current !== p) return;
+                curFaces = d.faces || []; layoutFaces();
+            });
+        }
+
+        function faceMenu(f) {
+            var acts = [];
+            if (f.person) acts.push({ html: '<i class="fa fa-user-times"></i> ' + esc(T('NotThisPerson', 'Not this person')), run: function () { peopleCall({ action: 'unmark', face: f.id }, afterFaceChange); } });
+            acts.push({ html: '<i class="fa fa-ban"></i> ' + esc(T('NotAFace', 'Not a face')), danger: true, run: function () { peopleCall({ action: 'reject', face: f.id }, afterFaceChange); } });
+            pickPerson(f.name ? f.name : T('WhoIsThis', 'Who is this?'), { actions: acts }, function (r) {
+                peopleCall({ action: 'assign', face: f.id, person: r.person || '', name: r.name || '' }, afterFaceChange);
+            });
+        }
+
+        function afterFaceChange() {
+            loadPeople(function () { if (current) loadFaces(current); if (personFilter) refreshPersonFiles(); });
+            fillPhotosKeep();
+        }
+
+        function refreshPersonFiles() {
+            if (!personFilter) return;
+            $.getJSON('services/people.aspx?action=photos&person=' + encodeURIComponent(personFilter.id), function (d) {
+                personFiles = {}; (d.files || []).forEach(function (f) { personFiles[f] = 1; }); renderGrid(false);
+            });
+        }
+        function fillPhotosKeep() { var id = current && current.id; fillPhotos(); $(document).one('ajaxStop', function () { var again = photos.filter(function (p) { return p.id === id; })[0]; if (again) current = again; }); }
 
         $(function () {
             $('#photoFilter').on('click', 'button', function () {
@@ -288,6 +467,31 @@
                 renderGrid(false);   // the map stays where it is
                 saveState();
             });
+            $('#viewTabs').on('click', 'button', function () { setTab($(this).data('t')); });
+            $('#peopleSearch').on('input', renderPeople);
+            $('#personClose').click(closePersonFilter);
+            $('#personRename').click(function () {
+                var n = prompt(T('NameThisPerson', 'Name of this person:'), personFilter.name || '');
+                if (n === null) return;
+                peopleCall({ action: 'rename', person: personFilter.id, name: n }, function () { loadPeople(); });
+            });
+            $('#personBlock').click(function () {
+                var making = !personFilter.blocked;
+                if (making && !confirm(T('BlockConfirm', 'Block this person? All photos that show them will disappear from your lists and from the map.'))) return;
+                peopleCall({ action: 'block', person: personFilter.id, v: making ? 1 : 0 }, function () { personFilter.blocked = making; loadPeople(function () { fillPhotosKeep(); renderGrid(false); }); });
+            });
+            $('#personMerge').click(function () {
+                pickPerson(T('MergeInto', 'Merge into…'), { exclude: personFilter.id, noNew: true }, function (r) {
+                    if (!confirm(T('MergeConfirm', 'Merge these two groups into one person?'))) return;
+                    var target = people.filter(function (x) { return x.id === r.person; })[0];
+                    peopleCall({ action: 'merge', from: personFilter.id, into: r.person }, function () { personFilter = target; loadPeople(function () { if (target) openPerson(target); }); });
+                });
+            });
+            $('#pkClose').click(function () { $('#picker').hide(); });
+            $('#pvFacesBtn').click(function () { pvFacesOn = !pvFacesOn; $(this).toggleClass('on', pvFacesOn); layoutFaces(); });
+            $('#pvFacesBtn').addClass('on');
+            $('#pvImg').on('load', layoutFaces); $(window).on('resize', layoutFaces);
+            loadPeople();
             init(null);
             var st = urlState(), lat0 = parseFloat(st.lat), lng0 = parseFloat(st.lng), z0 = parseInt(st.z, 10);
             if (isFinite(lat0) && isFinite(lng0) && isFinite(z0)) { map.setView([lat0, lng0], z0); firstFit = false; }
@@ -372,15 +576,6 @@
             $('#bulkPrivate').click(function () { bulk('private'); });
             $('#bulkDelete').click(function () { bulk('delete'); });
 
-            map.on('click', function (e) {
-                if (!current || inPreview) return;
-                if (!confirm(current.desc + '\n' + T('MovePhotoConfirm', 'Move this photo to the clicked place on the map?'))) return;
-                current.lat = e.latlng.lat; current.lng = e.latlng.lng;
-                updatePhotoData(current);
-                select(current);
-                fillPhotosKeepSelection();
-            });
-
             function fillPhotosKeepSelection() {
                 var id = current && current.id;
                 fillPhotos();
@@ -451,6 +646,8 @@
             $('#photosGrid').on('dblclick', 'button', function () { openPreview(photos.filter(function (p) { return p.id === $(this).data('id'); }.bind(this))[0]); });
             $('#pvImg').on('click', function () { window.open($('#pvOpen').attr('href'), '_blank'); });
             $(document).on('keydown', function (e) {
+                if (e.key === 'Escape' && $('#picker').is(':visible')) { $('#picker').hide(); return; }
+                if ($('#picker').is(':visible')) return;
                 if ($(e.target).is('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
                 if (e.key === 'Delete') { if (current) { e.preventDefault(); deleteCurrent(); } return; }
                 if (e.key === 'r' || e.key === 'R') { if (current) { e.preventDefault(); rotateCurrent(e.shiftKey ? 'ccw' : 'cw'); } return; }

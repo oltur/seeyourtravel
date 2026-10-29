@@ -27,6 +27,20 @@
     }
     catch (Exception ex) { Response.StatusCode = 500; Response.Write("Cannot rotate: " + ex.Message); return; }
     PhotoDerivatives.ForgetDimensions(Server, fileName);
+    try
+    {
+        // the face boxes turn with the picture, and the cut-out faces are made again
+        using (var c = People.Open())
+        {
+            var ids = new System.Collections.Generic.List<Guid>();
+            using (var r = People.Cmd(c, "SELECT f.FaceID FROM Face f JOIN Image i ON i.ImageID=f.ImageID WHERE i.FileName=@n", "@n", fileName).ExecuteReader())
+                while (r.Read()) ids.Add(r.GetGuid(0));
+            string set = dir == "cw" ? "X=1-Y-H, Y=X, W=H, H=W" : "X=Y, Y=1-X-W, W=H, H=W";   // right-hand sides use the old values
+            People.Cmd(c, "UPDATE f SET " + set + " FROM Face f JOIN Image i ON i.ImageID=f.ImageID WHERE i.FileName=@n", "@n", fileName).ExecuteNonQuery();
+            foreach (var id in ids) { string cf = Path.Combine(Path.GetTempPath(), "syt-facecache", id.ToString("N") + ".jpg"); if (File.Exists(cf)) File.Delete(cf); }
+        }
+    }
+    catch (Exception) { }   // no face tables: nothing to turn
     Response.Write("ok");
 %>
 <script runat="server">
