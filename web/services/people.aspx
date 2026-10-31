@@ -68,6 +68,7 @@
                 if (name.Length > 100) name = name.Substring(0, 100);
                 if (p == Guid.Empty || !People.KnowsPerson(c, userId, p)) { fail(404, "unknown person"); return; }
                 People.Cmd(c, "UPDATE Person SET Name=@n WHERE PersonID=@p", "@n", name.Length == 0 ? null : name, "@p", p).ExecuteNonQuery();
+                People.Changed();
                 Response.Write("{\"ok\":true}");
             }
             else if (action == "block")
@@ -75,7 +76,7 @@
                 Guid p = guid("person");
                 if (p == Guid.Empty || !People.KnowsPerson(c, userId, p)) { fail(404, "unknown person"); return; }
                 People.Cmd(c, "UPDATE Person SET IsBlocked=@b WHERE PersonID=@p", "@b", Request["v"] == "1", "@p", p).ExecuteNonQuery();
-                PhotoGuard.Invalidate();
+                People.Changed();
                 Response.Write("{\"ok\":true}");
             }
             else if (action == "merge")
@@ -84,7 +85,7 @@
                 if (from == Guid.Empty || into == Guid.Empty || from == into || !People.KnowsPerson(c, userId, from) || !People.KnowsPerson(c, userId, into)) { fail(404, "unknown person"); return; }
                 // the merged person is blocked when either of the two was
                 People.Cmd(c, "UPDATE Person SET IsBlocked=1 WHERE PersonID=@i AND EXISTS (SELECT 1 FROM Person WHERE PersonID=@f AND IsBlocked=1); UPDATE Face SET PersonID=@i WHERE PersonID=@f; DELETE FROM Person WHERE PersonID=@f", "@f", from, "@i", into).ExecuteNonQuery();
-                PhotoGuard.Invalidate();
+                People.Changed();
                 Response.Write("{\"ok\":true}");
             }
             else if (action == "assign")
@@ -99,7 +100,7 @@
                 }
                 else if (!People.KnowsPerson(c, userId, p)) { fail(404, "unknown person"); return; }
                 People.Cmd(c, "UPDATE Face SET PersonID=@p, Source='manual', Rejected=0 WHERE FaceID=@f", "@p", p, "@f", face).ExecuteNonQuery();
-                PhotoGuard.Invalidate();
+                People.Changed();
                 Response.Write(js.Serialize(new { ok = true, person = p.ToString() }));
             }
             else if (action == "unmark" || action == "reject")
@@ -107,7 +108,7 @@
                 Guid face = guid("face");
                 if (face == Guid.Empty || !People.OwnsFace(c, userId, face)) { fail(404, "unknown face"); return; }
                 People.Cmd(c, "UPDATE Face SET PersonID=NULL, Source='manual', Rejected=@r WHERE FaceID=@f", "@r", action == "reject", "@f", face).ExecuteNonQuery();
-                PhotoGuard.Invalidate();
+                People.Changed();
                 Response.Write("{\"ok\":true}");
             }
             else fail(400, "unknown action");

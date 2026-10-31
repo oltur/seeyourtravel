@@ -17,7 +17,7 @@ Usage: python3 tools/takeout_import.py [--dry-run]
 import os, sys, json, glob, uuid, shutil, argparse, datetime, subprocess
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-W = '/home/ot/work-gp/'
+W = os.environ.get('SYT_WORK', '/home/ot/work-gp').rstrip('/') + '/'
 DEST = os.path.join(REPO, 'web', 'data', 'images')
 OWNERS = {'admin': 'C9F148F7-923A-46B0-8B7C-BD4B54D90886', 'helen': '3D70C1C0-E191-4837-9FA7-3398C928EFAF'}
 PERSON = 0.25

@@ -57,17 +57,31 @@ public static class PhotoGuard
         return (ctx.Session == null || ctx.Session["UserID"] == null) ? Guid.Empty : (Guid)ctx.Session["UserID"];
     }
 
+    static readonly Dictionary<Guid, KeyValuePair<DateTime, bool>> adminCache = new Dictionary<Guid, KeyValuePair<DateTime, bool>>();
+
+    // asked for every photo file of a page (hundreds): the answer is kept for a minute instead of asking the database each time
     static bool IsAdmin(Guid userId)
     {
         if (userId == Guid.Empty) return false;
         if (userId == new Guid("00000000-0000-0000-0000-000000000000")) return true;
-        try { return new SeeYourTravelEntities().IsAdmin(userId).First().Result == 1; } catch (Exception) { return false; }
+        lock (adminCache)
+        {
+            KeyValuePair<DateTime, bool> hit;
+            if (adminCache.TryGetValue(userId, out hit) && (DateTime.UtcNow - hit.Key).TotalSeconds < 60) return hit.Value;
+        }
+        bool admin;
+        try { admin = new SeeYourTravelEntities().IsAdmin(userId).First().Result == 1; } catch (Exception) { return false; }
+        lock (adminCache) adminCache[userId] = new KeyValuePair<DateTime, bool>(DateTime.UtcNow, admin);
+        return admin;
     }
+
+    static DateTime flagChecked = DateTime.MinValue; static bool flagOn;
 
     /// <summary>While the file data/photos-admin-only.flag exists, every photo (public ones too) is opened by administrators only.</summary>
     public static bool AdminOnly(HttpContext ctx)
     {
-        return File.Exists(ctx.Server.MapPath("~/data/photos-admin-only.flag"));
+        if ((DateTime.UtcNow - flagChecked).TotalSeconds >= 3) { flagOn = File.Exists(ctx.Server.MapPath("~/data/photos-admin-only.flag")); flagChecked = DateTime.UtcNow; }   // looked at once per few seconds, not per file
+        return flagOn;
     }
 
     /// <summary>True when photos must not be listed at all for this request (admin-only mode and the visitor is no administrator).</summary>
@@ -148,7 +162,7 @@ public class PhotoHandler : IHttpHandler, IReadOnlySessionState
         modified = new DateTime(modified.Year, modified.Month, modified.Day, modified.Hour, modified.Minute, modified.Second, DateTimeKind.Utc);
         res.Cache.SetLastModified(modified);
         if (!PhotoGuard.AdminOnly(ctx) && PhotoGuard.IsPublic(name)) { res.Cache.SetCacheability(HttpCacheability.Public); res.Cache.SetMaxAge(TimeSpan.FromMinutes(5)); }
-        else { res.Cache.SetCacheability(HttpCacheability.Private); res.Cache.SetNoStore(); }   // a private photo is never stored by shared caches
+        else { res.Cache.SetCacheability(HttpCacheability.Private); res.Cache.SetMaxAge(TimeSpan.FromMinutes(10)); }   // a private photo is never stored by shared caches (Cloudflare); the browser of the person who may see it keeps it for a while, so scrolling the list again does not fetch every thumbnail again
 
         DateTime since;
         string ims = ctx.Request.Headers["If-Modified-Since"];

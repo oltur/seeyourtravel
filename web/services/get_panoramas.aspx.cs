@@ -48,13 +48,13 @@ public partial class services_get_panoramas : System.Web.UI.Page
         bool hideAll = PhotoGuard.HideAll(Context);
         double kx = Math.Cos(y * Math.PI / 180);   // a degree of longitude is shorter than one of latitude
         var db = new SeeYourTravelEntities();
-        var Images = db.Images
+        var Images = hideAll ? new List<Image>() : db.Images
             .Where(i => i.Lat != null && i.Lng != null && i.Lat >= miny && i.Lat <= maxy && i.Lng >= minx && i.Lng <= maxx)
             .Where(i => i.IsPublic || i.ImageUsers.Any(u => u.UserID == userId))
-            .Where(i => !hideAll)   // admin-only mode (data/photos-admin-only.flag): no photos for visitors, so no empty slots either
             .OrderBy(i => (i.Lat.Value - y) * (i.Lat.Value - y) + (i.Lng.Value - x) * kx * (i.Lng.Value - x) * kx)   // nearest to the centre of the box first
             .Take(400)
             .ToList();
+        // admin-only mode (data/photos-admin-only.flag): no photos for visitors, so no empty slots either. Not a condition in the SQL: as a parameter it made SQL Server reuse a plan that took seconds.
         var blockedKeys = People.BlockedPhotoKeys();   // photos that show a blocked person are never listed
         Images = Images.Where(i => !blockedKeys.Contains(Path.GetFileNameWithoutExtension(i.FileName).ToLowerInvariant())).ToList();
 

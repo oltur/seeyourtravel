@@ -66,6 +66,8 @@
                 <button type="button" data-s="all" class="on"><i class="fa fa-th"></i> <span class="i" data-i18n="ScopeAll">Whole list</span></button>
                 <button type="button" data-s="view"><i class="fa fa-crosshairs"></i> <span class="i" data-i18n="ScopeView">In map view</span> <em>0</em></button>
             </div>
+            <div class="pfChips" id="timeFilter" style="display: none"></div>
+            <div class="pfChips" id="monthFilter" style="display: none"></div>
             <div class="pfNote" id="bulkBar" style="display: none; align-items: center; gap: 8px; flex-wrap: wrap">
                 <span id="bulkCount"></span>
                 <button type="button" class="pfBtn" id="bulkPrivate"><i class="fa fa-lock"></i> <span class="i" data-i18n="BulkPrivate">Make all private</span></button>
@@ -180,17 +182,6 @@
             showPhoto(p);
         }
 
-        // thousands of photos: only the thumbnails that are (nearly) visible are requested
-        function lazyThumbs(grid) {
-            var set = function (el) { el.style.backgroundImage = 'url(' + el.getAttribute('data-bg') + ')'; };
-            var btns = grid.querySelectorAll('button[data-bg]');
-            if (!('IntersectionObserver' in window)) { btns.forEach(set); return; }
-            var io = new IntersectionObserver(function (entries) {
-                entries.forEach(function (e) { if (e.isIntersecting) { set(e.target); io.unobserve(e.target); } });
-            }, { root: grid, rootMargin: '300px' });
-            btns.forEach(function (b) { io.observe(b); });
-        }
-
         var filter = 'all';
         var firstFit = true;
         // map position, scale and the two filters live in the address (?lat=&lng=&z=&f=&s=), so a reload or a shared link comes back to the same view
@@ -205,6 +196,8 @@
                 q.set('lat', c.lat.toFixed(5)); q.set('lng', c.lng.toFixed(5)); q.set('z', map.getZoom());
                 if (filter !== 'all') q.set('f', filter); else q.delete('f');
                 if (scope !== 'all') q.set('s', scope); else q.delete('s');
+                if (yearSel) q.set('y', yearSel); else q.delete('y');
+                if (monthSel) q.set('m', monthSel); else q.delete('m');
                 history.replaceState(null, '', location.pathname + '?' + q.toString() + location.hash);
             } catch (e) { }
         }
@@ -216,7 +209,10 @@
         // people: a photo that shows a blocked person is hidden everywhere (except in that person's own list, so the block can be undone)
         var photoNames = {}, people = [], personFilter = null, personFiles = null, tab = 'photos', pvFacesOn = true, curFaces = [];
         function vis(p) { return p.blk !== '1' || (personFilter && personFilter.blocked); }
-        function isShown(p) { return vis(p) && (personFiles === null || personFiles[p.id]) && (filter === 'all' || (filter === 'pub') === isPub(p)) && (scope !== 'view' || inView(p)); }
+        // time taken: a year, and inside a year a month (the third way to narrow the list, next to person and map view)
+        var yearSel = null, monthSel = null;
+        function inTime(p) { return !yearSel || (p.date && p.date.substr(0, 4) === yearSel && (!monthSel || p.date.substr(5, 2) === monthSel)); }
+        function isShown(p) { return vis(p) && inTime(p) && (personFiles === null || personFiles[p.id]) && (filter === 'all' || (filter === 'pub') === isPub(p)) && (scope !== 'view' || inView(p)); }
         function shownPhotos() { return photos.filter(isShown); }
 
         // ---- one photo, big ----
@@ -256,9 +252,10 @@
             inPreview = false;
             $('#photoView').hide(); $('#listView').show();
             var g = $('#photosGrid')[0];
+            paintGrid(true);
             g.scrollTop = listScroll;                                     // back to where the list was
-            var sel = $('#photosGrid button.sel')[0];
-            if (sel && (sel.offsetTop < g.scrollTop || sel.offsetTop + sel.offsetHeight > g.scrollTop + g.clientHeight)) sel.scrollIntoView({ block: 'nearest' });
+            paintGrid(false);
+            if (current) gridReveal(current);
         }
 
         function stepPreview(d) {
@@ -266,9 +263,51 @@
             if (i >= 0 && i < list.length) { select(list[i]); renderPreview(); }
         }
 
+        // ---- the photo list is windowed: with tens of thousands of photos only the rows in view (plus a few) exist as elements ----
+        var gridList = [], gridCols = 1, gridRowH = 90, gridFrom = -1, gridTo = -1, photosVer = 0, markerKey = '', pinRenderer = null;
+        function paintGrid(force, toTop) {
+            var g = $('#photosGrid')[0];
+            if (!g.clientWidth) return;   // hidden (big preview open): painted again when it comes back
+            var w = g.clientWidth - 4;
+            gridCols = Math.max(1, Math.floor((w + 6) / 90));
+            gridRowH = (w - (gridCols - 1) * 6) / gridCols + 6;
+            if (toTop) g.scrollTop = 0;
+            var rows = Math.ceil(gridList.length / gridCols);
+            var r0 = Math.max(0, Math.floor(g.scrollTop / gridRowH) - 2), r1 = Math.min(rows, Math.ceil((g.scrollTop + g.clientHeight) / gridRowH) + 2);
+            var from = r0 * gridCols, to = Math.min(gridList.length, r1 * gridCols);
+            if (!force && from === gridFrom && to === gridTo) return;
+            gridFrom = from; gridTo = to;
+            var inner = document.createElement('div');
+            inner.className = 'pfGridIn';
+            inner.style.paddingTop = (r0 * gridRowH) + 'px';
+            inner.style.paddingBottom = (Math.max(0, rows - r1) * gridRowH) + 'px';
+            for (var i = from; i < to; i++) inner.appendChild(gridButton(gridList[i]));
+            $('#photosGrid').empty().append(inner);
+        }
+        function gridButton(p) {
+            var pub = isPub(p), names = photoNames[p.id];
+            var b = $('<button type="button">').data('id', p.id).attr('title', p.desc + ' (' + (pub ? T('Public', 'Public') : T('Private', 'Private')) + ')' + (names ? ' \u2014 ' + names.join(', ') : ''))
+                .toggleClass('noloc', !hasLoc(p)).toggleClass('sel', !!current && current.id === p.id)
+                .css('background-image', 'url(data/thumbs/480/' + encodeURIComponent(p.id.replace(/\.[^.]*$/, '')) + '.jpg' + (p.v ? '?v=' + p.v : '') + ')')   // ready-made copy
+                .append(names ? $('<span class="pfWho">').text(names.join(', ')) : null)
+                .append('<span class="pfFlag ' + (pub ? 'pub' : 'priv') + '"><i class="fa fa-' + (pub ? 'globe' : 'lock') + '"></i></span>')
+                .click(function () { select(p); });
+            return b[0];
+        }
+        // scroll the list so that this photo is in view (it may not be an element at the moment)
+        function gridReveal(p) {
+            var g = $('#photosGrid')[0], i = gridList.indexOf(p);
+            if (i < 0 || !g.clientWidth) return;
+            var top = Math.floor(i / gridCols) * gridRowH;
+            if (top < g.scrollTop || top + gridRowH > g.scrollTop + g.clientHeight) g.scrollTop = Math.max(0, top - gridRowH);
+            paintGrid(false);
+        }
+
         // the grid and the map pins show the current filter; every photo carries a public (globe) or private (lock) flag
         function renderGrid(fit) {
-            var pool = photos.filter(function (p) { return vis(p) && (personFiles === null || personFiles[p.id]); });
+            var base = photos.filter(function (p) { return vis(p) && (personFiles === null || personFiles[p.id]); });
+            renderTime(base);
+            var pool = base.filter(inTime);
             var nPub = pool.filter(isPub).length;
             $('#photoFilter [data-f=all] em').text(pool.length);
             $('#photoFilter [data-f=pub] em').text(nPub);
@@ -278,21 +317,51 @@
             $('#bulkBar').css('display', scope === 'view' ? 'flex' : 'none');
             $('#bulkCount').text(shown.length + ' ' + T('PhotosInView', 'photos in the map view'));
             $('#bulkPrivate, #bulkDelete').prop('disabled', !shown.length);
-            var grid = $('#photosGrid').empty();
-            markersImages.clearLayers();
-            shown.forEach(function (p) {
-                var pub = isPub(p);
-                $('<button type="button">').data('id', p.id).attr('title', p.desc + ' (' + (pub ? T('Public', 'Public') : T('Private', 'Private')) + ')' + (photoNames[p.id] ? ' — ' + photoNames[p.id].join(', ') : ''))
-                    .toggleClass('noloc', !hasLoc(p)).toggleClass('sel', !!current && current.id === p.id)
-                    .attr('data-bg', 'data/thumbs/480/' + encodeURIComponent(p.id.replace(/\.[^.]*$/, '')) + '.jpg' + (p.v ? '?v=' + p.v : ''))   // ready-made copy, loaded when scrolled into view
-                    .append(photoNames[p.id] ? $('<span class="pfWho">').text(photoNames[p.id].join(', ')) : null)
-                    .append('<span class="pfFlag ' + (pub ? 'pub' : 'priv') + '"><i class="fa fa-' + (pub ? 'globe' : 'lock') + '"></i></span>')
-                    .click(function () { select(p); }).appendTo(grid);
-                if (hasLoc(p)) L.marker([parseFloat(p.lat), parseFloat(p.lng)], { icon: L.divIcon({ className: 'pfDot ' + (pub ? 'pub' : 'priv'), iconSize: [14, 14] }) })
-                    .on('click', function () { select(p); }).addTo(markersImages);
-            });
-            lazyThumbs(grid[0]);
+            // the map pins do not depend on the map-view scope: they are built again only when the set of photos (or a public/private flag) changed.
+            // All of them are added in one call: adding thousands one by one makes the cluster layer recalculate every time.
+            var mkey = [photosVer, yearSel, monthSel, pool.length, nPub, pool.length ? pool[0].id : '', pool.length ? pool[pool.length - 1].id : ''].join('|');
+            if (mkey !== markerKey) {
+                markerKey = mkey;
+                markersImages.clearLayers();
+                var pins = [];
+                pool.forEach(function (p) {
+                    if (!hasLoc(p)) return;
+                    pins.push(L.circleMarker([parseFloat(p.lat), parseFloat(p.lng)], { renderer: pinRenderer || (pinRenderer = L.canvas({ padding: 0.5 })), radius: 7, weight: 2, color: '#fff', fillColor: isPub(p) ? '#23a455' : '#5b6b80', fillOpacity: 1 })   // light dots drawn on one canvas, not an element each
+                        .on('click', function () { select(p); }));
+                });
+                markersImages.addLayers(pins);
+            }
+            gridList = shown;
+            paintGrid(true, true);
             if (fit && scope !== 'view' && markersImages.getLayers().length) map.fitBounds(markersImages.getBounds(), { paddingTopLeft: [40, 40], paddingBottomRight: [440, 40], maxZoom: 12 });
+        }
+
+        // year (and month) chips with the number of photos; counts follow the person filter, so a chip never leads to an empty list
+        function renderTime(base) {
+            var years = {}, months = {};
+            base.forEach(function (p) {
+                if (!p.date) return;
+                var y = p.date.substr(0, 4); years[y] = (years[y] || 0) + 1;
+                if (y === yearSel) { var m = p.date.substr(5, 2); months[m] = (months[m] || 0) + 1; }
+            });
+            var ys = Object.keys(years).sort().reverse();
+            if (base.length) {   // an empty list means the photos are not loaded yet: keep what the address asked for
+                if (yearSel && !years[yearSel]) { yearSel = monthSel = null; }
+                if (monthSel && !months[monthSel]) monthSel = null;
+            }
+            var h = '<button type="button" data-y="" class="' + (yearSel ? '' : 'on') + '"><i class="fa fa-calendar"></i> ' + esc(T('AllTime', 'Any time')) + '</button>';
+            ys.forEach(function (y) { h += '<button type="button" data-y="' + y + '" class="' + (y === yearSel ? 'on' : '') + '">' + y + ' <em>' + years[y] + '</em></button>'; });
+            $('#timeFilter').html(h).toggle(ys.length > 1 || !!yearSel);
+            var mh = '';
+            if (yearSel) {
+                var lang = (window.i18next && i18next.language) || navigator.language || 'en';
+                for (var m = 1; m <= 12; m++) {
+                    var k = (m < 10 ? '0' : '') + m; if (!months[k]) continue;
+                    var nm; try { nm = new Date(2000, m - 1, 1).toLocaleDateString(lang, { month: 'short' }); } catch (e) { nm = k; }
+                    mh += '<button type="button" data-m="' + k + '" class="' + (k === monthSel ? 'on' : '') + '">' + esc(nm) + ' <em>' + months[k] + '</em></button>';
+                }
+            }
+            $('#monthFilter').html(mh).toggle(!!mh);
         }
 
         function fillPhotos() {
@@ -303,7 +372,6 @@
                 });
                 map.addLayer(markersImages);
             }
-            markersImages.clearLayers();
             $.get('services/get_myphotos.aspx?' + Math.random(), function (data) {
                 photos = [];
                 var seen = {};
@@ -311,8 +379,9 @@
                     var q = r.split(';');
                     if (q.length < 5 || seen[q[0]]) return;   // a description with a line break leaves a broken fragment
                     seen[q[0]] = 1;
-                    photos.push({ id: q[0], desc: q[1], pub: q[2], lat: q[3], lng: q[4], blk: q[5] });
+                    photos.push({ id: q[0], desc: q[1], pub: q[2], lat: q[3], lng: q[4], blk: q[5], date: q[6] || '' });
                 });
+                photosVer++;
                 var fit = firstFit; firstFit = false;   // fit the map to the photos only when the address did not say where to look
                 renderGrid(fit);
                 $('#noPhotos').toggle(!photos.length);
@@ -467,6 +536,8 @@
                 renderGrid(false);   // the map stays where it is
                 saveState();
             });
+            $('#photosGrid').on('scroll', function () { requestAnimationFrame(function () { paintGrid(false); }); });
+            $(window).on('resize', function () { paintGrid(true); });
             $('#viewTabs').on('click', 'button', function () { setTab($(this).data('t')); });
             $('#peopleSearch').on('input', renderPeople);
             $('#personClose').click(closePersonFilter);
@@ -497,6 +568,7 @@
             if (isFinite(lat0) && isFinite(lng0) && isFinite(z0)) { map.setView([lat0, lng0], z0); firstFit = false; }
             else map.setView([50.430981, 30.539267], 6);
             if (st.f === 'pub' || st.f === 'priv') { filter = st.f; $('#photoFilter button').removeClass('on').filter('[data-f=' + filter + ']').addClass('on'); }
+            if (/^\d{4}$/.test(st.y || '')) { yearSel = st.y; if (/^\d{2}$/.test(st.m || '')) monthSel = st.m; }
             if (st.s === 'view') { scope = 'view'; $('#scopeFilter button').removeClass('on').filter('[data-s=view]').addClass('on'); }
             markers = L.featureGroup().addTo(map);
 
@@ -544,6 +616,14 @@
                 saveState();
                 if (scope !== 'view' || inPreview || !markersImages) return;
                 clearTimeout(viewTimer); viewTimer = setTimeout(function () { renderGrid(false); }, 250);
+            });
+            $('#timeFilter').on('click', 'button', function () {
+                yearSel = String($(this).data('y') || '') || null; monthSel = null;
+                renderGrid(false); saveState();
+            });
+            $('#monthFilter').on('click', 'button', function () {
+                var m = String($(this).data('m')); monthSel = monthSel === m ? null : m;
+                renderGrid(false); saveState();
             });
             $('#scopeFilter').on('click', 'button', function () {
                 scope = $(this).data('s');

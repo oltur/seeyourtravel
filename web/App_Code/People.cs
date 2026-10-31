@@ -40,11 +40,26 @@ public static class People
         return set;
     }
 
-    /// <summary>Photo key (lower-case file name without extension) -> names of the named, not blocked people on the caller's own photos.</summary>
+    static readonly Dictionary<Guid, KeyValuePair<DateTime, Dictionary<string, List<string>>>> namesCache = new Dictionary<Guid, KeyValuePair<DateTime, Dictionary<string, List<string>>>>();
+    const int NamesTtlSeconds = 300;   // changes made through the site call Changed() and apply at once; a scan or an import is picked up within this time
+
+    /// <summary>Forget what is cached about people (call after a face, a name or a block changed).</summary>
+    public static void Changed()
+    {
+        lock (namesCache) namesCache.Clear();
+        PhotoGuard.Invalidate();
+    }
+
+    /// <summary>Photo key (lower-case file name without extension) -> names of the named, not blocked people on the caller's own photos. Cached per user: the page asks for it with every strip refresh and the query takes ~80 ms.</summary>
     public static Dictionary<string, List<string>> NamesByPhoto(Guid userId)
     {
+        if (userId == Guid.Empty) return new Dictionary<string, List<string>>();
+        lock (namesCache)
+        {
+            KeyValuePair<DateTime, Dictionary<string, List<string>>> hit;
+            if (namesCache.TryGetValue(userId, out hit) && (DateTime.UtcNow - hit.Key).TotalSeconds < NamesTtlSeconds) return hit.Value;
+        }
         var map = new Dictionary<string, List<string>>();
-        if (userId == Guid.Empty) return map;
         try
         {
             using (var c = Open())
@@ -57,7 +72,8 @@ public static class People
                     l.Add(r.GetString(1));
                 }
         }
-        catch (Exception) { }
+        catch (Exception) { return map; }   // tables missing: nobody is named; not cached
+        lock (namesCache) namesCache[userId] = new KeyValuePair<DateTime, Dictionary<string, List<string>>>(DateTime.UtcNow, map);
         return map;
     }
 

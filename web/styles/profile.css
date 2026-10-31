@@ -73,7 +73,8 @@
 .pfList li a.go:hover { color: #225EAC; }
 .pfEmpty { text-align: center; color: #7a8aa0; padding: 26px 10px; }
 
-.pfGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; max-height: 330px; overflow: auto; padding: 2px; }
+.pfGrid { max-height: 330px; overflow: auto; padding: 2px; }
+.pfGridIn { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
 .pfGrid button { position: relative; aspect-ratio: 1; padding: 0; border: 2px solid transparent; border-radius: 10px; overflow: hidden; cursor: pointer; background: #e8eff9 center/cover no-repeat; }
 .pfGrid button.sel { border-color: #4a90e2; box-shadow: 0 0 0 2px #cfe1f7; }
 .pfGrid button.noloc::after { content: "no location"; position: absolute; right: 4px; bottom: 3px; color: #fff; background: #d98324; border-radius: 8px; padding: 1px 5px; font: 10px system-ui, sans-serif; }
