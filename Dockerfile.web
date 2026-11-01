@@ -1,6 +1,9 @@
-FROM mono:latest
+FROM mono:latest@sha256:34d816779b1248b5cfd095770b64ecbaf1798e2aca693a91c11a018dce9c7ad5
 RUN sed -i 's/deb.debian.org/archive.debian.org/;s/security.debian.org/archive.debian.org/;/buster-updates/d' /etc/apt/sources.list; \
     apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y --no-install-recommends mono-xsp4 && rm -rf /var/lib/apt/lists/*
+# the site runs as an ordinary user (uid 1000, the same as the owner of the bind-mounted files), not as root
+ENV HOME=/tmp
+USER 1000:1000
 EXPOSE 8080
 WORKDIR /app
 CMD ["xsp4","--port","8080","--address","0.0.0.0","--root","/app","--nonstop","--verbose"]
