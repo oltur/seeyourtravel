@@ -30,3 +30,5 @@
 # photos removed from the site (backup copies of private/deleted photos and their database rows)
 /legacy/removed-photos-*/
 /legacy/takeout-import-*/
+__pycache__/
+*.pyc

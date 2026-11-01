@@ -12,7 +12,7 @@ using System.Web.SessionState;
 /// </summary>
 public static class PhotoGuard
 {
-    class Entry { public bool Public; public bool Blocked; public HashSet<Guid> Owners = new HashSet<Guid>(); }
+    public class Entry { public bool Public; public bool Blocked; public HashSet<Guid> Owners = new HashSet<Guid>(); public string File, Desc; public double? Lat, Lng; public DateTime? Taken; }
 
     static Dictionary<string, Entry> cache;          // file name without extension (lower case) -> who may open it
     static DateTime loadedAt = DateTime.MinValue;
@@ -33,11 +33,11 @@ public static class PhotoGuard
             var db = new SeeYourTravelEntities();
             var publicPlaceImages = new HashSet<Guid>(
                 (from pi in db.PlaceImages join p in db.Places on pi.PlaceID equals p.PlaceID where p.IsPublic select pi.ImageID).ToList());
-            foreach (var i in db.Images.Select(x => new { x.ImageID, x.FileName, x.IsPublic }).ToList())
+            foreach (var i in db.Images.Select(x => new { x.ImageID, x.FileName, x.IsPublic, x.Lat, x.Lng, x.Created, x.Description }).ToList())
             {
                 string key = Path.GetFileNameWithoutExtension(i.FileName ?? "").ToLowerInvariant();
                 if (key.Length == 0) continue;
-                map[key] = new Entry { Public = i.IsPublic || publicPlaceImages.Contains(i.ImageID) };
+                map[key] = new Entry { Public = i.IsPublic || publicPlaceImages.Contains(i.ImageID), File = i.FileName, Desc = i.Description, Lat = i.Lat, Lng = i.Lng, Taken = i.Created };
             }
             var blocked = People.BlockedPhotoKeys();
             foreach (var kv in map) kv.Value.Blocked = blocked.Contains(kv.Key);
@@ -63,7 +63,6 @@ public static class PhotoGuard
     static bool IsAdmin(Guid userId)
     {
         if (userId == Guid.Empty) return false;
-        if (userId == new Guid("00000000-0000-0000-0000-000000000000")) return true;
         lock (adminCache)
         {
             KeyValuePair<DateTime, bool> hit;
@@ -104,6 +103,39 @@ public static class PhotoGuard
             return uid != Guid.Empty && (e.Owners.Contains(uid) || IsAdmin(uid));
         }
         return IsAdmin(UserId(ctx));
+    }
+
+    /// <summary>What the list needs to show a photo, when the person may open it (null otherwise). Used by the photo search, which also finds other people's public photos.</summary>
+    public static Entry Find(HttpContext ctx, string fileName)
+    {
+        Entry e;
+        if (!CanView(ctx, fileName) || !Load().TryGetValue(Path.GetFileNameWithoutExtension(fileName ?? "").ToLowerInvariant(), out e)) return null;
+        return e;
+    }
+
+    /// <summary>Every photo this person may open (own photos, public photos of everybody, for administrators all), for searches that start from the whole library.</summary>
+    public static List<Entry> Visible(HttpContext ctx)
+    {
+        var res = new List<Entry>();
+        if (AdminOnly(ctx)) { if (!IsAdmin(UserId(ctx))) return res; foreach (var e in Load().Values) res.Add(e); return res; }
+        Guid uid = UserId(ctx); bool admin = IsAdmin(uid);
+        foreach (var e in Load().Values)
+            if ((e.Public && !e.Blocked) || (uid != Guid.Empty && (admin || e.Owners.Contains(uid)))) res.Add(e);
+        return res;
+    }
+
+    /// <summary>What the list needs to show a photo that was found (see photo_search.aspx).</summary>
+    public static Dictionary<string, object> Meta(HttpContext ctx, Entry e)
+    {
+        string desc = e.Desc == null || e.Desc == "(EMPTY)" ? e.File : e.Desc;
+        return new Dictionary<string, object> { { "file", e.File }, { "desc", desc }, { "lat", e.Lat }, { "lng", e.Lng }, { "date", e.Taken.HasValue ? e.Taken.Value.ToString("yyyy-MM-dd") : "" }, { "pub", e.Public }, { "mine", Owns(ctx, e) } };
+    }
+
+    /// <summary>Is the photo the person's own (or is the person an administrator)? Only those can be changed.</summary>
+    public static bool Owns(HttpContext ctx, Entry e)
+    {
+        Guid uid = UserId(ctx);
+        return uid != Guid.Empty && (e.Owners.Contains(uid) || IsAdmin(uid));
     }
 
     public static bool IsPublic(string fileName)

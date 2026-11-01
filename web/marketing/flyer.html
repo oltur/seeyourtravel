@@ -3,52 +3,77 @@
 <link rel="stylesheet" href="../styles/fonts.css">
 <style>
  @page { size: A4; margin: 0; }
- :root { --blue:#225EAC; --dark:#12305c; --yellow:#FCD600; }
+ :root { --blue:#225EAC; --dark:#12305c; --yellow:#FCD600; --ink:#1d2733; --mute:#4a5766; }
  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
- html, body { margin:0; padding:0; background:#fff; }
- .page { width:210mm; height:297mm; position:relative; overflow:hidden; color:#1d2733; background:#fff; }
- header { height:104mm; background: linear-gradient(180deg, var(--dark), var(--blue)); color:#fff; text-align:center; padding-top:8mm; position:relative; }
- header img.logo { height:44mm; }
- header h1 { margin:3mm 0 0; font-size:10.5mm; font-weight:700; letter-spacing:.2mm; }
- header h1 span { color:var(--yellow); }
- header p { margin:2mm 0 0; font-size:4.4mm; opacity:.92; }
- .shot { position:absolute; left:50%; top:86mm; width:126mm; transform:translateX(-50%); border-radius:4mm; box-shadow:0 3mm 9mm rgba(0,0,0,.35); border:1.2mm solid #fff; background:#fff; }
- .shot img { display:block; width:100%; border-radius:2.6mm; }
- main { position:absolute; top:171mm; left:0; right:0; padding:0 16mm; }
- .steps { display:flex; gap:6mm; margin-top:2mm; }
- .step { flex:1; text-align:center; }
- .step b { display:inline-block; width:9mm; height:9mm; line-height:9mm; border-radius:50%; background:var(--yellow); color:var(--dark); font-size:5mm; }
- .step h3 { margin:2mm 0 1mm; font-size:4.6mm; color:var(--blue); }
- .step p { margin:0; font-size:3.6mm; line-height:1.45; color:#44505e; }
- .feat { display:flex; gap:5mm; margin-top:6mm; padding-top:5mm; border-top:.4mm solid #dbe4f0; }
- .feat div { flex:1; text-align:center; font-size:3.5mm; color:#44505e; }
- .feat strong { display:block; color:var(--dark); font-size:4.2mm; text-transform:uppercase; letter-spacing:.3mm; margin-bottom:1mm; }
- footer { position:absolute; left:0; right:0; bottom:0; height:44mm; background:var(--dark); color:#fff; display:flex; align-items:center; justify-content:center; gap:12mm; }
- footer .qr { background:#fff; border-radius:3mm; padding:2.5mm; }
- footer .qr img { display:block; width:30mm; height:30mm; image-rendering: pixelated; }
+ html, body { margin:0; padding:0; background:#fff; font-family: Rubik, system-ui, sans-serif; }
+ .page { width:210mm; height:297mm; position:relative; overflow:hidden; color:var(--ink); background:#fff; }
+
+ header { height:143mm; background: linear-gradient(165deg, var(--dark) 0%, var(--blue) 70%, #3f86d6 100%); color:#fff; position:relative; }
+ header::after { content:""; position:absolute; right:-30mm; top:-30mm; width:110mm; height:110mm; border-radius:50%; background:rgba(252,214,0,.10); }
+ .brand { position:absolute; left:14mm; top:10mm; display:flex; align-items:center; gap:5mm; }
+ .brand img { height:21mm; }
+ .brand h1 { margin:0; font-size:9.2mm; line-height:1.08; font-weight:700; letter-spacing:.1mm; }
+ .brand h1 span { color:var(--yellow); }
+ .brand p { margin:1.6mm 0 0; font-size:3.9mm; opacity:.92; }
+
+ .desk { position:absolute; left:40mm; top:41mm; width:158mm; background:#fff; border-radius:3mm; box-shadow:0 4mm 12mm rgba(0,0,0,.42); overflow:hidden; }
+ .desk .bar { height:5.5mm; background:#e6ebf2; display:flex; align-items:center; gap:1.3mm; padding-left:3mm; }
+ .desk .bar i { width:1.9mm; height:1.9mm; border-radius:50%; background:#c4cdd9; display:block; }
+ .desk img { display:block; width:100%; }
+ .phone { position:absolute; left:11mm; top:57mm; width:43mm; background:#0e1b2e; border-radius:6mm; padding:1.6mm; box-shadow:0 4mm 12mm rgba(0,0,0,.5); }
+ .phone img { display:block; width:100%; border-radius:4.6mm; }
+ .tag { position:absolute; left:12mm; top:148.5mm; transform:translateY(-100%); }
+
+ .ai { padding:10.5mm 14mm 0; }
+ .ai h2 { margin:0; font-size:6.2mm; color:var(--dark); }
+ .ai h2 span { background:var(--yellow); padding:0 1.6mm; border-radius:1mm; }
+ .ai .lead { margin:1.6mm 0 0; font-size:3.7mm; color:var(--mute); }
+ .cols { display:flex; gap:6mm; margin-top:4mm; }
+ .col { flex:1; }
+ .col svg { width:9mm; height:9mm; }
+ .col h3 { margin:1.6mm 0 .8mm; font-size:4.2mm; color:var(--blue); }
+ .col p { margin:0; font-size:3.35mm; line-height:1.45; color:var(--mute); }
+
+ .how { margin:5mm 14mm 0; padding-top:4mm; border-top:.4mm solid #dbe4f0; display:flex; gap:5mm; }
+ .how div { flex:1; font-size:3.3mm; color:var(--mute); line-height:1.4; }
+ .how b { display:inline-block; width:6mm; height:6mm; line-height:6mm; text-align:center; border-radius:50%; background:var(--yellow); color:var(--dark); font-size:3.6mm; margin-right:1.6mm; vertical-align:middle; }
+ .how strong { color:var(--dark); font-size:3.8mm; }
+
+ .note { position:absolute; left:14mm; right:14mm; bottom:44.5mm; font-size:2.7mm; color:#7a8798; }
+ footer { position:absolute; left:0; right:0; bottom:0; height:42mm; background:var(--dark); color:#fff; display:flex; align-items:center; justify-content:center; gap:11mm; }
+ footer .qr { background:#fff; border-radius:3mm; padding:2.2mm; }
+ footer .qr img { display:block; width:28mm; height:28mm; image-rendering: pixelated; }
  footer .t h2 { margin:0; font-size:8mm; color:var(--yellow); }
- footer .t p { margin:1.5mm 0 0; font-size:4.2mm; line-height:1.5; }
- footer .t small { display:block; margin-top:2mm; font-size:3.6mm; opacity:.85; }
+ footer .t p { margin:1.4mm 0 0; font-size:3.9mm; line-height:1.45; }
+ footer .t small { display:block; margin-top:1.8mm; font-size:3.4mm; opacity:.85; }
 </style></head>
 <body><div class="page">
  <header>
-  <img class="logo" src="../img/syt-logo.png" alt="SeeYourTravel.app">
-  <h1>Replay your journey <span>on the map</span></h1>
-  <p>Create, share and relive your travels with photos, places and music.</p>
+  <div class="brand">
+   <img src="../img/syt-logo.png" alt="SeeYourTravel.app">
+   <div><h1>Replay your journey<br><span>on the map</span></h1><p>Create, share and relive your travels. Now with an AI travel companion.</p></div>
+  </div>
+  <div class="desk"><div class="bar"><i></i><i></i><i></i></div><img src="screenshots/new-ai-chat.jpg" alt=""></div>
+  <div class="phone"><img src="screenshots/new-phone-chat.jpg" alt=""></div>
  </header>
- <div class="shot"><img src="screenshots/app-norway.jpg" alt=""></div>
- <main>
-  <div class="steps">
-   <div class="step"><b>1</b><h3>Draw or import</h3><p>Click a route on the map, search two places, or import a GPX file.</p></div>
-   <div class="step"><b>2</b><h3>Add memories</h3><p>Photos, places, descriptions and your favourite music along the way.</p></div>
-   <div class="step"><b>3</b><h3>Replay &amp; share</h3><p>Watch the trip play back and send the link to friends and family.</p></div>
+
+ <section class="ai">
+  <h2>Meet your <span>AI travel companion</span></h2>
+  <p class="lead">It sees what you see on the map &mdash; the track, weather, places, elevation and photos &mdash; and says so when it does not know.</p>
+  <div class="cols">
+   <div class="col"><svg viewBox="0 0 24 24" fill="none" stroke="#225EAC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4"/></svg><h3>Chat with your trips</h3><p>Where am I? How high is this climb? What is nearby? Ask in plain words &mdash; and enjoy a joke on the way.</p></div>
+   <div class="col"><svg viewBox="0 0 24 24" fill="none" stroke="#225EAC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7.5 12.5l2-2 1.6 1.6 2.4-2.8"/></svg><h3>Search by looks</h3><p>Type &ldquo;beach at sunset&rdquo; in any language. The picture search runs on our own server.</p></div>
+   <div class="col"><svg viewBox="0 0 24 24" fill="none" stroke="#225EAC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 17c4 0 2-6 6-6s2-5 2-3.4"/></svg><h3>Tracks near your photos</h3><p>Find routes that pass the places where matching photos were taken &mdash; inside real country borders.</p></div>
   </div>
-  <div class="feat">
-   <div><strong>Global</strong>Global coverage with no extra effort</div>
-   <div><strong>Configurable</strong>Adjustable for your needs</div>
-   <div><strong>Friendly</strong>Easy to use and pleasant to come back</div>
-  </div>
- </main>
+ </section>
+
+ <div class="how">
+  <div><b>1</b><strong>Draw or import</strong><br>Click a route, search two places or import a GPX file.</div>
+  <div><b>2</b><strong>Add memories</strong><br>Photos, places, descriptions and music along the way.</div>
+  <div><b>3</b><strong>Replay &amp; share</strong><br>Watch the trip play back and send the link to friends.</div>
+ </div>
+ <div class="note">Free, in your browser. English, Deutsch, Українська, עברית. AI-based features can make mistakes: please check the results. Map data &copy; OpenStreetMap contributors. Screenshots show demo content.</div>
+
  <footer>
   <div class="qr"><img src="../img/qr.png" alt="QR code"></div>
   <div class="t"><h2>seeyourtravel.app</h2><p>Scan the code or visit the address<br>and start your first trip today.</p><small>info@seeyourtravel.app</small></div>

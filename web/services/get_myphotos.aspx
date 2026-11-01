@@ -22,7 +22,7 @@
     // the account's own photos; administrators see all of them (same rule as the GetUserImages function). Read straight from the database:
     // building 23,000 entity objects took about twice as long
     string sql = @"SELECT i.FileName, i.Description, i.IsPublic, i.Lat, i.Lng, i.Created FROM Image i
-                   WHERE @u = '00000000-0000-0000-0000-000000000000' OR EXISTS (SELECT 1 FROM UserRole WHERE RoleID = '5195a2d5-0b51-44c4-b672-7383482bc77a' AND UserID = @u)
+                   WHERE EXISTS (SELECT 1 FROM UserRole WHERE RoleID = '5195a2d5-0b51-44c4-b672-7383482bc77a' AND UserID = @u)
                       OR EXISTS (SELECT 1 FROM ImageUser tu WHERE tu.ImageID = i.ImageID AND tu.UserID = @u)
                    ORDER BY i.Created";
     using (var c = People.Open())

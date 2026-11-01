@@ -57,6 +57,7 @@
             </div>
 
             <div id="photosPane">
+            <!-- #Include virtual="include/pfSearch.inc" -->
             <div class="pfChips" id="photoFilter">
                 <button type="button" data-f="all" class="on"><span class="i" data-i18n="All">All</span> <em>0</em></button>
                 <button type="button" data-f="pub"><i class="fa fa-globe"></i> <span class="i" data-i18n="Public">Public</span> <em>0</em></button>
@@ -179,6 +180,8 @@
             $('#buttonTogglePub').text(isPub ? T('MakePrivate', 'Make private') : T('MakePublic', 'Make public'));
             $('#imageLatLng').val(hasLoc(p) ? parseFloat(p.lat).toFixed(5) + '; ' + parseFloat(p.lng).toFixed(5) : T('NoLocation', 'no location yet'));
             $('#buttonOpenPhoto').attr('href', 'data/images/' + p.id);
+            $('#buttonTogglePub, #buttonDelete, #buttonRotL, #buttonRotR').toggle(!p.ext);   // somebody else's public photo can be looked at, not changed
+            if (p.ext) $('#photoStatus').attr('class', 'pfBadge pub').html('<i class="fa fa-globe"></i> ' + esc(T('PublicOther', 'Public photo of someone else')));
             showPhoto(p);
         }
 
@@ -210,16 +213,23 @@
         var photoNames = {}, people = [], personFilter = null, personFiles = null, tab = 'photos', pvFacesOn = true, curFaces = [];
         function vis(p) { return p.blk !== '1' || (personFilter && personFilter.blocked); }
         // time taken: a year, and inside a year a month (the third way to narrow the list, next to person and map view)
-        var yearSel = null, monthSel = null;
-        function inTime(p) { return !yearSel || (p.date && p.date.substr(0, 4) === yearSel && (!monthSel || p.date.substr(5, 2) === monthSel)); }
-        function isShown(p) { return vis(p) && inTime(p) && (personFiles === null || personFiles[p.id]) && (filter === 'all' || (filter === 'pub') === isPub(p)) && (scope !== 'view' || inView(p)); }
-        function shownPhotos() { return photos.filter(isShown); }
+        var yearSel = null, monthSel = null, rangeFrom = null, rangeTo = null, searchRank = null, searchVer = 0;
+        function keyOf(p) { return p.id.replace(/\.[^.]*$/, '').toLowerCase(); }
+        function inTime(p) { if (rangeFrom) return !!p.date && p.date >= rangeFrom && p.date <= rangeTo; return !yearSel || (p.date && p.date.substr(0, 4) === yearSel && (!monthSel || p.date.substr(5, 2) === monthSel)); }
+        function isShown(p) { return vis(p) && inSearch(p) && inTime(p) && (personFiles === null || personFiles[p.id]) && (filter === 'all' || (filter === 'pub') === isPub(p)) && (scope !== 'view' || inView(p)); }
+        function inSearch(p) { return searchRank === null || searchRank[keyOf(p)] !== undefined; }
+        function shownPhotos() {
+            var l = photos.filter(isShown);
+            if (searchRank !== null) l.sort(function (a, b) { return searchRank[keyOf(b)] - searchRank[keyOf(a)]; });   // best match first
+            return l;
+        }
 
         // ---- one photo, big ----
         function renderPreview() {
             var p = current; if (!p) return;
             var list = shownPhotos(), i = list.indexOf(p);
-            loadFaces(p);
+            if (p.ext) { curFaces = []; $('#pvFaces').empty(); } else loadFaces(p);
+            $('#pvToggle, #pvDelete, #pvRotL, #pvRotR').toggle(!p.ext);
             var base = encodeURIComponent(p.id.replace(/\.[^.]*$/, ''));
             var img = document.getElementById('pvImg'), big = 'data/thumbs/1600/' + base + '.jpg' + (p.v ? '?v=' + p.v : '');
             var vq = p.v ? '?v=' + p.v : '';
@@ -305,7 +315,7 @@
 
         // the grid and the map pins show the current filter; every photo carries a public (globe) or private (lock) flag
         function renderGrid(fit) {
-            var base = photos.filter(function (p) { return vis(p) && (personFiles === null || personFiles[p.id]); });
+            var base = photos.filter(function (p) { return vis(p) && inSearch(p) && (personFiles === null || personFiles[p.id]); });
             renderTime(base);
             var pool = base.filter(inTime);
             var nPub = pool.filter(isPub).length;
@@ -315,18 +325,18 @@
             var shown = shownPhotos();
             $('#scopeFilter [data-s=view] em').text(pool.filter(inView).length);
             $('#bulkBar').css('display', scope === 'view' ? 'flex' : 'none');
-            $('#bulkCount').text(shown.length + ' ' + T('PhotosInView', 'photos in the map view'));
+            $('#bulkCount').text(shown.filter(function (p) { return !p.ext; }).length + ' ' + T('PhotosInView', 'photos in the map view'));
             $('#bulkPrivate, #bulkDelete').prop('disabled', !shown.length);
             // the map pins do not depend on the map-view scope: they are built again only when the set of photos (or a public/private flag) changed.
             // All of them are added in one call: adding thousands one by one makes the cluster layer recalculate every time.
-            var mkey = [photosVer, yearSel, monthSel, pool.length, nPub, pool.length ? pool[0].id : '', pool.length ? pool[pool.length - 1].id : ''].join('|');
+            var mkey = [photosVer, searchVer, rangeFrom, yearSel, monthSel, pool.length, nPub, pool.length ? pool[0].id : '', pool.length ? pool[pool.length - 1].id : ''].join('|');
             if (mkey !== markerKey) {
                 markerKey = mkey;
                 markersImages.clearLayers();
                 var pins = [];
                 pool.forEach(function (p) {
                     if (!hasLoc(p)) return;
-                    pins.push(L.circleMarker([parseFloat(p.lat), parseFloat(p.lng)], { renderer: pinRenderer || (pinRenderer = L.canvas({ padding: 0.5 })), radius: 7, weight: 2, color: '#fff', fillColor: isPub(p) ? '#23a455' : '#5b6b80', fillOpacity: 1 })   // light dots drawn on one canvas, not an element each
+                    pins.push(L.circleMarker([parseFloat(p.lat), parseFloat(p.lng)], { renderer: pinRenderer || (pinRenderer = L.canvas({ padding: 0.5 })), radius: 7, weight: 2, color: '#fff', fillColor: p.ext ? '#2f7de1' : isPub(p) ? '#23a455' : '#5b6b80', fillOpacity: 1 })   // light dots drawn on one canvas, not an element each
                         .on('click', function () { select(p); }));
                 });
                 markersImages.addLayers(pins);
@@ -349,9 +359,10 @@
                 if (yearSel && !years[yearSel]) { yearSel = monthSel = null; }
                 if (monthSel && !months[monthSel]) monthSel = null;
             }
-            var h = '<button type="button" data-y="" class="' + (yearSel ? '' : 'on') + '"><i class="fa fa-calendar"></i> ' + esc(T('AllTime', 'Any time')) + '</button>';
+            var h = rangeFrom ? '<button type="button" data-r="1" class="on"><i class="fa fa-calendar"></i> ' + esc(rangeFrom + ' – ' + rangeTo) + ' <i class="fa fa-times"></i></button>' : '';
+            h += '<button type="button" data-y="" class="' + (yearSel || rangeFrom ? '' : 'on') + '"><i class="fa fa-calendar"></i> ' + esc(T('AllTime', 'Any time')) + '</button>';
             ys.forEach(function (y) { h += '<button type="button" data-y="' + y + '" class="' + (y === yearSel ? 'on' : '') + '">' + y + ' <em>' + years[y] + '</em></button>'; });
-            $('#timeFilter').html(h).toggle(ys.length > 1 || !!yearSel);
+            $('#timeFilter').html(h).toggle(ys.length > 1 || !!yearSel || !!rangeFrom);
             var mh = '';
             if (yearSel) {
                 var lang = (window.i18next && i18next.language) || navigator.language || 'en';
@@ -362,6 +373,134 @@
                 }
             }
             $('#monthFilter').html(mh).toggle(!!mh);
+        }
+
+        // what the chat assistant is told about this screen (see js/chat.js): the filters, how many photos are shown and which, the open photo, the map
+        window.sytChatContext = function () {
+            var c = { page: 'my photos' };
+            try {
+                var list = shownPhotos(), years = {}, who = {}, min = '', max = '';
+                list.forEach(function (p) {
+                    if (p.date) { var y = p.date.substr(0, 4); years[y] = (years[y] || 0) + 1; if (!min || p.date < min) min = p.date; if (p.date > max) max = p.date; }
+                    (photoNames[p.id] || []).forEach(function (n) { who[n] = (who[n] || 0) + 1; });
+                });
+                var top = Object.keys(who).sort(function (a, b) { return who[b] - who[a]; }).slice(0, 8).map(function (n) { return n + ' (' + who[n] + ')'; });
+                c.photos_in_library = photos.filter(function (p) { return !p.ext; }).length;
+                c.photos_shown_now = list.length;
+                c.filters = {
+                    public_or_private: filter === 'all' ? 'all' : (filter === 'pub' ? 'public only' : 'private only'),
+                    area: scope === 'view' ? 'only photos inside the current map view' : 'whole library',
+                    year: yearSel, month: monthSel, from: rangeFrom, to: rangeTo,
+                    person: personFilter ? personLabel(personFilter) : null,
+                    ai_search_active: searchRank !== null, search_box_text: $.trim($('#askText').val()).slice(0, 120),
+                    assistant_summary: $('#askBar').is(':visible') ? $('#askSay').text().slice(0, 160) : null
+                };
+                c.shown_photos_taken = { first: min, last: max, per_year: years };
+                // the photos on screen right now (the visible part of the list): description, date, public/private, who is on it, where
+                var vis = (typeof gridList !== 'undefined' && gridList) ? gridList.slice(Math.max(0, gridFrom), Math.min(Math.max(gridTo, 0), Math.max(0, gridFrom) + 40)) : list.slice(0, 40);
+                c.photos_on_screen_now = vis.map(function (p) {
+                    return { description: String(p.desc || '').slice(0, 60), taken: p.date || '', visibility: p.ext ? 'public photo of another person' : (p.pub == '1' ? 'public' : 'private'),
+                             people: photoNames[p.id] && photoNames[p.id].length ? photoNames[p.id] : undefined, lat: hasLoc(p) ? +parseFloat(p.lat).toFixed(2) : undefined, lng: hasLoc(p) ? +parseFloat(p.lng).toFixed(2) : undefined };
+                });
+                if (top.length) c.people_in_shown_photos = top;
+                if (window.map) { var m = map.getCenter(), b = map.getBounds(); c.map_centre = { lat: +m.lat.toFixed(4), lng: +m.lng.toFixed(4) }; c.map_zoom = map.getZoom(); c.map_view = { south: +b.getSouth().toFixed(3), west: +b.getWest().toFixed(3), north: +b.getNorth().toFixed(3), east: +b.getEast().toFixed(3) }; }
+                if (current) c.open_photo = { description: String(current.desc || '').slice(0, 120), taken: current.date || '', public: current.pub == '1', lat: hasLoc(current) ? +parseFloat(current.lat).toFixed(5) : null, lng: hasLoc(current) ? +parseFloat(current.lng).toFixed(5) : null, people: photoNames[current.id] || [] };
+            } catch (e) { }
+            return c;
+        };
+
+        // ---- search by words and the assistant ----
+        // Enter: the assistant (Gemini, through the site) turns the sentence into a person, a time, a place, public/private and "what it looks like";
+        // the look is found by the local photo search. If the assistant is off or over its limit, the whole sentence is used as the look.
+        var askSeq = 0, askSet = null, askRecent = [];   // askRecent: the last three requests, for follow-ups ("only from 2023")
+        function matchPerson(name) {
+            var n = $.trim(name).toLowerCase(); if (!n) return null;
+            var c = people.filter(function (x) { return x.name; });
+            return c.filter(function (x) { return x.name.toLowerCase() === n; })[0]
+                || c.filter(function (x) { return x.name.toLowerCase().indexOf(n) === 0 || n.indexOf(x.name.toLowerCase()) === 0; })[0]
+                || c.filter(function (x) { return x.name.toLowerCase().indexOf(n) >= 0; })[0] || null;
+        }
+        function clearAsk(quiet) {
+            askSeq++;
+            var a = askSet; askSet = null; if (!quiet) askRecent = [];
+            searchRank = null; searchVer++; rangeFrom = rangeTo = null; dropForeign();
+            $('#askBar').hide(); $('#askText').val(quiet ? $('#askText').val() : '');
+            if (a) {
+                if (a.person) { personFilter = null; personFiles = null; $('#personBar').hide(); }
+                if (a.vis) { filter = 'all'; $('#photoFilter button').removeClass('on').filter('[data-f=all]').addClass('on'); }
+                if (a.bbox) { scope = 'all'; $('#scopeFilter button').removeClass('on').filter('[data-s=all]').addClass('on'); }
+            }
+            if (markersImages) renderGrid(false);
+            saveState();
+        }
+        // the photos of other people that the search found (public ones; for administrators every photo is in the list anyway) are added to the list for as long as the search lasts
+        function dropForeign() { var n = photos.length; photos = photos.filter(function (p) { return !p.ext; }); if (photos.length !== n) photosVer++; }
+        function mergeFound(files) {
+            dropForeign();
+            var have = {}, r = {}, added = 0; photos.forEach(function (p) { have[keyOf(p)] = 1; });
+            (files || []).forEach(function (f, i) {
+                var k = String(f[0]).toLowerCase(), m = f[2]; r[k] = f[1] || (files.length - i) / 1000;   // no score (the chat's list): keep its order
+                if (m && !have[k]) { added++; photos.push({ id: m.file, desc: m.desc, pub: m.pub ? '1' : '0', lat: m.lat == null ? '' : String(m.lat), lng: m.lng == null ? '' : String(m.lng), blk: '0', date: m.date || '', ext: !m.mine }); }
+            });
+            if (added) photosVer++;
+            return r;
+        }
+        // the chat found these photos: show exactly them (also used after the chat sent the person here from another page)
+        window.sytApplyFound = function (files, label) {
+            if (askSet) clearAsk(true);
+            askSeq++; askSet = { person: false, vis: false, bbox: false };
+            rangeFrom = rangeTo = null; yearSel = monthSel = null;
+            searchRank = mergeFound(files); searchVer++;
+            renderGrid(false); saveState();
+            $('#askSay').text(label || ''); $('#askBar').css('display', 'flex');
+        };
+        function searchWords(words, done) {
+            $.getJSON('services/photo_search.aspx?q=' + encodeURIComponent(words), function (d) {
+                done(mergeFound(d.files), (d.files || []).length);
+            }).fail(function () { done(null, 0); });
+        }
+        function runAsk(text) {
+            var my = ++askSeq; text = $.trim(text); if (!text) { clearAsk(); return; }
+            $('#askGo').prop('disabled', true);
+            var finish = function () { if (my === askSeq) $('#askGo').prop('disabled', false); };
+            function apply(f, note) {
+                if (my !== askSeq) return;
+                // forget what the last question set, then set the new one
+                var old = askSet; askSet = { person: false, vis: false, bbox: false };
+                searchRank = null; searchVer++; rangeFrom = rangeTo = null; yearSel = monthSel = null; dropForeign();
+                if (old && old.person) { personFilter = null; personFiles = null; }
+                var said = [f.say || ''];
+                var go = function () {
+                    if (my !== askSeq) return;
+                    var fin = function (rank, n) {
+                        if (my !== askSeq) return;
+                        if (f.visual) { if (rank === null) said.push(T('SearchOff', 'Search by looks is not running.')); else { searchRank = rank; searchVer++; } }
+                        renderGrid(false); saveState();
+                        var left = shownPhotos().length;
+                        if (!left) said.push(T('SearchNone', 'Nothing matches.'));
+                        $('#askSay').text($.trim(said.concat(note ? [note] : []).join(' '))); $('#askBar').css('display', 'flex'); finish();
+                    };
+                    if (f.visual) searchWords(f.visual, fin); else fin(null, 0);
+                };
+                if (f.from && f.to) { rangeFrom = f.from; rangeTo = f.to; }
+                if (f.visibility) { askSet.vis = true; filter = f.visibility === 'public' ? 'pub' : 'priv'; $('#photoFilter button').removeClass('on').filter('[data-f=' + filter + ']').addClass('on'); }
+                else { filter = 'all'; $('#photoFilter button').removeClass('on').filter('[data-f=all]').addClass('on'); }
+                if (f.bbox) {
+                    askSet.bbox = true; scope = 'view'; $('#scopeFilter button').removeClass('on').filter('[data-s=view]').addClass('on');
+                    map.fitBounds([[f.bbox[0], f.bbox[1]], [f.bbox[2], f.bbox[3]]], { animate: false });
+                } else if (old && old.bbox) { scope = 'all'; $('#scopeFilter button').removeClass('on').filter('[data-s=all]').addClass('on'); }
+                var who = f.person ? matchPerson(f.person) : null;
+                if (f.person && !who) said.push(T('NoSuchPerson', 'There is no person named') + ' “' + f.person + '”.');
+                if (who) { askSet.person = true; openPerson(who, go); } else { if (old && old.person) $('#personBar').hide(); go(); }
+            }
+            $.ajax({ url: 'services/assistant.aspx', method: 'POST', data: { text: text, prev: JSON.stringify(askRecent) }, dataType: 'json' })
+                .done(function (f) {
+                    if (f && f.ok) { askRecent.push(text); askRecent = askRecent.slice(-3); apply(f, ''); return; }
+                    // the assistant is off, over its limit or failing: use the sentence as it is
+                    var why = f && f.error === 'limit' ? T('AssistLimit', 'The assistant has reached its limit for now; searched by words instead.') : T('AssistOff', 'The assistant is not available; searched by words instead.');
+                    apply({ say: '', visual: text }, why);
+                })
+                .fail(function () { apply({ say: '', visual: text }, T('AssistOff', 'The assistant is not available; searched by words instead.')); });
         }
 
         function fillPhotos() {
@@ -385,6 +524,10 @@
                 var fit = firstFit; firstFit = false;   // fit the map to the photos only when the address did not say where to look
                 renderGrid(fit);
                 $('#noPhotos').toggle(!photos.length);
+                if (/[?&]chat=1/.test(location.search)) {   // sent here by the chat: show the photos it found
+                    try { var c = JSON.parse(sessionStorage.getItem('sytChatPhotos') || 'null'); sessionStorage.removeItem('sytChatPhotos'); if (c && c.files) window.sytApplyFound(c.files, c.label); } catch (e) { }
+                    try { history.replaceState(null, '', location.pathname + location.search.replace(/[?&]chat=1/, '').replace(/^&/, '?')); } catch (e) { }
+                }
             });
         }
 
@@ -443,13 +586,14 @@
             $('#personBlock').html(p.blocked ? '<i class="fa fa-check"></i> ' + esc(T('Unblock', 'Unblock')) : '<i class="fa fa-ban"></i> ' + esc(T('Block', 'Block')));
         }
 
-        function openPerson(p) {
+        function openPerson(p, done) {
             personFilter = p; personFiles = null;
             $.getJSON('services/people.aspx?action=photos&person=' + encodeURIComponent(p.id), function (d) {
                 personFiles = {}; (d.files || []).forEach(function (f) { personFiles[f] = 1; });
                 setTab('photos'); showPersonBar();
                 filter = 'all'; $('#photoFilter button').removeClass('on').filter('[data-f=all]').addClass('on');
                 renderGrid(false); saveState();
+                if (done) done();
             });
         }
 
@@ -617,8 +761,13 @@
                 if (scope !== 'view' || inPreview || !markersImages) return;
                 clearTimeout(viewTimer); viewTimer = setTimeout(function () { renderGrid(false); }, 250);
             });
+            // not a <form>: the page already sits inside the server form, and Enter must not post it
+            $('#askText').on('keydown', function (e) { if (e.which === 13) { e.preventDefault(); runAsk($('#askText').val()); } });
+            $('#askGo').on('click', function () { runAsk($('#askText').val()); });
+            $('#askClear').on('click', function () { clearAsk(); });
             $('#timeFilter').on('click', 'button', function () {
-                yearSel = String($(this).data('y') || '') || null; monthSel = null;
+                if ($(this).data('r')) { rangeFrom = rangeTo = null; renderGrid(false); saveState(); return; }
+                rangeFrom = rangeTo = null; yearSel = String($(this).data('y') || '') || null; monthSel = null;
                 renderGrid(false); saveState();
             });
             $('#monthFilter').on('click', 'button', function () {
@@ -632,7 +781,7 @@
                 saveState();
             });
             function bulk(action) {
-                var list = shownPhotos(); if (!list.length) return;
+                var list = shownPhotos().filter(function (p) { return !p.ext; }); if (!list.length) return;   // never other people's photos
                 var msg = action === 'delete'
                     ? T('BulkDeleteConfirm', 'Delete these photos permanently? This cannot be undone.')
                     : T('BulkPrivateConfirm', 'Make these photos private? Only you will see them.');
@@ -668,7 +817,7 @@
             fillPhotos();
 
             function togglePublic() {
-                if (!current) return;
+                if (!current || current.ext) return;
                 var making = current.pub != '1';
                 if (making && !confirm(T('MakePublicConfirm', 'Make this photo public? Check that nobody is recognisable in it.'))) return;
                 current.pub = making ? '1' : '0';
@@ -679,7 +828,7 @@
             }
 
             function deleteCurrent() {
-                if (!current) return;
+                if (!current || current.ext) return;
                 if (!confirm(T('DeletePhotoConfirm', 'Delete this photo permanently? This cannot be undone.'))) return;
                 var gone = current, list = shownPhotos(), i = list.indexOf(gone);
                 $.ajax({
@@ -699,7 +848,7 @@
             }
 
             function rotateCurrent(dir) {
-                if (!current) return;
+                if (!current || current.ext) return;
                 var p = current;
                 $('#buttonRotL, #buttonRotR, #pvRotL, #pvRotR').prop('disabled', true);
                 $.ajax({

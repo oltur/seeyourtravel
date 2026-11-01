@@ -38,7 +38,7 @@
                 <button type="button" class="pfBtn" id="buttonOpen" disabled="disabled"><i class="fa fa-play"></i> <span class="i" data-i18n="Open">Open</span></button>
                 <button type="button" class="pfBtn danger" id="buttonDelete" disabled="disabled"><i class="fa fa-trash-o"></i> <span class="i" data-i18n="Delete">Delete</span></button>
             </div>
-            <input type="search" id="trackFilter" placeholder="Search my tracks" />
+            <!-- #Include virtual="include/pfSearch.inc" -->
             <ul class="pfList" id="tracksList"></ul>
             <div class="pfRow" style="justify-content: space-between; font-size: 12px; color: #7a8aa0; margin: 4px 0">
                 <span id="trackCount"></span>
@@ -65,6 +65,7 @@
 
     <div id="map"></div>
 
+    <script src="<%=Tools.V("js/pfsearch.js")%>"></script>
     <script>
         var map, markers;   // shadow the #map element so init() creates the map
         var markersTracks, line, rows = [], selected = [];
@@ -99,14 +100,17 @@
             }).fail(function (x, s, e) { toastr.error(s + "," + e, "ERROR", { timeOut: 5000 }); });
         }
 
+        var aiRank = null;   // the assistant's answer {id: position}, or null while only the typed text filters
         function matches(t) {
-            var q = $.trim($('#trackFilter').val()).toLowerCase();
+            if (aiRank) return aiRank[t.id] !== undefined;
+            var q = $.trim($('#askText').val()).toLowerCase();
             return !q || t.name.toLowerCase().indexOf(q) >= 0;
         }
 
         function render() {
             var ul = $('#tracksList').empty();
             var shown = rows.filter(matches);
+            if (aiRank) shown.sort(function (a, b) { return aiRank[a.id] - aiRank[b.id]; });   // best match first
             shown.forEach(function (t) {
                 var on = selected.indexOf(t.id) >= 0;
                 var li = $('<li>').toggleClass('sel', on).data('id', t.id);
@@ -150,7 +154,8 @@
                 render();
                 if (selected.length === 1) showOnMap(selected[0]); else if (line) { map.removeLayer(line); line = null; }
             });
-            $('#trackFilter').on('input', render);
+            sytPfSearch({ url: 'services/track_search.aspx', extra: { limit: 500 }, idsOf: function (d) { return (d.tracks || []).map(function (x) { return x.file; }); },
+                          apply: function (rank) { aiRank = rank; selected = []; render(); } });
             $('#selectAll').click(function (e) {
                 e.preventDefault();
                 selected = rows.filter(matches).map(function (t) { return t.id; });

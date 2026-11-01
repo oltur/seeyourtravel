@@ -6,11 +6,9 @@
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 case "${1:-start}" in
-  stop) docker rm -f syt-web-test >/dev/null 2>&1 || true ;;
+  stop) docker compose -f "$REPO/compose.yaml" rm -sf web-test >/dev/null 2>&1 || true ;;
   start|restart)
-    docker rm -f syt-web-test >/dev/null 2>&1 || true
-    docker run -d --name syt-web-test --network syt -p 127.0.0.1:8089:8080 -e SYT_FORCE_LOCAL=1 \
-      -v "$REPO/web":/app -w /app syt-web:latest xsp4 --port 8080 --address 0.0.0.0 --root /app --nonstop >/dev/null
+    docker compose -f "$REPO/compose.yaml" --profile test up -d --force-recreate web-test >/dev/null
     until curl -s -o /dev/null -f http://127.0.0.1:8089/favicon.ico; do sleep 1; done
     echo "test site: http://127.0.0.1:8089" ;;
 esac

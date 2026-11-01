@@ -1,0 +1,89 @@
+# SeeYourTravel: every container of the project in one place.
+#   docker compose up -d                  database + website + AI service (the public site)
+#   docker compose --profile test up -d web-test     test copy on http://127.0.0.1:8089 (everybody is the administrator)
+#   docker compose run --rm clip-index    add new photos to the AI search index (also done nightly by tools/faces_scan.sh)
+#   docker compose ps | logs -f web | restart web | down      (down keeps all data: it lives in ./db and ./web/data)
+# Secrets come from .env (git-ignored): SYT_SA_PASSWORD, GEMINI_API_KEY, optional PORT, GEMINI_MODEL, ASSIST_*.
+# The Cloudflare tunnel runs on the host (cloudflared service -> http://localhost:8088), not in Docker.
+# The network "syt" is shared with the one-off jobs of tools/ (face scan etc.): create it once with `docker network create syt` (make up does it).
+name: seeyourtravel
+
+x-web: &web
+  image: syt-web
+  build: { context: ., dockerfile: Dockerfile.web }
+  volumes: ["./web:/app"]
+  networks: [syt]
+
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: syt-sql
+    restart: unless-stopped
+    mem_limit: 4g
+    stop_grace_period: 90s            # lets SQL Server close the database cleanly
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SYT_SA_PASSWORD:?set SYT_SA_PASSWORD in .env}
+    volumes: ["./db/mssql-data:/var/opt/mssql/data"]
+    networks:
+      syt: { aliases: [LOCAL.SEEYOURTRAVEL.com] }   # the name used by the connection string in web/Web.config
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'select 1' >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  web:
+    <<: *web
+    container_name: syt-web
+    restart: unless-stopped
+    mem_limit: 1g
+    ports: ["127.0.0.1:${PORT:-8088}:8080"]
+    command: xsp4 --port 8080 --address 0.0.0.0 --root /app --nonstop --verbose
+    depends_on: { sql: { condition: service_healthy } }
+
+  web-test:
+    <<: *web
+    profiles: [test]
+    container_name: syt-web-test
+    restart: "no"
+    mem_limit: 512m
+    ports: ["127.0.0.1:8089:8080"]
+    environment: { SYT_FORCE_LOCAL: "1" }
+    command: xsp4 --port 8080 --address 0.0.0.0 --root /app --nonstop
+    depends_on: { sql: { condition: service_healthy } }
+
+  # AI: local CLIP photo search (no LLM runs here) + calls to Google Gemini for the assistant. Only this container holds the Gemini key.
+  clip:
+    image: syt-clip
+    build: { context: ./tools/clip }
+    container_name: syt-clip
+    restart: unless-stopped
+    mem_limit: 1200m
+    cpus: 2
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-lite-latest}
+      ASSIST_DAILY_USER: ${ASSIST_DAILY_USER:-150}
+      ASSIST_DAILY_ALL: ${ASSIST_DAILY_ALL:-300}
+      ASSIST_MONTHLY_USD: ${ASSIST_MONTHLY_USD:-2}
+    volumes: ["./db/clip:/index", "./tools/clip:/t:ro"]
+    command: python /t/service.py /index
+    networks: [syt]
+
+  # one-off job: builds/extends the photo index
+  clip-index:
+    image: syt-clip
+    profiles: [jobs]
+    restart: "no"
+    mem_limit: 3g
+    cpus: 6
+    volumes: ["./web/data/thumbs/480:/thumbs:ro", "./db/clip:/index", "./tools/clip:/t:ro"]
+    command: python /t/index.py /thumbs /index 32
+    networks: [syt]
+
+networks:
+  syt:
+    name: syt
+    external: true

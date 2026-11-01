@@ -18,6 +18,18 @@ from multiprocessing import Pool
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from library_resize import resize_keep_tags
 
+def _sa_password():
+    """The SQL Server sa password comes from the environment or from .env (git-ignored): SYT_SA_PASSWORD."""
+    import os, pathlib
+    v = os.environ.get('SYT_SA_PASSWORD')
+    if not v:
+        env = pathlib.Path(__file__).resolve().parent.parent / '.env'
+        for line in env.read_text().splitlines():
+            if line.startswith('SYT_SA_PASSWORD='): v = line.split('=', 1)[1].strip()
+    if not v: raise SystemExit('Set SYT_SA_PASSWORD in .env')
+    return v
+
+
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 LIB = '/run/media/ot/oldssd/home/ot/Library-backup/'
 WORK = '/home/ot/work-pe/'
@@ -114,7 +126,7 @@ def main():
     sqlp = os.path.join(out, 'insert.sql')
     open(sqlp, 'w', encoding='utf-8').write('\n'.join(lines))
     r = subprocess.run(['docker', 'exec', '-i', 'syt-sql', '/opt/mssql-tools18/bin/sqlcmd', '-C', '-I', '-S', 'localhost', '-U', 'sa',
-                        '-P', 'CHANGE_ME', '-d', 'SeeYourTravel', '-b'], input=open(sqlp, 'rb').read(), capture_output=True)
+                        '-P', _sa_password(), '-d', 'SeeYourTravel', '-b'], input=open(sqlp, 'rb').read(), capture_output=True)
     print('sql exit', r.returncode, r.stdout.decode()[-300:], r.stderr.decode()[-300:])
     if r.returncode != 0:
         sys.exit(1)

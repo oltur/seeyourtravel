@@ -85,10 +85,22 @@
                 }
             },
 
+            // the close button: ends the tour at once (no click anywhere may count as "next step" while it is being closed)
+            cancel: function () {
+                $('*').unbind('click', this.tourClickHandler);
+                $('#tour_dialog').fadeOut();
+                $('#tour_mask').fadeOut();
+                $('.tour_item').removeClass('active');
+                this.startFrom = TourSteps.length;
+            },
+
             getContent: function () {
                 var message = TourSteps[this.startFrom].msg;
                 message += TourSteps[this.startFrom].btnMsg ? "<hr><div id='tour_dialog_btn' class='button'>" + TourSteps[this.startFrom].btnMsg + "</div>" : "";
                 $('#tour_dialog .msg').html(message);
+                var self = this;
+                $('<button type="button" class="tour_x" aria-label="Close" title="Close">&times;</button>')
+                    .on('click', function (e) { e.stopImmediatePropagation(); self.cancel(); }).prependTo('#tour_dialog .msg');
             },
 
             setDialogPos: function (position) {

@@ -6,6 +6,8 @@
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 set -a; . "$REPO/.env"; set +a
+# whatever happens below (also when there are no new faces), the photo search index is brought up to date at the end; its failure does not fail this scan
+trap '"$REPO/tools/clip_scan.sh" || echo "clip scan failed"' EXIT
 W="${FACES_WORK:-$HOME/work-faces}"; WORKERS="${WORKERS:-5}"
 mkdir -p "$W" "$W/models"
 SQL=(docker exec syt-sql /opt/mssql-tools18/bin/sqlcmd -C -I -S localhost -U sa -P "$SYT_SA_PASSWORD" -d SeeYourTravel -h -1 -W)

@@ -160,27 +160,44 @@ function clickSettings() {
 function clickMenu() {
     showHelpPanel(false);
     $('#settingsPanel').hide('slide', { direction: "up" }, 500);
-    $('#menuPanel').toggle('slide', 500);
+    $('#menuPanel').toggle('slide', 300, function () {
+        var open = $('#menuPanel').is(':visible');
+        $('#alogo').attr('aria-expanded', open ? 'true' : 'false');
+        $('#searchAiHint').toggle(!!window.sytSignedIn);
+        if (open) $('#menuPanel').find('input, button:not(:disabled), a').first().focus();
+    });
 }
+// Esc closes the menu and the settings (the usual way out of a drawer or a dialog)
+$(document).on('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if ($('#menuPanel').is(':visible')) { $('#menuPanel').hide('slide', 200); $('#alogo').attr('aria-expanded', 'false').focus(); }
+    if ($('#settingsPanel').is(':visible')) $('#settingsPanel').hide('slide', { direction: 'up' }, 200);
+});
 
+// Place search of the menu. An address or a place name goes to the geocoder; a sentence ("castles in Scotland"), or a place the geocoder does not know, goes to the AI assistant
+// (signed-in people): it moves the map and can list tracks there.
 function search($input) {
+    var q = $.trim($input.val());
+    try { if (window.event && window.event.stopPropagation) window.event.stopPropagation(); } catch (e) { }
+    if (!q) return;
+    var ai = window.sytSignedIn && window.sytChatAsk;
+    function askAi() { $('#menuPanel').hide('slide', 200); window.sytChatAsk(q); }
+    if (ai && q.split(/\s+/).length >= 4) { askAi(); return; }
     var service = new google.maps.Geocoder();
-    service.geocode({ 'address': $input.val() }, function (results, status) {
+    service.geocode({ 'address': q }, function (results, status) {
         if (status === 'OK') {
             map.panTo(new L.LatLng(results[0].geometry.location.lat(), results[0].geometry.location.lng()));
+        } else if (ai) {
+            askAi();
         } else {
-            toastr.error('Geocode was not successful for the following reason: ' + status);
+            toastr.error(T('PlaceNotFound', 'Place not found') + ' (' + status + ')');
         }
     });
-    event.stopPropagation();
 }
 
 function onBodyResize() {
     if ($("#map").length) {
         $("#map").height(window.innerHeight);
-    }
-    if ($("#menuPanel").length) {
-        $("#menuPanel").height(window.innerHeight - 100);
     }
     if ($(".viewport").length) {
         $(".viewport").height(window.innerHeight - 150);
@@ -1546,7 +1563,9 @@ function addMarkersNear(nearLat, nearLng, types, odd) {
     //    }
 }
 
+window.sytSeenWeather = window.sytSeenWeather || [];   // weather labels drawn on the map, kept for the chat assistant
 function weather_success(place) {
+    try { window.sytSeenWeather.push({ lat: +place.lat, lng: +place.lng, temperature: String(place.temperature), conditions: String(place.icon || '') }); if (window.sytSeenWeather.length > 60) window.sytSeenWeather.shift(); } catch (e) { }
 
     var iconImg;
     if (place.icon == "clear-day") {
@@ -1606,12 +1625,22 @@ function getplaces_success(data) {
     }
 }
 
+window.sytSeenPlaces = window.sytSeenPlaces || {};   // places drawn on the map (name, source, short description), kept for the chat assistant
 function createPhotoMarker(place) {
 
     if (allMarkers.indexOf(place.id) < 0)
         allMarkers.push(place.id);
     else
         return;
+
+    try {
+        var plat = place.lat != null ? place.lat : (place.geometry && place.geometry.location ? place.geometry.location.lat() : null);
+        var plng = place.lng != null ? place.lng : (place.geometry && place.geometry.location ? place.geometry.location.lng() : null);
+        if (plat != null && plng != null && place.name) {
+            var ks = Object.keys(window.sytSeenPlaces); if (ks.length > 300) delete window.sytSeenPlaces[ks[0]];
+            window.sytSeenPlaces[place.id] = { name: String(place.name).slice(0, 80), source: place.types.indexOf("wiki") >= 0 ? "Wikipedia" : place.types.indexOf("syt") >= 0 ? "SeeYourTravel user place" : "Google place", description: String(place.description || "").slice(0, 100), lat: +plat, lng: +plng };
+        }
+    } catch (e) { }
 
     // console.log (place);
 
@@ -2285,12 +2314,46 @@ $(function () {
         var input = $('<input type="search" class="ts-q" autocomplete="off" spellcheck="false">')
             .attr('placeholder', T('SearchTracks', 'Search tracks\u2026')).attr('aria-label', T('SearchTracks', 'Search tracks\u2026'));
         var list = $('<div class="ts-list" role="listbox"></div>');
-        panel.append($('<div class="ts-head"></div>').append(input)).append(list).appendTo('body');
+        var hint = $('<div class="ts-hint"></div>').append('<i class="fa fa-magic"></i> ').append($('<span></span>').text(T('TrackSearchHint', 'Search by name, or describe what you look for, e.g. \u201ctracks in Italy with churches\u201d. ') + T('AiSearchNote', 'AI-based search: it can make mistakes, so check the results.')));
+        var closeBtn = $('<button type="button" class="ts-x"></button>').html('&times;').attr('title', T('Close', 'Close')).attr('aria-label', T('Close', 'Close')).on('click', function () { close(); sel.focus(); });
+        panel.append($('<div class="ts-head"></div>').append(input).append(closeBtn)).append(hint).append(list).appendTo('body');
         panel.css('max-height', Math.max(200, window.innerHeight - r.bottom - 16));
         var active = -1;
 
+        // tracks that pass photos which look like the words (AI-based photo search); shown under the name matches
+        var aiBox = $('<div class="ts-ai" style="display:none"></div>'), aiTimer = null, aiSeq = 0;
+        function aiPhotoUrl(f) { return 'services/get_thumbnail.aspx?size=small&p=' + encodeURIComponent(f); }
+        function aiShow(d, ask) {
+            aiBox.empty();
+            var head = $('<div class="ts-aihead"></div>').append('<i class="fa fa-magic"></i> ').append($('<span></span>').text(T('TracksByPhotos', 'Tracks with matching photos')));
+            $('<button type="button" class="ts-ask"></button>').html('<i class="fa fa-comment-o"></i> ' + $('<div>').text(T('AskAi', 'Ask AI')).html()).appendTo(head);
+            aiBox.append(head);
+            var res = (d && d.tracks) || [];
+            aiBox.append($('<div class="ts-ainote"></div>').text(T('AiSearchNote', 'AI-based search: it can make mistakes, so check the results.')));
+            if (d && d.say) aiBox.append($('<div class="ts-say"></div>').text(d.say));
+            if (d && d.error) aiBox.append($('<div class="ts-none"></div>').text(d.error === 'not signed in' ? T('SignInToAsk', 'Sign in to ask the assistant.') : T('AssistOff', 'The assistant is not available; searched by words instead.')));
+            res.forEach(function (t) {
+                var row = $('<div class="ts-item ts-aiitem" role="option"></div>').attr('data-v', t.file);
+                row.append($('<div class="ts-aitt"></div>').text(t.desc).append(t.n ? $('<span class="ts-n"></span>').text(' \u00b7 ' + t.n + ' ' + T('Photos', 'photos').toLowerCase()) : ''));
+                if (t.photos && t.photos.length) row.append($('<div class="ts-th"></div>').append(t.photos.map(function (f) { return $('<img alt="" loading="lazy">').attr('src', aiPhotoUrl(f))[0]; })));
+                aiBox.append(row);
+            });
+            if (ask && !res.length && d && !d.error) aiBox.append($('<div class="ts-none"></div>').text(T('NoTracksFound', 'No tracks found')));
+            aiBox.show();
+        }
+        function aiRun(ask) {
+            var q = $.trim(input.val()), my = ++aiSeq;
+            if (q.length < 3) { aiBox.hide().empty(); return; }
+            if (ask) aiBox.find('.ts-ask').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');   // the assistant takes a few seconds
+            $.getJSON('services/track_search.aspx', { q: q, ask: ask ? 1 : 0, locale: (window.i18next && i18next.language) || '' })
+                .done(function (d) { if (my === aiSeq) aiShow(d, ask); })
+                .fail(function (x) { if (my === aiSeq) aiShow({ tracks: [], error: x.status === 403 ? 'not signed in' : 'off' }, ask); });
+        }
+        aiBox.on('click', '.ts-ask', function (e) { e.stopPropagation(); aiRun(true); });
+
         function render() {
             var q = norm(input.val()).split(/\s+/).filter(Boolean), shown = 0, html = '';
+            aiBox.detach();
             list.empty();
             groups.forEach(function (g) {
                 var cat = norm(g.label);
@@ -2307,6 +2370,7 @@ $(function () {
                 });
             });
             if (!shown) list.append($('<div class="ts-none"></div>').text(T('NoTracksFound', 'No tracks found')));
+            list.append(aiBox);
             active = q.length && shown ? 0 : -1;
             mark();
         }
@@ -2324,11 +2388,18 @@ $(function () {
             sel.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
-        input.on('input', render).on('keydown', function (e) {
+        input.on('input', function () {
+            render();
+            hint.toggle(!$.trim(input.val()));
+            clearTimeout(aiTimer); aiSeq++;
+            if ($.trim(input.val()).length < 3) { aiBox.hide().empty(); return; }
+            aiShow(null, false);   // the "Ask AI" button is there at once; matching tracks follow
+            aiTimer = setTimeout(function () { aiRun(false); }, 500);
+        }).on('keydown', function (e) {
             var n = list.children('.ts-item').length;
             if (e.key === 'ArrowDown') { active = Math.min(n - 1, active + 1); mark(); e.preventDefault(); }
             else if (e.key === 'ArrowUp') { active = Math.max(0, active - 1); mark(); e.preventDefault(); }
-            else if (e.key === 'Enter') { var el = list.children('.ts-item').eq(Math.max(active, 0)); if (el.length) choose(el.attr('data-v')); e.preventDefault(); }
+            else if (e.key === 'Enter') { var el = list.children('.ts-item').eq(Math.max(active, 0)); if (el.length) choose(el.attr('data-v')); else if ($.trim(input.val()).length >= 3) { clearTimeout(aiTimer); aiRun(true); } e.preventDefault(); }   // no track has that name: ask the assistant
             else if (e.key === 'Escape') { close(); sel.focus(); }
         });
         list.on('click', '.ts-item', function () { choose($(this).attr('data-v')); });
@@ -2395,6 +2466,7 @@ function setTrackElevation(elevations) {
     });
     if (min === Infinity) return;
     track._elev = { min: min, max: max, up: up, down: down };
+    try { track._elevProf = elevations.map(function (e) { return { lat: e.location.lat(), lng: e.location.lng(), m: Math.round(e.elevation) }; }); } catch (e) { }   // the profile behind the numbers, for the chat assistant
     updateTrackStats();
 }
 
@@ -2506,4 +2578,86 @@ setInterval(function () {
     var tab = document.getElementById("tab-info");
     if (tab && tab.offsetParent !== null) updateLiveStats();
 }, 1000);
+//#endregion
+
+
+//#region Chat context
+// What the chat assistant is told about the screen: the track on the map, where the marker and the map are, the photos in the strip. Plain data, read when a question is sent.
+// elevation is only asked for when the Track panel is open; the assistant needs it whenever it is asked, so it is fetched on demand (waits at most 4 s)
+window.sytChatPrepare = function () {
+    var d = $.Deferred();
+    try {
+        var t = window.track;
+        if (t && t.trackData && t.trackData.length && !t._elev && !t._elevAsked && window.google && google.maps && google.maps.ElevationService) {
+            t._elevAsked = true;
+            new google.maps.ElevationService().getElevationAlongPath({ path: compactTrackData(t.trackData), samples: 128 }, function (el, status) {
+                try { if (el && el.length) setTrackElevation(el); else t._elevStatus = String(status); } catch (e) { }
+                d.resolve();
+            });
+            setTimeout(function () { d.resolve(); }, 4000);
+        } else d.resolve();
+    } catch (e) { d.resolve(); }
+    return d.promise();
+};
+
+window.sytChatContext = function () {
+    var c = { page: 'map' };
+    function ll(p) { return p ? { lat: +(+p.lat).toFixed(5), lng: +(+p.lng).toFixed(5) } : null; }
+    try {
+        var t = window.track;
+        if (t && t.trackData && t.trackData.length) {
+            var first = pointToLatLng(t.trackData[0]), last = pointToLatLng(t.trackData[t.trackData.length - 1]);
+            c.track = { name: t.name, category: t.category || '', travel_with: t.travelWith || '', start_name: t.startName || t._startName || '', end_name: t.endName || t._endName || '',
+                        length_km: +(trackDistanceMeters(t) / 1000).toFixed(1), start: ll(first), end: ll(last) };
+            var pr = trackProgress();
+            if (pr) c.track_marker_now = { position: ll(pr.pos), done_km: +(pr.done / 1000).toFixed(1), left_km: +(pr.left / 1000).toFixed(1), percent_done: pr.total > 0 ? Math.round(pr.done / pr.total * 100) : 0 };
+        } else c.track = null;
+        if (window.map) { var m = map.getCenter(); c.map_centre = ll(m); c.map_zoom = map.getZoom(); }
+        if (window.markerWhereIAm) { var g = markerWhereIAm.getLatLng(); if (g && Math.abs(g.lat) <= 90) c.my_gps_position = ll(g); }
+        // elevation: the numbers of the Track tab and the profile along the route (distance from the start, height), thinned to about 24 points
+        if (t && t._elev) {
+            var el = { lowest_m: t._elev.min, highest_m: t._elev.max, total_climb_m: t._elev.up, total_descent_m: t._elev.down };
+            var pf = t._elevProf;
+            if (pf && pf.length > 1) {
+                var cum = [0]; for (var q = 1; q < pf.length; q++) cum.push(cum[q - 1] + L.latLng(pf[q - 1].lat, pf[q - 1].lng).distanceTo([pf[q].lat, pf[q].lng]));
+                var hi = 0, lo = 0; pf.forEach(function (p, i) { if (p.m > pf[hi].m) hi = i; if (p.m < pf[lo].m) lo = i; });
+                el.highest_point_at_km = +(cum[hi] / 1000).toFixed(1); el.lowest_point_at_km = +(cum[lo] / 1000).toFixed(1);
+                var n = Math.min(24, pf.length), prof = [];
+                for (var k = 0; k < n; k++) { var ix = Math.round(k * (pf.length - 1) / (n - 1)); prof.push({ km: +(cum[ix] / 1000).toFixed(1), m: pf[ix].m }); }
+                el.profile_km_and_height_m = prof;
+                if (c.track_marker_now) {
+                    var mp = c.track_marker_now.position, bi = 0, bd = Infinity;
+                    pf.forEach(function (p, i) { var d = L.latLng(p.lat, p.lng).distanceTo([mp.lat, mp.lng]); if (d < bd) { bd = d; bi = i; } });
+                    el.elevation_at_marker_m = pf[bi].m;
+                }
+            }
+            c.elevation = el;
+        } else if (t) c.elevation = { status: t._elevStatus ? 'the elevation service gave no data (' + t._elevStatus + ')' : 'not loaded' };
+        // what the information panel and the map show: track properties, weather labels and places (Wikipedia, user and Google places) inside the visible map
+        try { if (window.updateTrackStats) window.updateTrackStats(); } catch (e) { }   // the Track tab is only filled when it is needed: fill it now
+        var props = $('#trackStats').text().replace(/\s+/g, ' ').trim();
+        if (props) c.track_properties_panel = props.slice(0, 1200);
+        if (t) c.track_settings = { photos_to_show: t.numOfPhotos, photo_distance_tolerance: t.photoLocationTolerancy, speed_m_per_s: t.velocityMetersPerSec, default_zoom: t.defaultScale, copyright: t.copyright || '', has_audio: !!t.audioSrc };
+        if (window.map) {
+            var bb = map.getBounds();
+            c.weather_on_map = (window.sytSeenWeather || []).filter(function (w) { return bb.contains([w.lat, w.lng]); }).slice(-8);
+            c.places_on_map = Object.keys(window.sytSeenPlaces || {}).map(function (k) { return window.sytSeenPlaces[k]; })
+                .filter(function (p) { return bb.contains([p.lat, p.lng]); }).slice(0, 30).map(function (p) { return { name: p.name, source: p.source, description: p.description }; });
+        }
+        // the photos in the strip: how many, and the ones that are on screen right now (title, author, own or public, who is on it, where it was taken)
+        var imgs = $('#imageDiv img.photo'), area = document.querySelector('#imageDiv0 .innerScrollArea'), shown = [];
+        try {
+            stripItems().forEach(function (li) {
+                var ph = li._ph; if (!ph || shown.length >= 15) return;
+                if (area && !(li._left + li._w > area.scrollLeft && li._left < area.scrollLeft + area.clientWidth)) return;
+                var lat = ph.latitude != null ? ph.latitude : ph.lat, lng = ph.longitude != null ? ph.longitude : ph.lng;
+                shown.push({ title: (ph.photo_title && ph.photo_title !== 'TBD') ? String(ph.photo_title).slice(0, 80) : '', author: String(ph.owner_name || '').slice(0, 40),
+                             source: ph.source === 'own' ? (ph.syt_public === false ? "the person's own photo (private)" : "the person's own photo (public)") : 'public photo from Wikimedia Commons',
+                             people: ph.people && ph.people.length ? ph.people : undefined, lat: lat != null ? +(+lat).toFixed(3) : undefined, lng: lng != null ? +(+lng).toFixed(3) : undefined });
+            });
+        } catch (e) { }
+        c.photo_strip = { count: imgs.length, on_screen_now: shown };
+    } catch (e) { }
+    return c;
+};
 //#endregion

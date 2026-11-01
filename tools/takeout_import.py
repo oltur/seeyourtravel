@@ -8,13 +8,25 @@ Input (made by the scripts in /home/ot/work-gp):
   ocr_gp.jsonl, mid_stats.json   document detection (>= 40 words, or 20-39 words on pale low-colour pictures: left out)
   stage/out/<id>.jpg   the resized pictures
 
-Owner: group A -> administrator, group B -> Friend Name (friend@example.org).
+Owner: group A -> administrator, group B -> the second user (set by email in the script).
 IsPublic = 0 when a person was found, Google named a person, or detection failed.
 A log (guid, source, status) goes to legacy/takeout-import-<date>/manifest.tsv.
 
 Usage: python3 tools/takeout_import.py [--dry-run]
 """
 import os, sys, json, glob, uuid, shutil, argparse, datetime, subprocess
+
+def _sa_password():
+    """The SQL Server sa password comes from the environment or from .env (git-ignored): SYT_SA_PASSWORD."""
+    import os, pathlib
+    v = os.environ.get('SYT_SA_PASSWORD')
+    if not v:
+        env = pathlib.Path(__file__).resolve().parent.parent / '.env'
+        for line in env.read_text().splitlines():
+            if line.startswith('SYT_SA_PASSWORD='): v = line.split('=', 1)[1].strip()
+    if not v: raise SystemExit('Set SYT_SA_PASSWORD in .env')
+    return v
+
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 W = os.environ.get('SYT_WORK', '/home/ot/work-gp').rstrip('/') + '/'
@@ -76,7 +88,7 @@ def main():
     sqlp = os.path.join(out, 'insert.sql')
     open(sqlp, 'w', encoding='utf-8').write('\n'.join(lines))
     r = subprocess.run(['docker', 'exec', '-i', 'syt-sql', '/opt/mssql-tools18/bin/sqlcmd', '-C', '-I', '-S', 'localhost', '-U', 'sa',
-                        '-P', 'CHANGE_ME', '-d', 'SeeYourTravel', '-b'], input=open(sqlp, 'rb').read(), capture_output=True)
+                        '-P', _sa_password(), '-d', 'SeeYourTravel', '-b'], input=open(sqlp, 'rb').read(), capture_output=True)
     print('sql exit', r.returncode, r.stdout.decode()[-300:], r.stderr.decode()[-300:])
     if r.returncode != 0:
         sys.exit(1)

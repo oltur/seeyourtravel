@@ -8,6 +8,7 @@
         <div class="pfName"><%= HttpUtility.HtmlEncode(pfName) %></div>
         <a class="pfBack" href="index.aspx"><i class="fa fa-arrow-left"></i> <span class="i" data-i18n="BackToMap">Back to the map</span></a>
     </div>
+    <button type="button" class="pfClose i" id="pfClose" data-i18n="[title]Close;[aria-label]Close" title="Close" aria-label="Close" onclick="window.location = 'index.aspx'">&times;</button>
 </div>
 <nav class="pfTabs">
     <a href="UserProfile.aspx" data-tab="UserProfile"><i class="fa fa-user"></i> <span class="i" data-i18n="MyProfile">My Profile</span></a>

@@ -202,19 +202,7 @@
                     <span id="lblCoord" style="vertical-align: super; text-shadow: 1px 1px #ffffff;"></span>
                 </div>
             </div>
-                        <div id="menuPanel" class="menuPanel">
-                <div>
-                    <div class="searchBox"><input type="text" id="searchForPlace" data-i18n="[placeholder]Search for places;[aria-label]Search for places" class="i" autocomplete="off" aria-label="Search for place"  placeholder="Search for place" onkeydown="if(event.keyCode == 13) {search($(this)); return false;} return true;" /><button type="button" onclick="search($('#searchForPlace'));return false;" data-i18n="Go" id="searchButton" title="Search" class="i" >Go</button></div>
-                    <button type="button" data-i18n="[title]New;New" id="newTrackButton" title="New" class="i headerButton" style="background-image: url(img/new.png );" onclick="clickNew()">New</button>
-                    <button type="button" data-i18n="[title]RecordRoute;RecordRoute" id="recordButton" title="Record route" class="i headerButton" style="background-image: url(img/record.png );" onclick="sytRecorder.toggle()">Record route</button>
-                    <button type="button" data-i18n="[title]Edit;Edit" id="editTrackButton" title="Edit" class="i headerButton" style="background-image: url(img/edit.png );" onclick="clickEdit()">Edit</button>
-                    <button type="button" data-i18n="[title]Settings;Settings" id="settingsCheckBox" title="Settings" class="i headerButton" style="background-image: url(img/settings1.png );" onclick="clickSettings()">Settings</button>
-                    <button type="button" data-i18n="[title]AboutSeeYourTravel;AboutSeeYourTravel" id="corporateSite" title="Corporate site" class="i headerButton" style="background-image: url(img/corporate.png );" onclick="window.open('./corporate','_blank')">About SeeYourTravel</button>
-                    <button type="button" <%--data-i18n="[title]Profile;Profile" --%>id="profile" title="Profile" class="headerButton" style="background-image: url(img/profile.png );" onclick="window.location = 'UserProfile.aspx'"></button>
-                    <button type="button" data-i18n="[title]Logout;Logout" id="logout" title="Logout" class="i headerButton" style="background-image: url(img/logoff.png );" onclick="window.location = 'Logout.aspx?ReturnURL='+window.location.href">Logout</button>
-                    <%--                    <button type="button" data-i18n="[title]Help;Help" id="helpButton" style="background-image: url(img/help.png);" class="i headerButton" title="Need help?" onclick="clickHelp()">Help</button>--%>
-                </div>
-            </div>
+            <!-- #Include virtual="include/mainMenu.inc" -->
             <!-- #Include virtual="include/profileHelpPanel.inc" -->
             <!-- #Include virtual="include/settingsPanel.inc" -->
 

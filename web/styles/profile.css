@@ -175,3 +175,29 @@
 #photosGrid .pfWho { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 6px 3px; font-size: 11px; line-height: 1.2; color: #fff; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: linear-gradient(transparent, rgba(0,0,0,.6)); opacity: 0; transition: opacity .15s; pointer-events: none; }
 #photosGrid button:hover .pfWho, #photosGrid button.sel .pfWho { opacity: 1; }
 .pvCaption .pvWho { color: #7a8aa0; font-size: 12px; white-space: nowrap; }
+.pfAsk { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 4px 6px 4px 12px; border: 1px solid #cfd9e6; border-radius: 18px; background: #fff; }
+.pfAsk > i { color: #7a8aa0; }
+.pfAsk input { flex: 1; min-width: 0; border: 0; outline: 0; font-size: 13px; background: transparent; }
+.pfAsk .pfBtn { padding: 4px 12px; }
+.pfAiNote { margin: -4px 0 8px 12px; font-size: 11px; color: #7a8aa0; }
+.pfAiNote i { margin-right: 3px; }
+
+/* phones */
+@media (max-width: 600px) {
+    /* My profile / tracks / photos / places */
+    .profilePanel { font-size: 12.5px; max-height: 62vh !important; left: 6px; right: 6px; bottom: 6px; border-radius: 14px; }
+    .pfHead { padding: 10px 12px 6px; gap: 10px; }
+    .pfAvatar { width: 34px; height: 34px; font-size: 16px; }
+    .pfName { font-size: 15px; }
+    .pfBack { font-size: 11.5px; }
+    .pfTabs { padding: 0 6px; }
+    .pfTabs a { font-size: 11px; padding: 6px 2px 7px; }
+    .pfTabs a .fa { font-size: 14px; margin-bottom: 1px; }
+    .pfTabs em { font-size: 10px; padding: 0 5px; }
+    .pfBody { padding: 10px 12px 14px; }
+    .pfBtn { font-size: 12px; padding: 5px 10px; }
+    .pfChips { gap: 5px; margin-bottom: 6px; }
+    .pfChips button { font-size: 11px; padding: 3px 8px; }
+    .pfBody h3 { font-size: 11px; margin: 12px 0 6px; }
+    .pfGrid { max-height: 38vh; }
+}

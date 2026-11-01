@@ -14,7 +14,8 @@ export
 
 PORT      ?= 8088
 CLOUDFLARED_IMAGE ?= cloudflare/cloudflared:latest
-SA_PW     ?= CHANGE_ME
+# SQL Server sa password: SYT_SA_PASSWORD from .env
+SA_PW     ?= $(SYT_SA_PASSWORD)
 # app DB password: taken from web/Web.config (not committed; copy web/Web.config.example and set the password)
 APP_PW    ?= $(shell sed -n 's/.*LOCAL.SEEYOURTRAVEL.com;.*Password=\([^;"&]*\).*/\1/p' web/Web.config | head -1)
 SQL_IMAGE ?= mcr.microsoft.com/mssql/server:2022-latest
@@ -31,7 +32,7 @@ network:
 	@docker network inspect syt >/dev/null 2>&1 || docker network create syt >/dev/null
 
 image:
-	@docker image inspect syt-web >/dev/null 2>&1 || docker build -t syt-web -f Dockerfile.web .
+	@docker image inspect syt-web >/dev/null 2>&1 || docker compose build web
 
 db-volume:
 	@docker volume inspect sytdb >/dev/null 2>&1 || { \
@@ -40,9 +41,7 @@ db-volume:
 	    bash -c 'cp /src/seeyourtravel.mdf /src/seeyourtravel_log.ldf /var/opt/mssql/data/ && chown -R mssql /var/opt/mssql/data'; }
 
 sql: network db-volume
-	@if docker container inspect syt-sql >/dev/null 2>&1; then docker start syt-sql >/dev/null; else \
-	  docker run -d --name syt-sql --restart unless-stopped --network syt --network-alias LOCAL.SEEYOURTRAVEL.com \
-	    -e ACCEPT_EULA=Y -e 'MSSQL_SA_PASSWORD=$(SA_PW)' -v sytdb:/var/opt/mssql/data $(SQL_IMAGE) >/dev/null; fi
+	@docker compose up -d sql
 	@$(MAKE) --no-print-directory wait-sql
 
 wait-sql:
@@ -59,8 +58,7 @@ attach-db:
 	@$(SQLCMD) -Q "IF SUSER_ID('SeeYourTravel') IS NULL CREATE LOGIN SeeYourTravel WITH PASSWORD='$(APP_PW)', CHECK_POLICY=OFF; ALTER AUTHORIZATION ON DATABASE::SeeYourTravel TO SeeYourTravel;" >/dev/null
 
 web: network image
-	@if docker container inspect syt-web >/dev/null 2>&1; then docker start syt-web >/dev/null; else \
-	  docker run -d --name syt-web --restart unless-stopped --network syt -p 127.0.0.1:$(PORT):8080 -v "$(CURDIR)/web:/app" syt-web >/dev/null; fi
+	@docker compose up -d web
 	@echo -n "Waiting for web"; \
 	for i in $$(seq 1 30); do [ "$$(curl -s -o /dev/null -w '%{http_code}' http://localhost:$(PORT)/index.aspx)" = 200 ] && { echo " ok"; exit 0; }; echo -n .; sleep 2; done; \
 	echo " timed out (see: make logs)"; exit 1
@@ -84,10 +82,11 @@ thumbs:
 	python3 tools/make_thumbs.py
 
 down:
-	-docker stop syt-web syt-sql syt-tunnel
+	-docker compose stop
+	-docker stop syt-tunnel
 
 restart:
-	docker restart syt-web
+	docker compose restart web
 
 logs:
 	docker logs -f --tail 50 syt-web

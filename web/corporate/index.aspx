@@ -194,6 +194,37 @@
     </section>
     <!-- DESCRIPTION SECTION ENDS  HERE -->
 
+    <section class="description jasm-s" id="ai">
+        <div class="container">
+            <div class="jasm-text-center">
+                <h2 class="i" data-i18n="Corporate_AiTitle">Meet your AI travel companion</h2>
+                <p class="i jasm-lead" data-i18n="Corporate_AiLead">Ask in plain words, find photos by what they show, and let the assistant see what you see on the map.</p>
+            </div>
+            <div class="row">
+                <div class="col-sm-4 jasm-icon-container">
+                    <span><i class="fa fa-comments"></i></span>
+                    <h3 class="i jasm-text-uppercase" data-i18n="Corporate_AiChat">Chat with your trips</h3>
+                    <p class="i" data-i18n="Corporate_AiChat1">A friendly assistant that knows the track, weather, places, elevation and photos on your screen, and says so when it does not know.</p>
+                </div>
+                <div class="col-sm-4 jasm-icon-container">
+                    <span><i class="fa fa-search"></i></span>
+                    <h3 class="i jasm-text-uppercase" data-i18n="Corporate_AiSearch">Search by looks</h3>
+                    <p class="i" data-i18n="Corporate_AiSearch1">Type “beach at sunset” in any language. The picture search runs on our own server.</p>
+                </div>
+                <div class="col-sm-4 jasm-icon-container">
+                    <span><i class="fa fa-road"></i></span>
+                    <h3 class="i jasm-text-uppercase" data-i18n="Corporate_AiTracks">Tracks near your photos</h3>
+                    <p class="i" data-i18n="Corporate_AiTracks1">Find routes that pass the places where matching photos were taken.</p>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 10px">
+                <div class="col-sm-8"><img class="img-responsive" style="border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.25)" src="../marketing/screenshots/new-ai-chat.jpg" alt="AI assistant on the map" loading="lazy"></div>
+                <div class="col-sm-4"><img class="img-responsive" style="border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.25); max-height: 520px; margin: 0 auto" src="../marketing/screenshots/new-phone-chat.jpg" alt="AI assistant on a phone" loading="lazy"></div>
+            </div>
+            <p class="jasm-text-center i" data-i18n="Corporate_AiNote" style="margin-top: 14px; font-size: 14px; opacity: .8">AI-based features can make mistakes, so check the results. The assistant never receives your photos, only text.</p>
+        </div>
+    </section>
+
     <section class="recent-works jasm-s">
         <div class="container">
             <div class="jasm-text-center ">

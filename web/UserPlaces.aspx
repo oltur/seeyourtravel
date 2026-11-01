@@ -33,6 +33,7 @@
         <!-- #Include virtual="include/profileTabs.inc" -->
         <div class="pfBody">
             <h3 class="i" data-i18n="MyPlaces">My Places</h3>
+            <!-- #Include virtual="include/pfSearch.inc" -->
             <ul class="pfList" id="placesList"></ul>
             <div class="pfRow" id="placeActions" style="display: none">
                 <button type="button" class="pfBtn" id="buttonEditPlace"><i class="fa fa-pencil"></i> <span class="i" data-i18n="Edit">Edit</span></button>
@@ -74,6 +75,7 @@
 
     <div id="map"></div>
 
+    <script src="<%=Tools.V("js/pfsearch.js")%>"></script>
     <script>
         var map, markers;   // shadow the #map element so init() creates the map
         var places = [], current = null, newMarker = null, editing = null;
@@ -88,17 +90,29 @@
             map.panTo(ll);
         }
 
+        var aiRank = null;   // the assistant's answer {PlaceID: position}, or null while only the typed text filters
+        function placeMatches(p) {
+            if (aiRank) return aiRank[p.PlaceID] !== undefined;
+            var q = $.trim($('#askText').val()).toLowerCase();
+            return !q || String(p.Name || '').toLowerCase().indexOf(q) >= 0;
+        }
+        function renderPlaces() {
+            var ul = $('#placesList').empty(), shown = places.filter(placeMatches);
+            if (aiRank) shown.sort(function (a, b) { return aiRank[a.PlaceID] - aiRank[b.PlaceID]; });   // best match first
+            shown.forEach(function (p) {
+                var li = $('<li>').data('id', p.PlaceID);
+                if (current && current.PlaceID === p.PlaceID) li.addClass('sel');
+                $('<span class="nm">').text(p.Name).attr('title', p.Name).appendTo(li);
+                $('<span class="pfBadge">').addClass(p.IsPublic ? 'pub' : 'priv').text(p.IsPublic ? T('Public', 'Public') : T('Private', 'Private')).appendTo(li);
+                ul.append(li);
+            });
+            if (!shown.length) ul.append($('<li class="pfEmpty" style="display:block;cursor:default">').text(places.length ? T('NothingFound', 'Nothing found') : T('NoPlacesYet', 'No places yet.')));
+        }
+
         function fillPlaces() {
             $.getJSON('services/get_myplaces.aspx?' + Math.random(), function (data) {
                 places = $.map(data, function (v) { return v; });
-                var ul = $('#placesList').empty();
-                places.forEach(function (p) {
-                    var li = $('<li>').data('id', p.PlaceID);
-                    $('<span class="nm">').text(p.Name).attr('title', p.Name).appendTo(li);
-                    $('<span class="pfBadge">').addClass(p.IsPublic ? 'pub' : 'priv').text(p.IsPublic ? T('Public', 'Public') : T('Private', 'Private')).appendTo(li);
-                    ul.append(li);
-                });
-                if (!places.length) ul.append($('<li class="pfEmpty" style="display:block;cursor:default">').text(T('NoPlacesYet', 'No places yet.')));
+                renderPlaces();
                 current = null;
                 setEditing(null);
                 $('#placeActions').hide();
@@ -135,6 +149,8 @@
             map.setView([50.430981, 30.539267], 6);
             markers = L.featureGroup().addTo(map);
             fillPlaces();
+            sytPfSearch({ url: 'services/place_search.aspx', idsOf: function (d) { return (d.places || []).map(function (x) { return x.id; }); },
+                          apply: function (rank) { aiRank = rank; renderPlaces(); } });
 
             $('#placesList').on('click', 'li', function () {
                 var id = $(this).data('id');

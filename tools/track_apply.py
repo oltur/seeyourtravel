@@ -4,12 +4,24 @@
 spec: {id, name?, category?, public?, travelWith?, startName?, endName?, description (HTML), notes: [{lat,lng,text}], image: {title: "File:...", credit: "..."},
        audio: "path.mp3", audioVolume?, register?: true (insert a Track row for a file that has none)}"""
 import json, math, os, re, subprocess, sys, time, urllib.parse, urllib.request
+
+def _sa_password():
+    """The SQL Server sa password comes from the environment or from .env (git-ignored): SYT_SA_PASSWORD."""
+    import os, pathlib
+    v = os.environ.get('SYT_SA_PASSWORD')
+    if not v:
+        env = pathlib.Path(__file__).resolve().parent.parent / '.env'
+        for line in env.read_text().splitlines():
+            if line.startswith('SYT_SA_PASSWORD='): v = line.split('=', 1)[1].strip()
+    if not v: raise SystemExit('Set SYT_SA_PASSWORD in .env')
+    return v
+
 UA = {'User-Agent': 'seeyourtravel-curator/1.0 (info@seeyourtravel.app)'}
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'web')
 ADMIN = 'C9F148F7-923A-46B0-8B7C-BD4B54D90886'
 
 def sql(q):
-    r = subprocess.run(['docker', 'exec', 'syt-sql', '/opt/mssql-tools18/bin/sqlcmd', '-C', '-S', 'localhost', '-U', 'sa', '-P', 'CHANGE_ME', '-d', 'SeeYourTravel', '-W', '-h', '-1', '-Q', 'set nocount on; ' + q], capture_output=True, text=True)
+    r = subprocess.run(['docker', 'exec', 'syt-sql', '/opt/mssql-tools18/bin/sqlcmd', '-C', '-S', 'localhost', '-U', 'sa', '-P', _sa_password(), '-d', 'SeeYourTravel', '-W', '-h', '-1', '-Q', 'set nocount on; ' + q], capture_output=True, text=True)
     if r.returncode or 'Msg ' in r.stdout: raise SystemExit('SQL failed: ' + r.stdout + r.stderr)
     return r.stdout.strip()
 
