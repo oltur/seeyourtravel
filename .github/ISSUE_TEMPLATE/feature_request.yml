@@ -1,0 +1,14 @@
+name: Feature request
+description: An idea to make SeeYourTravel better
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to do?
+      description: Describe the situation first, then the idea.
+    validations: { required: true }
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
