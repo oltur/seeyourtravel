@@ -1,0 +1,6 @@
+# pinned so that the builds are repeatable and Dependabot / Trivy can check them (torch comes from the CPU index in the Dockerfile)
+sentence-transformers==6.2.0
+transformers==5.22.1
+huggingface_hub==2.4.0
+pillow==13.0.0
+numpy==2.5.4

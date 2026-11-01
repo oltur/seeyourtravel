@@ -34,3 +34,8 @@ The AI features need a `GEMINI_API_KEY` in `.env`; without it search falls back 
 ## License
 The code of this project is released under the [MIT License](LICENSE).
 Third-party components keep their own licences: the libraries in `web/libs` (jQuery, Leaflet and plugins, Bootstrap and others, see the headers of each file), the "powered by Google" images in `web/img/poweredbygoolge` (Google's terms apply), map tiles from OpenStreetMap contributors (ODbL) and photos or text from Wikipedia and Wikimedia Commons, which are shown with their authors and licences. The Natural Earth country borders in `web/App_Data/countries50.geojson` are public domain.
+
+## CI and security
+GitHub Actions (`.github/workflows`) check every push and pull request: compose/shell/Python/JSON lint, a build of the website image with a start-up smoke test, a secret scan (gitleaks over the whole history), Trivy (dependencies, secrets, Dockerfile settings), CodeQL for JavaScript and Python, and, weekly, a build and vulnerability report of the Docker images. Dependabot proposes updates for actions, Dockerfiles, Python and NuGet packages. See [SECURITY.md](SECURITY.md) to report a problem.
+
+Known items on the roadmap: upgrade Newtonsoft.Json (needs a binding redirect in `web/Web.config`) and run the containers as a non-root user.

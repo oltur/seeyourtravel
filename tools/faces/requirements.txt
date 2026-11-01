@@ -1,0 +1,8 @@
+# pinned so that the builds are repeatable and Dependabot / Trivy can check them
+insightface==0.7.3
+onnxruntime==1.31.1
+numpy==2.5.4
+pillow==13.0.0
+pillow-heif==1.8.1
+scikit-learn==1.9.1
+opencv-python-headless==5.0.0.93

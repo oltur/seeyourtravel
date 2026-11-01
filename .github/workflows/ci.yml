@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint and static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: compose.yaml is valid
+        run: SYT_SA_PASSWORD=ci-only docker compose --profile test --profile jobs config -q
+
+      - name: Shell scripts (shellcheck)
+        run: shellcheck -S warning tools/*.sh run.sh
+
+      - name: Python tools compile
+        run: python3 -m compileall -q tools
+
+      - name: JSON files and translations
+        run: |
+          python3 - <<'PY'
+          import glob, json, sys
+          bad = False
+          for f in glob.glob('web/locales/*/translation.json') + ['web/App_Data/countries50.geojson']:
+              try: json.load(open(f, encoding='utf-8-sig'))
+              except Exception as e: print('INVALID JSON', f, e); bad = True
+          en = set(json.load(open('web/locales/en/translation.json', encoding='utf-8-sig')))
+          for f in sorted(glob.glob('web/locales/*/translation.json')):
+              missing = en - set(json.load(open(f, encoding='utf-8-sig')))
+              if missing: print('::warning file=%s::%d keys of en are missing (e.g. %s)' % (f, len(missing), sorted(missing)[0]))
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: No secrets or personal data files are tracked
+        run: |
+          if git ls-files | grep -E '(^|/)(\.env|Web\.config)$|^(legacy|db)/|^web/data/|\.(bak|mdf|ldf)$'; then
+            echo "::error::a private file is tracked"; exit 1
+          fi
+
+  web:
+    name: Build the website image and smoke-test it
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the web image
+        run: docker build -f Dockerfile.web -t syt-web .
+
+      - name: Start the site (no database) and request the pages
+        run: |
+          cp web/Web.config.example web/Web.config
+          # with a Google client ID set the site is not in "local mode", which would ask the (absent) database on every request
+          sed -i 's#<add key="GoogleClientId" value="" />#<add key="GoogleClientId" value="ci.apps.googleusercontent.com" />#' web/Web.config
+          docker run -d --name syt-ci -p 8080:8080 -v "$PWD/web:/app" syt-web
+          for _ in $(seq 1 40); do curl -s -o /dev/null http://localhost:8080/robots.txt && break; sleep 2; done
+          fail=0
+          # these pages need the database, but must at least compile: a compile or parse error is a failure, a database error is not
+          for p in /index.aspx /track/ /sitemap.xml /corporate/ /services/get_myphotos.aspx /services/track_search.aspx /google_login.ashx; do
+            code=$(curl -s -o body.txt -w '%{http_code}' "http://localhost:8080$p" || true)
+            if [ "$code" = 000 ]; then echo "::error::$p: no answer from the site"; fail=1
+            elif grep -q -E 'Compilation Error|Parser Error|CS[0-9]{4}:' body.txt; then echo "::error::$p does not compile"; grep -m5 -E 'error CS|Compilation Error|Parser Error|CS[0-9]{4}' body.txt; fail=1; else echo "ok $p ($code)"; fi
+          done
+          # static files must be served as they are
+          for p in /robots.txt /llms.txt /press/ /favicon.ico; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8080$p")
+            if [ "$code" = 200 ]; then echo "ok $p"; else echo "::error::$p returned $code"; fail=1; fi
+          done
+          docker logs syt-ci 2>&1 | tail -20
+          exit $fail

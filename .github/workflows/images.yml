@@ -1,0 +1,46 @@
+name: Docker images
+
+# The AI and face images are large (PyTorch, models), so they are built only when their files change, and weekly to catch new vulnerabilities.
+on:
+  push:
+    branches: [main]
+    paths: ['tools/clip/**', 'tools/faces/**', 'Dockerfile.web', '.github/workflows/images.yml']
+  pull_request:
+    paths: ['tools/clip/**', 'tools/faces/**', 'Dockerfile.web']
+  schedule:
+    - cron: '41 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-scan:
+    name: Build and scan ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: web,  context: .,            file: Dockerfile.web }
+          - { name: clip, context: tools/clip,   file: tools/clip/Dockerfile }
+          - { name: face, context: tools/faces,  file: tools/faces/Dockerfile }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          load: true
+          tags: syt-${{ matrix.name }}:ci
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+      - name: "Scan the image (report only, the Mono base image is old)"
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: syt-${{ matrix.name }}:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '0'

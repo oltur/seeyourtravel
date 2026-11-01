@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /services/
+Disallow: /UserProfile.aspx
+Disallow: /UserTracks.aspx
+Disallow: /UserPhotos.aspx
+Disallow: /UserPlaces.aspx
+Disallow: /Login.aspx
+Disallow: /Logout.aspx
+Disallow: /editor.aspx
+Disallow: /admin/
+
+Sitemap: https://seeyourtravel.app/sitemap.xml

@@ -41,7 +41,7 @@
   "url": "https://seeyourtravel.app/corporate",
   "contactPoint": [{
     "@type": "ContactPoint",
-    "telephone": "+972-58-7786265",
+    "telephone": "+49-1525-8596581",
     "contactType": "sales"
   }]
 }

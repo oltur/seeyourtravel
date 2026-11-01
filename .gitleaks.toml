@@ -1,0 +1,17 @@
+title = "SeeYourTravel gitleaks config"
+
+[extend]
+useDefault = true
+
+# These are keys that the browser has to receive to draw the map, so they are visible to every visitor of the site anyway:
+# the Mapbox PUBLIC token (pk.…) and the Flickr web API key in web/js and the pages that draw maps.
+# Restrict them in the providers' dashboards (allowed URLs: https://seeyourtravel.app). Secret keys never belong in the repository.
+[allowlist]
+description = "public client-side map keys"
+paths = [
+  '''^web/(js/OurTravel.*\.js|editor\.aspx|UserProfile\.aspx|UserPlaces\.aspx)$''',
+]
+regexes = [
+  '''pk\.eyJ[A-Za-z0-9_.-]+''',
+  '''api_key=[0-9a-f]{32}''',
+]

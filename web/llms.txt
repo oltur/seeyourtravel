@@ -1,0 +1,16 @@
+# SeeYourTravel
+
+> SeeYourTravel.app is a free web app for creating, sharing and replaying journeys on a map. A route is played back with photos, places (Wikipedia, Google, your own), weather and the elevation profile along the way. Signed-in users also get an AI assistant (Google Gemini) and a photo search that understands what a photo looks like.
+
+## Main pages
+- [Home: the interactive map](https://seeyourtravel.app/): pick a public journey and watch it replay.
+- [Public journeys](https://seeyourtravel.app/track/): the list of public routes, each with its own text page.
+- [About and corporate information](https://seeyourtravel.app/corporate/): features, the AI companion and contact details.
+- [Press kit](https://seeyourtravel.app/press/): logos, screenshots and a short description.
+- [Sitemap](https://seeyourtravel.app/sitemap.xml)
+
+## Facts
+- Languages: English, Ukrainian, German, Hebrew. Works on phones and desktops.
+- Private tracks and photos are never shown to visitors; only content its owner made public is on the public pages.
+- Source code: https://github.com/oltur/seeyourtravel
+- Contact: info@seeyourtravel.app

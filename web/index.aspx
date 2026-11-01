@@ -1,8 +1,23 @@
-﻿<%@ Page Title="See Your Travel" Language="C#" MasterPageFile="MasterPage.master" CodeFile="Index.aspx.cs" Inherits="Index" %>
+﻿<%@ Page Title="SeeYourTravel – replay your journey on the map" Language="C#" MasterPageFile="MasterPage.master" CodeFile="Index.aspx.cs" Inherits="Index" %>
 
 <%@ Import Namespace="System.IO" %>
 
 <asp:Content ID="headContent" ContentPlaceHolderID="HeadPlaceholder" runat="Server">
+    <meta name="description" content="SeeYourTravel is a free web app to create, share and replay journeys on a map, with photos, places, weather and an AI travel companion." />
+    <link rel="canonical" href="https://seeyourtravel.app/" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SeeYourTravel",
+      "url": "https://seeyourtravel.app/",
+      "applicationCategory": "TravelApplication",
+      "operatingSystem": "Any (web browser)",
+      "description": "Create, share and replay journeys on a map, with photos, places, weather, the elevation profile and an AI travel companion.",
+      "inLanguage": ["en", "uk", "de", "he"],
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+    }
+    </script>
     <script>
         var sideMenuNo = 0;
         var errorMessage = '<%=Request["errorMessage"]%>';
@@ -169,6 +184,12 @@
 
 <asp:Content ID="bodyContent" ContentPlaceHolderID="BodyPlaceholder" runat="Server">
     <!--Content-->
+    <!-- the same facts as text, for search engines and screen readers (the map itself is drawn by script) -->
+    <div class="srOnly">
+        <h1>SeeYourTravel – replay your journey on the map</h1>
+        <p>SeeYourTravel is a free web app for creating, sharing and replaying journeys on a map. A route is played back with photos, places, weather and the elevation profile along the way.</p>
+        <p><a href="/track/">Browse the public journeys</a> · <a href="/corporate/">About SeeYourTravel</a> · <a href="/press/">Press kit</a></p>
+    </div>
     <div class="langButton">
         <select style="" id="langList" class="graySelect" onchange="selectLang()"></select>
     </div>

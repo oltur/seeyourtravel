@@ -26,6 +26,15 @@
         }
         if (Tools.IsHttps(req))
             HttpContext.Current.Response.AppendHeader("Strict-Transport-Security", "max-age=31536000");
+        // search-engine friendly addresses: /sitemap.xml and /track/<name>-<id> (public tracks, see track.aspx)
+        string path = req.Path;
+        if (path.Equals("/sitemap.xml", StringComparison.OrdinalIgnoreCase)) HttpContext.Current.RewritePath("~/sitemap.aspx");
+        else if (path.Equals("/track", StringComparison.OrdinalIgnoreCase) || path.Equals("/track/", StringComparison.OrdinalIgnoreCase)) HttpContext.Current.RewritePath("~/track.aspx", "", "");
+        else if (path.StartsWith("/track/", StringComparison.OrdinalIgnoreCase))
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(path, @"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/?$");
+            HttpContext.Current.RewritePath("~/track.aspx", "", "id=" + (m.Success ? m.Value : "00000000-0000-0000-0000-000000000000"));
+        }
     }
 
     protected void Application_EndRequest(Object sender, EventArgs e)

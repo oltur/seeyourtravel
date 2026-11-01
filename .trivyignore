@@ -1,0 +1,8 @@
+# DS-0002 (container runs as root): the containers are reachable only on the private docker network (the site goes out through the Cloudflare
+# tunnel), their data is bind-mounted from the host, and Mono's web server writes the uploaded photos there. Running them as a fixed non-root
+# user is planned hardening; until then this rule is accepted.
+DS-0002
+
+# CVE-2024-21907, Newtonsoft.Json 9.0.1 (deeply nested JSON can exhaust the stack). Fixed in 13.0.1, but the swap needs a bindingRedirect in
+# web/Web.config (not in git) because Facebook.dll references an older version. Tracked in the README roadmap; this exception expires so it comes back.
+CVE-2024-21907 exp:2027-01-01
