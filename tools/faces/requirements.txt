@@ -1,5 +1,5 @@
 # pinned so that the builds are repeatable and Dependabot / Trivy can check them
-insightface==0.7.3
+insightface==2.1
 onnxruntime==1.31.1
 numpy==2.5.4
 pillow==13.0.0
