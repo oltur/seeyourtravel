@@ -316,6 +316,8 @@
             Your browser does not support the audio element.
         </audio>
     </form>
+    <div id="sytLegal"><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/imprint/">Imprint</a></div>
+    <style>#sytLegal{position:fixed;left:6px;bottom:2px;z-index:400;font:11px/1.4 sans-serif;background:rgba(255,255,255,.75);padding:0 6px;border-radius:4px}#sytLegal a{color:#225EAC;text-decoration:none}@media (max-width:600px){#sytLegal{font-size:10px}}</style>
     <script>window.sytSignedIn = <%= Tools.GetUserId(Page) != Guid.Empty ? "true" : "false" %>;</script>
     <script src="<%=Tools.V("js/chat.js")%>"></script>
 </body>

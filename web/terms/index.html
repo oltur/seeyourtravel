@@ -8,21 +8,65 @@
  :root{--blue:#225EAC;--dark:#12305c;--ink:#1d2733;--mute:#5a6675}
  *{box-sizing:border-box} body{margin:0;color:var(--ink);background:#f4f7fb;line-height:1.6}
  header{background:linear-gradient(180deg,var(--dark),var(--blue));color:#fff;text-align:center;padding:28px 16px 40px}
- header img{height:80px} header h1{margin:8px 0 0;font-size:30px}
+ header img{height:80px} header h1{margin:8px 0 10px;font-size:30px}
+ .lang a{color:#fff;margin:0 8px;text-decoration:none;opacity:.75;font-size:15px}.lang a.on{opacity:1;border-bottom:2px solid #FCD600}
  main{max-width:820px;margin:-18px auto 40px;padding:0 16px}
  section{background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(18,48,92,.08);padding:22px 26px;margin:18px 0}
  h2{margin:0 0 10px;color:var(--dark);font-size:20px} a{color:var(--blue)} li{margin:4px 0}
  footer{text-align:center;color:var(--mute);padding:10px 16px 40px;font-size:14px}
+ [data-l]{display:none} [data-l].on{display:block} footer[data-l].on{display:block}
 </style></head><body>
-<header><a href="../"><img src="../img/syt-logo.png" alt="SeeYourTravel.app"></a><h1>Terms of use</h1></header>
+<header><a href="../"><img src="../img/syt-logo.png" alt="SeeYourTravel.app"></a>
+<h1 data-l="en" class=on lang="en">Terms of use</h1><h1 data-l="de" lang="de">Nutzungsbedingungen</h1><h1 data-l="uk" lang="uk">Умови користування</h1><h1 data-l="he" lang="he">תנאי שימוש</h1>
+<div class="lang"><a href="#en" data-s="en" lang="en">English</a><a href="#de" data-s="de" lang="de">Deutsch</a><a href="#uk" data-s="uk" lang="uk">Українська</a><a href="#he" data-s="he" lang="he">עברית</a></div></header>
 <main>
+<div data-l="en" lang="en" class=on>
 <section><p>Last updated: 1 November 2026. By using SeeYourTravel.app you accept these terms.</p></section>
-<section><h2>The service</h2><p>SeeYourTravel.app is a free, non-commercial web app for recording and sharing journeys. It is provided "as is", without warranty of availability or accuracy; maps, weather and AI answers may be wrong. Do not rely on it for navigation in safety-critical situations.</p></section>
-<section><h2>Your content</h2><p>You keep the rights to what you upload. You grant us the permission needed to store it and, for items you mark public, to display them on the site. You confirm that you hold the rights to it and that people shown in it agree. Do not upload illegal, infringing, hateful or private-document content.</p></section>
-<section><h2>Acceptable use</h2><p>No abuse, scraping that harms the service, attempts to break security, or automated mass requests. We may remove content or suspend accounts that break these rules.</p></section>
-<section><h2>Liability</h2><p>To the extent permitted by law, we are not liable for indirect damages or data loss; keep your own copy of anything important. Liability for intent, gross negligence, injury to life, body or health, and under mandatory law remains unaffected.</p></section>
-<section><h2>Open source</h2><p>The source code is available under the MIT licence at <a href="https://github.com/oltur/seeyourtravel">github.com/oltur/seeyourtravel</a>. Third-party components keep their own licences.</p></section>
-<section><h2>Contact</h2><p><a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a>. See also the <a href="../privacy/">privacy policy</a>.</p></section>
+<section><h2>The service</h2>SeeYourTravel.app is a free, non-commercial web app for recording and sharing journeys. It is provided "as is", without warranty of availability or accuracy; maps, weather and AI answers may be wrong. Do not rely on it for navigation in safety-critical situations.</section>
+<section><h2>Your content</h2>You keep the rights to what you upload. You grant us the permission needed to store it and, for items you mark public, to display them on the site. You confirm that you hold the rights to it and that people shown in it agree. Do not upload illegal, infringing, hateful or private-document content.</section>
+<section><h2>Acceptable use</h2>No abuse, scraping that harms the service, attempts to break security, or automated mass requests. We may remove content or suspend accounts that break these rules.</section>
+<section><h2>Liability</h2>To the extent permitted by law, we are not liable for indirect damages or data loss; keep your own copy of anything important. Liability for intent, gross negligence, injury to life, body or health, and under mandatory law remains unaffected.</section>
+<section><h2>Open source</h2>The source code is available under the MIT licence at <a href="https://github.com/oltur/seeyourtravel">github.com/oltur/seeyourtravel</a>. Third-party components keep their own licences.</section>
+<section><h2>Contact</h2><a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a>. See also the <a href="../privacy/">privacy policy</a>.</section>
+</div>
+<div data-l="de" lang="de">
+<section><p>Stand: 1. November 2026. Mit der Nutzung von SeeYourTravel.app akzeptieren Sie diese Bedingungen.</p></section>
+<section><h2>Der Dienst</h2>SeeYourTravel.app ist eine kostenlose, nichtkommerzielle Web-App zum Aufzeichnen und Teilen von Reisen. Sie wird „wie besehen“ bereitgestellt, ohne Gewähr für Verfügbarkeit oder Richtigkeit; Karten, Wetter und KI-Antworten können falsch sein. Verlassen Sie sich nicht darauf für Navigation in sicherheitskritischen Situationen.</section>
+<section><h2>Ihre Inhalte</h2>Die Rechte an hochgeladenen Inhalten bleiben bei Ihnen. Sie räumen uns die zum Speichern nötige Erlaubnis ein und, für als öffentlich markierte Inhalte, zur Anzeige auf der Seite. Sie bestätigen, dass Sie die Rechte daran besitzen und dass abgebildete Personen einverstanden sind. Laden Sie keine rechtswidrigen, verletzenden, hasserfüllten oder private Dokumente zeigenden Inhalte hoch.</section>
+<section><h2>Zulässige Nutzung</h2>Kein Missbrauch, kein dem Dienst schadendes Scraping, keine Versuche, die Sicherheit zu umgehen, und keine automatisierten Massenanfragen. Wir können Inhalte entfernen oder Konten sperren, die gegen diese Regeln verstoßen.</section>
+<section><h2>Haftung</h2>Soweit gesetzlich zulässig, haften wir nicht für mittelbare Schäden oder Datenverlust; bewahren Sie von wichtigen Dingen eine eigene Kopie auf. Die Haftung für Vorsatz, grobe Fahrlässigkeit, Verletzung von Leben, Körper oder Gesundheit sowie nach zwingendem Recht bleibt unberührt.</section>
+<section><h2>Open Source</h2>Der Quellcode ist unter der MIT-Lizenz verfügbar: <a href="https://github.com/oltur/seeyourtravel">github.com/oltur/seeyourtravel</a>. Komponenten Dritter behalten ihre eigenen Lizenzen.</section>
+<section><h2>Kontakt</h2><a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a>. Siehe auch die <a href="../privacy/">Datenschutzerklärung</a>.</section>
+</div>
+<div data-l="uk" lang="uk">
+<section><p>Оновлено: 1 листопада 2026. Користуючись SeeYourTravel.app, ви приймаєте ці умови.</p></section>
+<section><h2>Сервіс</h2>SeeYourTravel.app — безкоштовний некомерційний вебзастосунок для запису й публікації подорожей. Він надається «як є», без гарантій доступності чи точності; мапи, погода й відповіді ШІ можуть бути помилковими. Не покладайтеся на нього для навігації в ситуаціях, критичних для безпеки.</section>
+<section><h2>Ваш вміст</h2>Права на завантажене залишаються за вами. Ви надаєте нам дозвіл, потрібний для зберігання, а для позначеного публічним — для показу на сайті. Ви підтверджуєте, що маєте права на нього і що люди, зображені на ньому, не заперечують. Не завантажуйте незаконний, порушний, ворожий вміст чи приватні документи.</section>
+<section><h2>Припустиме використання</h2>Жодних зловживань, шкідливого для сервісу скрапінгу, спроб обійти безпеку чи автоматичних масових запитів. Ми можемо видалити вміст або призупинити облікові записи, що порушують ці правила.</section>
+<section><h2>Відповідальність</h2>У межах, дозволених законом, ми не відповідаємо за непрямі збитки чи втрату даних; зберігайте власну копію важливого. Відповідальність за умисел, грубу недбалість, шкоду життю, тілу чи здоров’ю та за обов’язковими нормами права не змінюється.</section>
+<section><h2>Відкритий код</h2>Вихідний код доступний за ліцензією MIT: <a href="https://github.com/oltur/seeyourtravel">github.com/oltur/seeyourtravel</a>. Компоненти третіх сторін зберігають власні ліцензії.</section>
+<section><h2>Контакт</h2><a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a>. Див. також <a href="../privacy/">політику конфіденційності</a>.</section>
+</div>
+<div data-l="he" lang="he" dir="rtl">
+<section><p>עודכן: 1 בנובמבר 2026. השימוש ב-SeeYourTravel.app מהווה הסכמה לתנאים אלה.</p></section>
+<section><h2>השירות</h2>SeeYourTravel.app היא אפליקציית אינטרנט חינמית ולא מסחרית לתיעוד ושיתוף של מסעות. היא ניתנת „כמות שהיא”, ללא אחריות לזמינות או לדיוק; מפות, מזג אוויר ותשובות בינה מלאכותית עלולים להיות שגויים. אל תסתמכו עליה לניווט במצבים קריטיים לבטיחות.</section>
+<section><h2>התוכן שלכם</h2>הזכויות בתוכן שהעליתם נשארות שלכם. אתם מעניקים לנו את ההיתר הדרוש לשמירתו, ולפריטים שסומנו כציבוריים — להצגתם באתר. אתם מאשרים שיש לכם זכויות בתוכן ושהאנשים המופיעים בו מסכימים. אל תעלו תוכן בלתי חוקי, מפר, שונא או מסמכים פרטיים.</section>
+<section><h2>שימוש מותר</h2>ללא ניצול לרעה, גרידה הפוגעת בשירות, ניסיונות לעקוף אבטחה או בקשות המוניות אוטומטיות. נוכל להסיר תוכן או להשעות חשבונות המפרים כללים אלה.</section>
+<section><h2>אחריות</h2>במידה המותרת בחוק, איננו אחראים לנזקים עקיפים או לאובדן מידע; שמרו עותק משלכם של דברים חשובים. האחריות בגין כוונה, רשלנות חמורה, פגיעה בחיים, בגוף או בבריאות ולפי דין קוגנטי אינה מושפעת.</section>
+<section><h2>קוד פתוח</h2>קוד המקור זמין ברישיון MIT בכתובת <a href="https://github.com/oltur/seeyourtravel">github.com/oltur/seeyourtravel</a>. רכיבי צד שלישי שומרים על רישיונותיהם.</section>
+<section><h2>יצירת קשר</h2><a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a>. ראו גם את <a href="../privacy/">מדיניות הפרטיות</a>.</section>
+</div>
 </main>
-<footer>© SeeYourTravel.app · <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a> · <a href="../imprint/">Imprint</a> · <a href="../corporate/">About</a></footer>
+<footer data-l="en" lang="en" class=on>© SeeYourTravel.app · <a href="../privacy/">Privacy policy</a> · <a href="../terms/">Terms of use</a> · <a href="../imprint/">Imprint</a> · <a href="../corporate/">About</a></footer>
+<footer data-l="de" lang="de">© SeeYourTravel.app · <a href="../privacy/">Datenschutzerklärung</a> · <a href="../terms/">Nutzungsbedingungen</a> · <a href="../imprint/">Impressum</a> · <a href="../corporate/">Über uns</a></footer>
+<footer data-l="uk" lang="uk">© SeeYourTravel.app · <a href="../privacy/">Політика конфіденційності</a> · <a href="../terms/">Умови користування</a> · <a href="../imprint/">Вихідні дані</a> · <a href="../corporate/">Про нас</a></footer>
+<footer data-l="he" lang="he" dir="rtl">© SeeYourTravel.app · <a href="../privacy/">מדיניות פרטיות</a> · <a href="../terms/">תנאי שימוש</a> · <a href="../imprint/">פרטי הספק</a> · <a href="../corporate/">אודות</a></footer>
+<script>
+(function(){var map={"en-US":"en","de-DE":"de","uk-UA":"uk","he":"he"},ok={en:1,de:1,uk:1,he:1};
+function ck(){try{var m=document.cookie.match(/(?:^|; )i18next=([^;]*)/);return m?map[decodeURIComponent(m[1])]:null}catch(e){return null}}
+function set(l){document.documentElement.lang=l;var n=document.querySelectorAll("[data-l]");for(var i=0;i<n.length;i++)n[i].classList.toggle("on",n[i].getAttribute("data-l")===l);
+var a=document.querySelectorAll("[data-s]");for(i=0;i<a.length;i++)a[i].classList.toggle("on",a[i].getAttribute("data-s")===l)}
+var h=(location.hash||"").slice(1),l=ok[h]?h:(ck()||(ok[(navigator.language||"en").slice(0,2)]?(navigator.language||"en").slice(0,2):"en"));
+set(l);var a=document.querySelectorAll("[data-s]");for(var i=0;i<a.length;i++)a[i].addEventListener("click",function(e){e.preventDefault();set(this.getAttribute("data-s"));history.replaceState(null,"","#"+this.getAttribute("data-s"))});})();
+</script>
 </body></html>
