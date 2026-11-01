@@ -8,18 +8,52 @@
  :root{--blue:#225EAC;--dark:#12305c;--ink:#1d2733;--mute:#5a6675}
  *{box-sizing:border-box} body{margin:0;color:var(--ink);background:#f4f7fb;line-height:1.6}
  header{background:linear-gradient(180deg,var(--dark),var(--blue));color:#fff;text-align:center;padding:28px 16px 40px}
- header img{height:80px} header h1{margin:8px 0 0;font-size:30px}
+ header img{height:80px} header h1{margin:8px 0 10px;font-size:30px}
+ .lang a{color:#fff;margin:0 8px;text-decoration:none;opacity:.75;font-size:15px}.lang a.on{opacity:1;border-bottom:2px solid #FCD600}
  main{max-width:820px;margin:-18px auto 40px;padding:0 16px}
  section{background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(18,48,92,.08);padding:22px 26px;margin:18px 0}
  h2{margin:0 0 10px;color:var(--dark);font-size:20px} a{color:var(--blue)} li{margin:4px 0}
  footer{text-align:center;color:var(--mute);padding:10px 16px 40px;font-size:14px}
+ [data-l]{display:none} [data-l].on{display:block} footer[data-l].on{display:block}
 </style></head><body>
-<header><a href="../"><img src="../img/syt-logo.png" alt="SeeYourTravel.app"></a><h1>Imprint</h1></header>
+<header><a href="../"><img src="../img/syt-logo.png" alt="SeeYourTravel.app"></a>
+<h1 data-l="en" class=on lang="en">Imprint</h1><h1 data-l="de" lang="de">Impressum</h1><h1 data-l="uk" lang="uk">Вихідні дані</h1><h1 data-l="he" lang="he">פרטי הספק</h1>
+<div class="lang"><a href="#en" data-s="en" lang="en">English</a><a href="#de" data-s="de" lang="de">Deutsch</a><a href="#uk" data-s="uk" lang="uk">Українська</a><a href="#he" data-s="he" lang="he">עברית</a></div></header>
 <main>
-<section><h2>Provider</h2><p>Oleksandr Turevskiy<br>
-Sperberstr. 1<br>41751 Viersen<br>Germany</p></section>
-<section><h2>Contact</h2><p>Email: <a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a><br>Phone: +49-1525-8596581</p></section>
-<section><h2>Content responsibility</h2><p>Content added by users is their own responsibility. Report problems to the email above and we will review them promptly.</p></section>
+<div data-l="en" lang="en" class=on>
+<section><h2>Provider</h2>Oleksandr Turevskiy<br>Sperberstr. 1<br>41751 Viersen<br>Germany</section>
+<section><h2>Contact</h2>Email: <a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a><br>Phone: +49-1525-8596581</section>
+<section><h2>Content responsibility</h2>Content added by users is their own responsibility. Report problems to the email above and we will review them promptly.</section>
+</div>
+<div data-l="de" lang="de">
+<section><h2>Anbieter</h2>Oleksandr Turevskiy<br>Sperberstr. 1<br>41751 Viersen<br>Deutschland</section>
+<section><h2>Kontakt</h2>E-Mail: <a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a><br>Telefon: +49-1525-8596581</section>
+<section><h2>Verantwortung für Inhalte</h2>Von Nutzern hinzugefügte Inhalte liegen in deren eigener Verantwortung. Melden Sie Probleme an die obige E-Mail-Adresse; wir prüfen sie zeitnah.</section>
+</div>
+<div data-l="uk" lang="uk">
+<section><h2>Постачальник</h2>Oleksandr Turevskiy<br>Sperberstr. 1<br>41751 Viersen<br>Німеччина</section>
+<section><h2>Контакт</h2>Ел. пошта: <a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a><br>Телефон: +49-1525-8596581</section>
+<section><h2>Відповідальність за вміст</h2>За вміст, доданий користувачами, відповідають вони самі. Повідомляйте про проблеми на наведену адресу — ми розглянемо їх невідкладно.</section>
+</div>
+<div data-l="he" lang="he" dir="rtl">
+<section><h2>ספק השירות</h2>Oleksandr Turevskiy<br>Sperberstr. 1<br>41751 Viersen<br>גרמניה</section>
+<section><h2>יצירת קשר</h2>דוא״ל: <a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a><br>טלפון: +49-1525-8596581</section>
+<section><h2>אחריות לתוכן</h2>התוכן שמוסיפים משתמשים באחריותם. דווחו על בעיות בדוא״ל שלמעלה ונבדוק אותן בהקדם.</section>
+</div>
 </main>
-<footer>© SeeYourTravel.app · <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a> · <a href="../imprint/">Imprint</a> · <a href="../corporate/">About</a></footer>
+<footer data-l="en" lang="en" class=on>© SeeYourTravel.app · <a href="../privacy/" data-p="privacy">Privacy policy</a> · <a href="../terms/" data-p="terms">Terms of use</a> · <a href="../imprint/" data-p="imprint">Imprint</a> · <a href="../corporate/">About</a></footer>
+<footer data-l="de" lang="de">© SeeYourTravel.app · <a href="../privacy/" data-p="privacy">Datenschutzerklärung</a> · <a href="../terms/" data-p="terms">Nutzungsbedingungen</a> · <a href="../imprint/" data-p="imprint">Impressum</a> · <a href="../corporate/">Über uns</a></footer>
+<footer data-l="uk" lang="uk">© SeeYourTravel.app · <a href="../privacy/" data-p="privacy">Політика конфіденційності</a> · <a href="../terms/" data-p="terms">Умови користування</a> · <a href="../imprint/" data-p="imprint">Вихідні дані</a> · <a href="../corporate/">Про нас</a></footer>
+<footer data-l="he" lang="he" dir="rtl">© SeeYourTravel.app · <a href="../privacy/" data-p="privacy">מדיניות פרטיות</a> · <a href="../terms/" data-p="terms">תנאי שימוש</a> · <a href="../imprint/" data-p="imprint">פרטי הספק</a> · <a href="../corporate/">אודות</a></footer>
+<script>
+(function(){var map={"en-US":"en","de-DE":"de","uk-UA":"uk","he":"he"},rev={en:"en-US",de:"de-DE",uk:"uk-UA",he:"he"},ok={en:1,de:1,uk:1,he:1};
+function ck(){try{var m=document.cookie.match(/(?:^|; )i18next=([^;]*)/);return m?map[decodeURIComponent(m[1])]||null:null}catch(e){return null}}
+function br(){var n=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||"en"]);for(var i=0;i<n.length;i++){var c=String(n[i]).slice(0,2).toLowerCase();if(c==="iw")c="he";if(ok[c])return c}return"en"}
+function nz(x){return x==="de"?"de":x==="uk"?"uk":x==="he"?"he":"en"}
+function set(l){l=nz(l);document.documentElement.lang=l;document.documentElement.dir=l==="he"?"rtl":"ltr";var n=document.querySelectorAll("[data-l]");for(var i=0;i<n.length;i++)n[i].classList.toggle("on",n[i].getAttribute("data-l")===l);
+var a=document.querySelectorAll("[data-s]");for(i=0;i<a.length;i++)a[i].classList.toggle("on",a[i].getAttribute("data-s")===l);
+var U=["../privacy/#","../terms/#","../imprint/#"],k=document.querySelectorAll("footer a");for(i=0;i<k.length;i++){if(i%4<3)k[i].setAttribute("href",U[i%4]+l)}}
+var h=(location.hash||"").slice(1),l=ok[h]?h:(ck()||br());
+set(l);var a=document.querySelectorAll("[data-s]");for(var i=0;i<a.length;i++)a[i].addEventListener("click",function(e){e.preventDefault();var x=nz(this.getAttribute("data-s"));set(x);history.replaceState(null,"","#"+x);try{document.cookie="i18next="+rev[x]+"; path=/; max-age=31536000; SameSite=Lax"}catch(_){}})})();
+</script>
 </body></html>
