@@ -12,8 +12,10 @@ key = next((os.path.basename(f)[:-4] for f in glob.glob(os.path.join(web, '*.txt
 if not key: sys.exit('no IndexNow key file in web/')
 urls = sys.argv[1:]
 if not urls:
-    xml = urllib.request.urlopen('https://%s/sitemap.xml' % HOST, timeout=30).read().decode()
+    # Cloudflare turns away the default Python user agent
+    req0 = urllib.request.Request('https://%s/sitemap.xml' % HOST, headers={'User-Agent': 'seeyourtravel-indexnow/1.0 (info@seeyourtravel.app)'})
+    xml = urllib.request.urlopen(req0, timeout=30).read().decode()
     urls = re.findall(r'<loc>([^<]+)</loc>', xml)
 body = json.dumps({'host': HOST, 'key': key, 'keyLocation': 'https://%s/%s.txt' % (HOST, key), 'urlList': urls}).encode()
-req = urllib.request.Request('https://api.indexnow.org/indexnow', body, {'Content-Type': 'application/json; charset=utf-8'})
+req = urllib.request.Request('https://api.indexnow.org/indexnow', body, {'Content-Type': 'application/json; charset=utf-8', 'User-Agent': 'seeyourtravel-indexnow/1.0 (info@seeyourtravel.app)'})
 print(len(urls), 'URLs ->', urllib.request.urlopen(req, timeout=30).status)
