@@ -57,17 +57,17 @@
 <section><h2>יצירת קשר</h2><a href="mailto:info@seeyourtravel.app">info@seeyourtravel.app</a>. ראו גם את <a href="../privacy/">מדיניות הפרטיות</a>.</section>
 </div>
 </main>
-<footer data-l="en" lang="en" class=on>© SeeYourTravel.app · <a href="../privacy/">Privacy policy</a> · <a href="../terms/">Terms of use</a> · <a href="../imprint/">Imprint</a> · <a href="../corporate/">About</a></footer>
-<footer data-l="de" lang="de">© SeeYourTravel.app · <a href="../privacy/">Datenschutzerklärung</a> · <a href="../terms/">Nutzungsbedingungen</a> · <a href="../imprint/">Impressum</a> · <a href="../corporate/">Über uns</a></footer>
-<footer data-l="uk" lang="uk">© SeeYourTravel.app · <a href="../privacy/">Політика конфіденційності</a> · <a href="../terms/">Умови користування</a> · <a href="../imprint/">Вихідні дані</a> · <a href="../corporate/">Про нас</a></footer>
-<footer data-l="he" lang="he" dir="rtl">© SeeYourTravel.app · <a href="../privacy/">מדיניות פרטיות</a> · <a href="../terms/">תנאי שימוש</a> · <a href="../imprint/">פרטי הספק</a> · <a href="../corporate/">אודות</a></footer>
+<footer data-l="en" lang="en" class=on>© SeeYourTravel.app · <a href="../privacy/" data-p="privacy">Privacy policy</a> · <a href="../terms/" data-p="terms">Terms of use</a> · <a href="../imprint/" data-p="imprint">Imprint</a> · <a href="../corporate/">About</a></footer>
+<footer data-l="de" lang="de">© SeeYourTravel.app · <a href="../privacy/" data-p="privacy">Datenschutzerklärung</a> · <a href="../terms/" data-p="terms">Nutzungsbedingungen</a> · <a href="../imprint/" data-p="imprint">Impressum</a> · <a href="../corporate/">Über uns</a></footer>
+<footer data-l="uk" lang="uk">© SeeYourTravel.app · <a href="../privacy/" data-p="privacy">Політика конфіденційності</a> · <a href="../terms/" data-p="terms">Умови користування</a> · <a href="../imprint/" data-p="imprint">Вихідні дані</a> · <a href="../corporate/">Про нас</a></footer>
+<footer data-l="he" lang="he" dir="rtl">© SeeYourTravel.app · <a href="../privacy/" data-p="privacy">מדיניות פרטיות</a> · <a href="../terms/" data-p="terms">תנאי שימוש</a> · <a href="../imprint/" data-p="imprint">פרטי הספק</a> · <a href="../corporate/">אודות</a></footer>
 <script>
 (function(){var map={"en-US":"en","de-DE":"de","uk-UA":"uk","he":"he"},rev={en:"en-US",de:"de-DE",uk:"uk-UA",he:"he"},ok={en:1,de:1,uk:1,he:1};
 function ck(){try{var m=document.cookie.match(/(?:^|; )i18next=([^;]*)/);return m?map[decodeURIComponent(m[1])]||null:null}catch(e){return null}}
 function br(){var n=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||"en"]);for(var i=0;i<n.length;i++){var c=String(n[i]).slice(0,2).toLowerCase();if(c==="iw")c="he";if(ok[c])return c}return"en"}
 function set(l){document.documentElement.lang=l;document.documentElement.dir=l==="he"?"rtl":"ltr";var n=document.querySelectorAll("[data-l]");for(var i=0;i<n.length;i++)n[i].classList.toggle("on",n[i].getAttribute("data-l")===l);
 var a=document.querySelectorAll("[data-s]");for(i=0;i<a.length;i++)a[i].classList.toggle("on",a[i].getAttribute("data-s")===l);
-var k=document.querySelectorAll("footer a[href^='../']");for(i=0;i<k.length;i++){k[i].href=k[i].href.split("#")[0]+(k[i].getAttribute("href").indexOf("corporate")<0?"#"+l:"")}}
+var P={"privacy":1,"terms":1,"imprint":1},k=document.querySelectorAll("footer a[data-p]");for(i=0;i<k.length;i++){var q=k[i].getAttribute("data-p");if(P[q]&&ok[l])k[i].setAttribute("href","../"+q+"/#"+l)}}
 var h=(location.hash||"").slice(1),l=ok[h]?h:(ck()||br());
 set(l);var a=document.querySelectorAll("[data-s]");for(var i=0;i<a.length;i++)a[i].addEventListener("click",function(e){e.preventDefault();var x=this.getAttribute("data-s");set(x);history.replaceState(null,"","#"+x);try{document.cookie="i18next="+rev[x]+"; path=/; max-age=31536000; SameSite=Lax"}catch(_){}})})();
 </script>
