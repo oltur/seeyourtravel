@@ -317,6 +317,8 @@
         </audio>
     </form>
     <div id="sytLegal"><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/imprint/">Imprint</a></div>
+    <script>(function(){var T={"de-DE":["Datenschutz","Bedingungen","Impressum","de"],"uk-UA":["Конфіденційність","Умови","Вихідні дані","uk"],"he":["פרטיות","תנאים","פרטי הספק","he"]},m=document.cookie.match(/(?:^|; )i18next=([^;]*)/),c=m?decodeURIComponent(m[1]):"",l=T[c];if(!l){var n=(navigator.language||"en").slice(0,2).toLowerCase();if(!m){for(var k in T)if(T[k][3]===(n==="iw"?"he":n))l=T[k]}}
+if(!l)return;var a=document.querySelectorAll("#sytLegal a"),u=["privacy","terms","imprint"];for(var i=0;i<3;i++){a[i].textContent=l[i];a[i].href="/"+u[i]+"/#"+l[3]}})();</script>
     <style>#sytLegal{position:fixed;left:6px;bottom:2px;z-index:400;font:11px/1.4 sans-serif;background:rgba(255,255,255,.75);padding:0 6px;border-radius:4px}#sytLegal a{color:#225EAC;text-decoration:none}@media (max-width:600px){#sytLegal{font-size:10px}}</style>
     <script>window.sytSignedIn = <%= Tools.GetUserId(Page) != Guid.Empty ? "true" : "false" %>;</script>
     <script src="<%=Tools.V("js/chat.js")%>"></script>
