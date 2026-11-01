@@ -65,10 +65,11 @@
 (function(){var map={"en-US":"en","de-DE":"de","uk-UA":"uk","he":"he"},rev={en:"en-US",de:"de-DE",uk:"uk-UA",he:"he"},ok={en:1,de:1,uk:1,he:1};
 function ck(){try{var m=document.cookie.match(/(?:^|; )i18next=([^;]*)/);return m?map[decodeURIComponent(m[1])]||null:null}catch(e){return null}}
 function br(){var n=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||"en"]);for(var i=0;i<n.length;i++){var c=String(n[i]).slice(0,2).toLowerCase();if(c==="iw")c="he";if(ok[c])return c}return"en"}
-function set(l){document.documentElement.lang=l;document.documentElement.dir=l==="he"?"rtl":"ltr";var n=document.querySelectorAll("[data-l]");for(var i=0;i<n.length;i++)n[i].classList.toggle("on",n[i].getAttribute("data-l")===l);
+function nz(x){return x==="de"?"de":x==="uk"?"uk":x==="he"?"he":"en"}
+function set(l){l=nz(l);document.documentElement.lang=l;document.documentElement.dir=l==="he"?"rtl":"ltr";var n=document.querySelectorAll("[data-l]");for(var i=0;i<n.length;i++)n[i].classList.toggle("on",n[i].getAttribute("data-l")===l);
 var a=document.querySelectorAll("[data-s]");for(i=0;i<a.length;i++)a[i].classList.toggle("on",a[i].getAttribute("data-s")===l);
-var P={"privacy":1,"terms":1,"imprint":1},k=document.querySelectorAll("footer a[data-p]");for(i=0;i<k.length;i++){var q=k[i].getAttribute("data-p");if(P[q]&&ok[l])k[i].setAttribute("href","../"+q+"/#"+l)}}
+var P={"privacy":1,"terms":1,"imprint":1},k=document.querySelectorAll("footer a[data-p]");for(i=0;i<k.length;i++){var q=k[i].getAttribute("data-p");if(P[q])k[i].setAttribute("href","../"+q+"/#"+l)}}
 var h=(location.hash||"").slice(1),l=ok[h]?h:(ck()||br());
-set(l);var a=document.querySelectorAll("[data-s]");for(var i=0;i<a.length;i++)a[i].addEventListener("click",function(e){e.preventDefault();var x=this.getAttribute("data-s");set(x);history.replaceState(null,"","#"+x);try{document.cookie="i18next="+rev[x]+"; path=/; max-age=31536000; SameSite=Lax"}catch(_){}})})();
+set(l);var a=document.querySelectorAll("[data-s]");for(var i=0;i<a.length;i++)a[i].addEventListener("click",function(e){e.preventDefault();var x=nz(this.getAttribute("data-s"));set(x);history.replaceState(null,"","#"+x);try{document.cookie="i18next="+rev[x]+"; path=/; max-age=31536000; SameSite=Lax"}catch(_){}})})();
 </script>
 </body></html>
