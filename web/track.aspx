@@ -114,6 +114,7 @@
         s += ". ";
         if (t.Text.Length > 0) s += t.Text.Length > 150 ? t.Text.Substring(0, 150).TrimEnd() + "…" : t.Text;
         else s += "Replay it on the map with photos, places and weather.";
+        if (s.Length < 110) s += " A journey shared on SeeYourTravel: replay it on the map with photos, places, weather and the elevation profile.";
         return s;
     }
 

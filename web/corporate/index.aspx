@@ -13,6 +13,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="../img/syt-icon-192.png">
     <link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
     <meta property="og:title" content="SeeYourTravel.app - your travel planning community">
+    <meta name="description" content="SeeYourTravel is a free web app to create, share and replay your journeys on a map, with photos, places, weather and an AI travel companion.">
+    <meta property="og:description" content="SeeYourTravel is a free web app to create, share and replay your journeys on a map, with photos, places, weather and an AI travel companion.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://seeyourtravel.app/corporate/">
     <meta property="og:image" content="https://seeyourtravel.app/img/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <link href="css/bootstrap.min.css" rel="stylesheet">
