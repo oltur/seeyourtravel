@@ -390,5 +390,6 @@
 
 
 
+<p style="text-align:center;padding:16px;font-size:14px"><a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a> · <a href="../imprint/">Imprint</a></p>
 </body>
 </html>

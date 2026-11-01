@@ -22,7 +22,7 @@
     };
     var o = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
     Action<string, string> add = (loc, mod) => o.Append("<url><loc>").Append(HttpUtility.HtmlEncode(loc)).Append("</loc>").Append(mod != null ? "<lastmod>" + mod + "</lastmod>" : "").Append("</url>\n");
-    add(Site + "/", null); add(Site + "/track/", null); add(Site + "/corporate/", null); add(Site + "/press/", null);
+    add(Site + "/", null); add(Site + "/track/", null); add(Site + "/corporate/", null); add(Site + "/press/", null); add(Site + "/privacy/", null); add(Site + "/terms/", null);
     using (var db = new SeeYourTravelEntities())
         foreach (var t in db.Tracks.Where(x => x.IsPublic).ToList())
         {
