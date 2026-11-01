@@ -23,6 +23,7 @@ services:
     stop_grace_period: 90s            # lets SQL Server close the database cleanly
     environment:
       ACCEPT_EULA: "Y"
+      MSSQL_PID: Express               # free for production (10 GB per database, 1.4 GB of memory); "Developer" is for development and testing only
       MSSQL_SA_PASSWORD: ${SYT_SA_PASSWORD:?set SYT_SA_PASSWORD in .env}
     volumes: ["./db/mssql-data:/var/opt/mssql/data"]
     networks:

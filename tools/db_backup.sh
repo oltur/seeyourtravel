@@ -1,5 +1,6 @@
 #!/bin/bash
 # Backup of the SeeYourTravel database to db/backups (the last 14 are kept), verified after writing.
+# SQL Server Express (the edition used for production) cannot compress backups, so each file is the size of the data (about 260 MB).
 # The SQL Server password is read from .env (SYT_SA_PASSWORD, git-ignored).
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -9,7 +10,7 @@ mkdir -p "$DIR"
 NAME="SeeYourTravel-$(date +%Y%m%d-%H%M).bak"
 SQL=(docker exec syt-sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$SYT_SA_PASSWORD" -b)
 docker exec syt-sql mkdir -p /var/opt/mssql/backup
-"${SQL[@]}" -Q "BACKUP DATABASE SeeYourTravel TO DISK='/var/opt/mssql/backup/$NAME' WITH COMPRESSION, INIT, CHECKSUM" >/dev/null
+"${SQL[@]}" -Q "BACKUP DATABASE SeeYourTravel TO DISK='/var/opt/mssql/backup/$NAME' WITH INIT, CHECKSUM" >/dev/null || { echo "backup failed (run the BACKUP statement by hand to see the error)" >&2; exit 1; }
 "${SQL[@]}" -Q "RESTORE VERIFYONLY FROM DISK='/var/opt/mssql/backup/$NAME' WITH CHECKSUM" >/dev/null
 docker cp "syt-sql:/var/opt/mssql/backup/$NAME" "$DIR/$NAME"
 docker exec syt-sql rm -f "/var/opt/mssql/backup/$NAME"

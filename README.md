@@ -16,7 +16,7 @@
 </p>
 <p align="center">
   <img alt="ASP.NET Web Forms on Mono" src="https://img.shields.io/badge/ASP.NET%20Web%20Forms-Mono-512BD4">
-  <img alt="SQL Server 2022" src="https://img.shields.io/badge/SQL%20Server-2022-CC2927">
+  <img alt="SQL Server 2022 Express" src="https://img.shields.io/badge/SQL%20Server-2022%20Express-0078D4">
   <img alt="Docker Compose" src="https://img.shields.io/badge/Docker-Compose-2496ED">
   <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-3776AB">
   <img alt="Leaflet" src="https://img.shields.io/badge/Leaflet-1.9-199900">
@@ -51,7 +51,7 @@ SeeYourTravel started in 2014 as an ASP.NET Web Forms site and still runs on it,
 flowchart LR
     U([Browser]) -->|HTTPS| CF[Cloudflare tunnel]
     CF --> WEB["web<br/>ASP.NET Web Forms on Mono"]
-    WEB --> SQL[("sql<br/>SQL Server 2022")]
+    WEB --> SQL[("sql<br/>SQL Server 2022 Express")]
     WEB -->|search, assistant| CLIP["clip<br/>CLIP photo search + Gemini calls"]
     CLIP -.->|question text only| G[Google Gemini]
     WEB -.-> EXT[Wikipedia, Google Maps, weather]
@@ -65,6 +65,8 @@ cp .env.example .env                         # SYT_SA_PASSWORD, optional GEMINI_
 docker network create syt
 docker compose up -d                         # or: make up       -> http://localhost:8088
 ```
+The database is **SQL Server 2022 Express**, which is free for production use (10 GB per database; plenty for this app). Do not switch it to the Developer edition on a public site: that edition is licensed for development and testing only. Express cannot compress backups, so `tools/db_backup.sh` writes plain `.bak` files.
+
 Without a Google client ID the site runs in *local mode*: you are signed in as the owner. This mode is never used for requests that come through a proxy or tunnel.
 Other commands: `docker compose --profile test up -d web-test` (test copy on :8089), `docker compose run --rm clip-index` (build the photo search index), and the targets in the [`Makefile`](Makefile).
 
