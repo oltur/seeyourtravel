@@ -8,15 +8,20 @@
 # The network "syt" is shared with the one-off jobs of tools/ (face scan etc.): create it once with `docker network create syt` (make up does it).
 name: seeyourtravel
 
+# Our own containers run as an ordinary user, not as root; 1000 is the usual first user, whose files are bind-mounted (set SYT_UID / SYT_GID in .env if yours differs).
+x-user: &user "${SYT_UID:-1000}:${SYT_GID:-1000}"
+
 x-web: &web
   image: syt-web
+  user: *user
+  environment: { HOME: /tmp }
   build: { context: ., dockerfile: Dockerfile.web }
   volumes: ["./web:/app"]
   networks: [syt]
 
 services:
   sql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2022-latest@sha256:cf8f0ab2ebe61feec2eed2629061a07d247f791c2a8ddda74a4ac9f06a291718
     container_name: syt-sql
     restart: unless-stopped
     mem_limit: 4g
@@ -51,7 +56,7 @@ services:
     restart: "no"
     mem_limit: 512m
     ports: ["127.0.0.1:8089:8080"]
-    environment: { SYT_FORCE_LOCAL: "1" }
+    environment: { SYT_FORCE_LOCAL: "1", HOME: /tmp }
     command: xsp4 --port 8080 --address 0.0.0.0 --root /app --nonstop
     depends_on: { sql: { condition: service_healthy } }
 
@@ -59,11 +64,13 @@ services:
   clip:
     image: syt-clip
     build: { context: ./tools/clip }
+    user: *user
     container_name: syt-clip
     restart: unless-stopped
     mem_limit: 1200m
     cpus: 2
     environment:
+      HOME: /tmp
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-lite-latest}
       ASSIST_DAILY_USER: ${ASSIST_DAILY_USER:-150}
@@ -76,6 +83,8 @@ services:
   # one-off job: builds/extends the photo index
   clip-index:
     image: syt-clip
+    user: *user
+    environment: { HOME: /tmp }
     profiles: [jobs]
     restart: "no"
     mem_limit: 3g

@@ -23,9 +23,9 @@ open(w + '/todo.txt', 'w').write(''.join(r[0] + '\n' for r in rows if r[1].strip
 P
 N=$(wc -l < "$W/todo.txt"); echo "photos to scan: $N"; [ "$N" -gt 0 ] || exit 0
 rm -f "$W/faces_new.jsonl"
-docker run --rm --cpus 6 --memory 3000m -v "$W":/w -v "$W/models":/root/.insightface -v "$REPO/web/data/thumbs":/thumbs:ro -v "$REPO/tools":/t:ro -w /w syt-face python /t/faces/scan.py todo.txt faces_new.jsonl "$WORKERS" | grep -v Warn | tail -1
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp --cpus 6 --memory 3000m -v "$W":/w -v "$W/models":/tmp/.insightface -v "$REPO/web/data/thumbs":/thumbs:ro -v "$REPO/tools":/t:ro -w /w syt-face python /t/faces/scan.py todo.txt faces_new.jsonl "$WORKERS" | grep -v Warn | tail -1
 rm -rf "$W/out"
-docker run --rm -v "$W":/w -v "$REPO/tools":/t:ro -w /w syt-face python /t/faces_import.py images.tsv faces_new.jsonl out --existing existing.tsv --people people.tsv
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$W":/w -v "$REPO/tools":/t:ro -w /w syt-face python /t/faces_import.py images.tsv faces_new.jsonl out --existing existing.tsv --people people.tsv
 docker exec syt-sql rm -rf /tmp/faces_out 2>/dev/null || true
 docker cp "$W/out" syt-sql:/tmp/faces_out
 for f in $(cd "$W/out" && ls *.sql | sort); do "${SQL[@]}" -b -i "/tmp/faces_out/$f" > /dev/null; done
