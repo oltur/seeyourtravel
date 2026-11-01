@@ -6,18 +6,29 @@ updates:
   - package-ecosystem: docker
     directory: /
     schedule: { interval: weekly }
+  # The AI and face images stay on the Python version their pinned wheels (torch, onnxruntime, insightface) are built for; new Python
+  # versions are tried by hand. Patch updates still arrive.
   - package-ecosystem: docker
     directory: /tools/clip
     schedule: { interval: weekly }
+    ignore:
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
   - package-ecosystem: docker
     directory: /tools/faces
     schedule: { interval: weekly }
+    ignore:
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
   - package-ecosystem: pip
     directory: /tools/clip
     schedule: { interval: weekly }
   - package-ecosystem: pip
     directory: /tools/faces
     schedule: { interval: weekly }
+    ignore:
+      - dependency-name: insightface          # 2.x is a different API; the scripts in tools/faces are written for 0.7
+        update-types: [version-update:semver-major]
   - package-ecosystem: nuget
     directory: /web
     schedule: { interval: weekly }
