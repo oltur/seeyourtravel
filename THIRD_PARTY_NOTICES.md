@@ -13,7 +13,7 @@ The code of SeeYourTravel is under the [MIT License](LICENSE). It includes or us
 | jquery.tour.js 0.0.2 | see the project page github.com/yckart/jquery.tour.js |
 | jStorage, json2 | public domain / Unlicense |
 | Entity Framework 6.1.3 | Apache-2.0 |
-| Newtonsoft.Json 9.0.1 | MIT |
+| Newtonsoft.Json 13.0.3 | MIT |
 | Facebook C# SDK 7.0.6 | Apache-2.0 |
 | Font Awesome 4.1.0 | fonts: SIL OFL 1.1, CSS: MIT |
 

@@ -99,7 +99,6 @@ Other commands: `docker compose --profile test up -d web-test` (test copy on :80
 Every push and pull request is checked by GitHub Actions: lint (compose, shell, Python, JSON and translations), a build of the website image with a start-up check, a secret scan over the whole history (gitleaks), Trivy (dependencies, secrets, Dockerfile settings) and CodeQL (JavaScript, Python). Docker images are built and scanned weekly, Dependabot proposes updates, and an [OpenSSF Scorecard](https://securityscorecards.dev/viewer/?uri=github.com/oltur/seeyourtravel) rates the practices. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## Roadmap
-- Upgrade Newtonsoft.Json (needs a binding redirect in `web/Web.config`).
 - Public photos on the public track pages.
 - More languages.
 
