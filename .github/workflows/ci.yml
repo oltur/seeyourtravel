@@ -18,7 +18,7 @@ jobs:
     name: Lint and static checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: compose.yaml is valid
         run: SYT_SA_PASSWORD=ci-only docker compose --profile test --profile jobs config -q
@@ -54,7 +54,7 @@ jobs:
     name: Build the website image and smoke-test it
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build the web image
         run: docker build -f Dockerfile.web -t syt-web .
