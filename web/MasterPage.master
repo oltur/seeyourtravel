@@ -319,7 +319,7 @@
     <div id="sytLegal"><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/imprint/">Imprint</a></div>
     <script>(function(){var T={"de-DE":["Datenschutz","Bedingungen","Impressum","de"],"uk-UA":["Конфіденційність","Умови","Вихідні дані","uk"],"he":["פרטיות","תנאים","פרטי הספק","he"]},m=document.cookie.match(/(?:^|; )i18next=([^;]*)/),c=m?decodeURIComponent(m[1]):"",l=T[c];if(!l){var n=(navigator.language||"en").slice(0,2).toLowerCase();if(!m){for(var k in T)if(T[k][3]===(n==="iw"?"he":n))l=T[k]}}
 if(!l)return;var a=document.querySelectorAll("#sytLegal a"),u=["privacy","terms","imprint"];for(var i=0;i<3;i++){a[i].textContent=l[i];a[i].href="/"+u[i]+"/#"+l[3]}})();</script>
-    <style>#sytLegal{position:fixed;left:10px;bottom:10px;z-index:1000;font:600 13px/1.5 sans-serif;background:#fff;padding:3px 10px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.3)}#sytLegal a{color:#225EAC;text-decoration:none}#sytLegal a:hover{text-decoration:underline}@media (max-width:600px){#sytLegal{font-size:12px;left:6px;bottom:6px}}</style>
+    <style>#sytLegal{position:fixed;left:8px;bottom:4px;z-index:1000;font:12px/1.5 sans-serif;background:rgba(255,255,255,.7);padding:0 7px;border-radius:6px}#sytLegal a{color:#225EAC;text-decoration:none}#sytLegal a:hover{text-decoration:underline}@media (max-width:600px){#sytLegal{font-size:11px;left:4px;bottom:3px}}</style>
     <script>window.sytSignedIn = <%= Tools.GetUserId(Page) != Guid.Empty ? "true" : "false" %>;</script>
     <script src="<%=Tools.V("js/chat.js")%>"></script>
 </body>
