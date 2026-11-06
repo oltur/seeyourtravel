@@ -119,14 +119,28 @@ function translateTracksContentPath(path) {
 }
 //#endregion
 
+// "Ready gate": the vehicle starts only when the first places (markers) and the first photos are shown, or after a short
+// wait at most - so the first stretch of the journey is not empty. A small notice with a "Start now" link shows meanwhile.
+var SYT_GATE_MAX_MS = 3500;
+window.sytGate = { places: false, photos: false, done: true };
 function loadTrackOnPageLoad() {
-    //if (trackParam) {
+    var g = window.sytGate = { places: false, photos: false, done: false };
     init(trackParam,
         function () {
-            toastr.warning("Let's go!", "", { timeOut: 2000, extendedTimeOut: 3000 });
-            setTimeout(doStartStop, 2000);
+            var $note = $('<div id="trackLoading" class="gate"><span class="spin"></span><span class="txt i" data-i18n="PreparingJourney">Preparing your journey\u2026</span><a href="#" class="skip i" data-i18n="StartNow">Start now</a></div>').appendTo('body');
+            if ($.fn.i18n) $note.find('.i').i18n();
+            var go = function () {
+                if (g.done) return;
+                g.done = true;
+                clearInterval(poll); clearTimeout(cap);
+                $note.fadeOut(200, function () { $note.remove(); });
+                toastr.warning("Let's go!", "", { timeOut: 2000, extendedTimeOut: 3000 });
+                setTimeout(doStartStop, 500);
+            };
+            var poll = setInterval(function () { if (g.places && g.photos) go(); }, 150);
+            var cap = setTimeout(go, SYT_GATE_MAX_MS);
+            $note.find('.skip').on('click', function (e) { e.preventDefault(); go(); });
         });
-    //}
 }
 function showHelpPanel(show) {
     if (show) {
@@ -805,6 +819,7 @@ var stripShifted = 0;   // set when the positions were moved, so the scroller co
 
 var lastStripArgs = null;
 function get_photos_success(photos, p, tolerancy, force) {
+    if (window.sytGate) window.sytGate.photos = true;
     lastStripArgs = { photos: photos, p: p, tol: tolerancy };
     // same place as before (same cached, arranged list): keep the strip as it is - no flicker, no re-download, no DOM rebuild
     if (!force && photos === stripPhotos && scrollerContent.children().length) {
@@ -1496,9 +1511,16 @@ function doSetTimeout(allData, types, from, to, step, i) {
 }
 
 function addMarkersNearRange(allData, types, from1, to1, step1, odd) {
-    for (i = from1; i < to1; i += step1) {
+    var pending = [];
+    for (var i = from1; i < to1; i += step1) {
         var x = allData[i];
-        addMarkersNear(x.lat, x.lng, types, odd);
+        pending.push(addMarkersNear(x.lat, x.lng, types, odd));
+    }
+    // the first part of the track is what the ready gate waits for
+    if (from1 === 0 && window.sytGate) {
+        var g = window.sytGate;
+        var settle = function (pr) { return Promise.resolve(pr).then(function () { }, function () { }); };
+        Promise.all(pending.map(settle)).then(function () { g.places = true; });
     }
 }
 
@@ -1551,7 +1573,7 @@ function addMarkersNear(nearLat, nearLng, types, odd) {
 
     var googlePlacesService = new google.maps.places.PlacesService(map2);
 
-    Promise.all([
+    return Promise.all([
         syt.api.searchSYTPlaces(request),
         syt.api.searchWikiPlaces(request),
         syt.api.searchGooglePlaces(googlePlacesService, request)
