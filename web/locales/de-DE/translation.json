@@ -227,6 +227,8 @@
   "UnitM": "m",
   "Israel": "Israel",
   "LoadingTrack": "Track wird geladen …",
+  "PreparingJourney": "Reise wird vorbereitet …",
+  "StartNow": "Jetzt starten",
   "ImportChoose": "Wähle, was importiert werden soll",
   "ImportButton": "Importieren",
   "ImportPoints": "{0} Punkte",

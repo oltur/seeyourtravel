@@ -315,6 +315,7 @@ img.vehicleIcon { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px rgba(255
 /* "Loading track..." notice while the map waits for the track */
 #trackLoading { position: fixed; left: 50%; top: 45%; transform: translateX(-50%); z-index: 1500; display: flex; align-items: center; gap: 12px; padding: 12px 22px; border-radius: 999px; background: rgba(255,255,255,.95); box-shadow: 0 8px 28px rgba(18,48,92,.3); color: #12305c; font-weight: 600; }
 #trackLoading .spin { width: 20px; height: 20px; border-radius: 50%; border: 3px solid #cfdcf0; border-top-color: #225EAC; animation: sytSpin .8s linear infinite; }
+#trackLoading.gate { top: 40%; } #trackLoading .skip { margin-left: 6px; font-weight: 500; font-size: 13px; color: #225EAC; text-decoration: underline; }
 @keyframes sytSpin { to { transform: rotate(360deg); } }
 
 /* ===================== Phones / small windows (html.compact) ===================== */

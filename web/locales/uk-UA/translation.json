@@ -228,6 +228,8 @@
   "UnitM": "м",
   "Israel": "Ізраїль",
   "LoadingTrack": "Завантаження треку…",
+  "PreparingJourney": "Підготовка подорожі…",
+  "StartNow": "Почати зараз",
   "ImportChoose": "Оберіть, що імпортувати",
   "ImportButton": "Імпортувати",
   "ImportPoints": "точок: {0}",
