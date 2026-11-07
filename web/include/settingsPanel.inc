@@ -55,6 +55,26 @@
             <label for="pictureHeight">Max Picture Height</label>
             <input id="pictureMaxHeight" type="number" value="100" />--%>
             <br />
+            <div id="imStyleRow" class="imOnly">
+                <label for="imStyle" class="i" data-i18n="ImmersiveStyle">3D map style</label>
+                <select id="imStyle" class="graySelect">
+                    <option value="liberty" class="i" data-i18n="ImStyleStreets">Streets</option>
+                    <option value="bright" class="i" data-i18n="ImStyleBright">Bright</option>
+                    <option value="positron" class="i" data-i18n="ImStyleLight">Light</option>
+                    <option value="dark" class="i" data-i18n="ImStyleDark">Dark</option>
+                    <option value="fiord" class="i" data-i18n="ImStyleFiord">Blue</option>
+                </select>
+            </div>
+            <div class="imOnly">
+                <input id="imTerrainCheck" type="checkbox" checked="checked" />
+                <label for="imTerrainCheck" class="i" data-i18n="ImTerrain">Hills (3D terrain)</label>
+                <br />
+                <input id="imWxCheck" type="checkbox" checked="checked" />
+                <label for="imWxCheck" class="i" data-i18n="ImWeather">Weather in the sky</label>
+                <br />
+                <input id="imTickerCheck" type="checkbox" checked="checked" />
+                <label for="imTickerCheck" class="i" data-i18n="ImTicker">Running line with nearby places</label>
+            </div>
             <label for="mapStyle" class="i" data-i18n="MapStyle">Map style</label>
             <select id="mapStyle" class="graySelect" onchange="SaveSettings();selectMapStyle()">
                 <option>mapbox.streets</option>

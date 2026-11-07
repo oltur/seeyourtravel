@@ -10,6 +10,7 @@ The code of SeeYourTravel is under the [MIT License](LICENSE). It includes or us
 | Leaflet 1.9.4 | BSD-2-Clause |
 | Leaflet.markercluster 1.5.3 | MIT |
 | Leaflet Routing Machine | ISC |
+| MapLibre GL JS 4.7.1 (`web/libs/maplibre-gl.*`, immersive 3D mode) | BSD-3-Clause |
 | jquery.tour.js 0.0.2 | see the project page github.com/yckart/jquery.tour.js |
 | jStorage, json2 | public domain / Unlicense |
 | Entity Framework 6.1.3 | Apache-2.0 |
@@ -25,6 +26,9 @@ The code of SeeYourTravel is under the [MIT License](LICENSE). It includes or us
 | Wikipedia / Wikimedia Commons text and photos shown on the map | their authors' licences (CC BY, CC BY-SA, CC0 …), shown with each photo |
 | Google Maps, Places, Elevation, Sign-In and "powered by Google" images (`web/img/poweredbygoolge`) | Google's terms of service |
 | Mapbox tiles | Mapbox terms of service |
+| OpenFreeMap vector tiles and styles (immersive 3D mode), built on OpenMapTiles and © OpenStreetMap contributors | OpenMapTiles CC BY 4.0 / ODbL 1.0, attribution is shown on the map |
+| Elevation tiles (Terrarium: Mapzen, AWS Terrain Tiles; SRTM and other sources) for 3D hills | open data, attribution is shown on the map |
+| Open-Meteo weather and elevation | CC BY 4.0 for the data, free for non-commercial use |
 | Google Gemini (assistant) | Google's terms; only the text of the question and the screen context is sent, never photos |
 
 ## AI models and Python packages (run in your own containers)

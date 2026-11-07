@@ -237,9 +237,13 @@
                 <button type="button" id="continuePauseButton" disabled="disabled" class="sideButton" style="padding-left: 0; background-image: url(img/play.png );" onclick="doStartStop();"></button>
                 <br />
                 <button type="button" id="restartButton" disabled="disabled" class="sideButton i" data-i18n="[title]RestartRoute;[aria-label]RestartRoute" title="Restart route" aria-label="Restart route" style="padding-left: 0; background-image: url(img/restart.png );" onclick="restartRoute();"></button>
+                <br />
+                <button type="button" id="immersiveButton" class="sideButton" title="Immersive flight" aria-label="Immersive flight" style="padding-left: 0; background-image: url(img/immersive.svg);" onclick="sytImmersive.toggle();"></button>
             </div>
 
 
+            <link rel="stylesheet" href="styles/immersive.css" />
+            <script src="js/immersive.js"></script>
             <!--Map-->
             <div id="map"></div>
             <div id="map2"></div>

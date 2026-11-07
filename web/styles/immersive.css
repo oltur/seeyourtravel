@@ -1,0 +1,41 @@
+/* Immersive mode (prototype): a 3D map with the camera behind the vehicle, and big photo walls on both sides. */
+#immersiveButton { background-image: url(../img/immersive.svg) !important; }
+#immersiveButton.on { outline: 3px solid #FCD600; }
+body.immersive #map { visibility: hidden; }
+body.immersive .leaflet-control-container, body.immersive #imageDiv0, body.immersive .flyLayer, body.immersive #photoToggle { display: none !important; }
+#imSky { position: fixed; inset: 0; z-index: 500; background: linear-gradient(#1c4f93 0%, #6aa5df 38%, #d6e8f8 62%); }
+#imMap { position: fixed; left: 0; right: 0; bottom: 0; top: 22vh; z-index: 510; }
+#imMap .maplibregl-canvas { outline: 0; }
+.maplibregl-ctrl-attrib { font-size: 10px; }
+.imVehicle img { width: 54px; height: 54px; display: block; filter: drop-shadow(0 3px 4px rgba(0,0,0,.45)); }
+#imCards { position: fixed; left: 0; right: 0; top: 0; height: 100vh; z-index: 520; perspective: 700px; perspective-origin: 50% 36%; pointer-events: none; overflow: hidden; }
+.imCard { position: absolute; left: 50%; top: 36%; width: min(46vw, 620px); height: min(30vw, 410px); margin: calc(min(15vw, 205px) * -1) 0 0 calc(min(23vw, 310px) * -1);
+    border-radius: 10px; overflow: hidden; pointer-events: auto; cursor: pointer; box-shadow: 0 14px 40px rgba(0,0,0,.5); border: 4px solid #fff; background: #223; will-change: transform, opacity; opacity: 0; }
+.imCard img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 600px) { .imCard { width: 78vw; height: 52vw; margin: -26vw 0 0 -39vw; } #imMap { top: 30vh; } }
+
+.imCredit { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 10px 6px; font: 13px/1.3 sans-serif; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7);
+    background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.65)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.imOnly { display: none; margin: 6px 0; } body.immersive .imOnly { display: block; }
+
+/* the map credit (OpenFreeMap / OpenStreetMap) must stay readable: the legal links sit above it in this mode */
+body.immersive #sytLegal { bottom: 34px; }
+
+/* weather in the sky: between the sky colour (500) and the map (510); rain and snow in front of the map but behind the photos */
+#imSkyArt { position: fixed; left: 0; right: 0; top: 0; height: 50vh; z-index: 505; overflow: hidden; pointer-events: none; }
+#imFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 515; pointer-events: none; }
+.imSun { position: absolute; right: 14%; top: 9%; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #fffbe0 0 38%, #ffe27a 60%, rgba(255,226,122,0) 72%); box-shadow: 0 0 80px 40px rgba(255,236,150,.55); }
+.imMoon { position: absolute; right: 16%; top: 8%; width: 64px; height: 64px; border-radius: 50%; box-shadow: inset -16px 6px 0 0 #f4f1e2, 0 0 36px 10px rgba(240,240,255,.22); }
+.imStar { position: absolute; border-radius: 50%; background: #fff; }
+.imCloud { position: absolute; left: -30vw; width: 190px; height: 52px; border-radius: 52px; background: var(--cc, #fff); filter: blur(1.5px); animation: imDrift linear infinite; }
+.imCloud::before, .imCloud::after { content: ''; position: absolute; background: inherit; border-radius: 50%; }
+.imCloud::before { width: 80px; height: 80px; left: 30px; top: -38px; }
+.imCloud::after { width: 58px; height: 58px; left: 100px; top: -24px; }
+@keyframes imDrift { from { translate: 0 0; } to { translate: 170vw 0; } }
+.imFog { position: absolute; left: 0; right: 0; bottom: 0; height: 70%; background: linear-gradient(rgba(225,230,234,0), rgba(225,230,234,.95)); }
+/* running line */
+#imTicker { position: fixed; left: 14px; right: 14px; top: 76px; height: 26px; z-index: 530; overflow: hidden; pointer-events: none; border-radius: 13px; background: rgba(10,22,44,.5); color: #fff; font: 600 13px/26px sans-serif; white-space: nowrap; }
+#imTicker span { position: absolute; left: 0; top: 0; padding-left: 100%; animation: imScroll linear infinite; }
+@keyframes imScroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .imCloud { animation-duration: 600s !important; } }
