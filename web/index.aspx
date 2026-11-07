@@ -242,10 +242,10 @@
             </div>
 
 
-            <link rel="stylesheet" href="styles/immersive.css" />
-            <script src="js/immersive.js"></script>
-            <link rel="stylesheet" href="styles/seek.css" />
-            <script src="js/seek.js"></script>
+            <link rel="stylesheet" href="<%=Tools.V("styles/immersive.css")%>" />
+            <script src="<%=Tools.V("js/immersive.js")%>"></script>
+            <link rel="stylesheet" href="<%=Tools.V("styles/seek.css")%>" />
+            <script src="<%=Tools.V("js/seek.js")%>"></script>
             <!--Map-->
             <div id="map"></div>
             <div id="map2"></div>
