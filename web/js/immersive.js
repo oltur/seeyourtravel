@@ -290,6 +290,74 @@
         gl.setTerrain(onT ? { source: 'imDem', exaggeration: 1.5 } : null);
         if (gl.getLayer('imHill')) gl.setLayoutProperty('imHill', 'visibility', onT ? 'visible' : 'none');
     }
+
+    // ---- the markers of the normal map are shown in 3D too: places, weather, text points, start and finish, photo pins ----
+    var glMarkers = {}, lastSync = 0, glPopup = null;
+    function leafletMarkers() {
+        var out = [];
+        function walk(g) { if (!g || !g.eachLayer) return; g.eachLayer(function (l) { if (l instanceof L.Marker) out.push(l); else walk(l); }); }
+        if (window.markers) walk(window.markers);
+        return out;
+    }
+    function markerEl(m) {
+        var ic = m.options.icon, o = (ic && ic.options) || {}, el = document.createElement('div'), anchor, size;
+        if (o.html !== undefined) {
+            size = o.iconSize || [30, 30]; anchor = o.iconAnchor || [size[0] / 2, size[1] / 2];
+            el.className = o.className || ''; el.innerHTML = typeof o.html === 'string' ? o.html : '';
+        } else {
+            var url = o.iconUrl || (ic && ic._getIconUrl ? ic._getIconUrl('icon') : '');
+            size = o.iconSize || [25, 41]; anchor = o.iconAnchor || [size[0] / 2, size[1]];
+            var im = new Image(); im.src = url; im.alt = ''; im.draggable = false; el.appendChild(im);
+            el.className = o.className || '';
+        }
+        el.style.width = size[0] + 'px'; el.style.height = size[1] + 'px'; el.style.cursor = 'pointer';
+        var img = el.querySelector(':scope > img'); if (img && o.html === undefined) { img.style.width = size[0] + 'px'; img.style.height = size[1] + 'px'; img.style.display = 'block'; }
+        var tt = m.getTooltip && m.getTooltip();
+        if (tt && tt.options && tt.options.permanent) {
+            var c = tt.getContent(), lab = document.createElement('span');
+            lab.className = 'imLabel'; lab.textContent = (c && c.nodeType) ? c.textContent : String(c || '');
+            el.style.overflow = 'visible'; el.appendChild(lab);
+        }
+        el.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var pc = m.getPopup && m.getPopup();
+            // markers without a popup have their own click action on the normal map (e.g. a photo pin opens the large photo): run it
+            if (!pc) { try { m.fire('click', { latlng: m.getLatLng() }); } catch (err) { } return; }
+            if (!gl) return;
+            var cc = pc.getContent(), node;
+            if (typeof cc === 'function') { try { cc = cc(m); } catch (err) { return; } }   // e.g. the places build their popup when it is opened
+            if (typeof cc === 'string') { node = document.createElement('div'); node.innerHTML = cc; }
+            else if (cc && cc.nodeType) { node = cc.cloneNode(true); node.onclick = cc.onclick; }
+            else return;
+            if (glPopup) glPopup.remove();
+            var ll = m.getLatLng();
+            glPopup = new maplibregl.Popup({ offset: [size[0] / 2 - anchor[0], -anchor[1] - 4], maxWidth: '280px' }).setLngLat([ll.lng, ll.lat]).setDOMContent(node).addTo(gl);
+        });
+        return { el: el, anchor: anchor };
+    }
+    function syncMarkers(v) {
+        if (!gl || !glReady || !window.L) return;
+        var want = {}, near = [];
+        leafletMarkers().forEach(function (m) {
+            var ll = m.getLatLng();
+            if (!ll || Math.abs(ll.lat) > 90 || m === window.animatedMarker || m === window.markerWhereIAm) return;
+            var d = dist(v.lat, v.lng, ll.lat, ll.lng);
+            if (d < 12000 || m === window.markerStart || m === window.markerFinish) near.push({ m: m, d: d });
+        });
+        near.sort(function (a, b) { return a.d - b.d; });
+        near.slice(0, 200).forEach(function (x) {
+            var id = L.stamp(x.m); want[id] = 1;
+            var rec = glMarkers[id];
+            if (rec && rec.ic !== x.m.options.icon) { rec.gm.remove(); delete glMarkers[id]; rec = null; }   // e.g. the start marker gets its round picture later
+            if (!rec) {
+                var built = markerEl(x.m), ll = x.m.getLatLng();
+                var gm = new maplibregl.Marker({ element: built.el, anchor: 'top-left', offset: [-built.anchor[0], -built.anchor[1]], pitchAlignment: 'viewport', rotationAlignment: 'viewport' }).setLngLat([ll.lng, ll.lat]).addTo(gl);
+                glMarkers[id] = { gm: gm, ic: x.m.options.icon };
+            }
+        });
+        Object.keys(glMarkers).forEach(function (id) { if (!want[id]) { glMarkers[id].gm.remove(); delete glMarkers[id]; } });
+    }
+
     var lastCam = 0, lastFeed = 0, setupDone = false;
     function frame(now) {
         raf = requestAnimationFrame(frame);
@@ -312,6 +380,7 @@
             try { photoSearch.get(track, { lat: v.lat, lng: v.lng }).then(function (r) { if (on && r) feed(r.photos); }); } catch (e) { }
         }
         fxStep(dt);
+        if (v && now - lastSync > 1500) { lastSync = now; try { syncMarkers(v); } catch (e) { console.log('markers: ' + e); } }
         if (v && pref('Ticker') && (Date.now() - info.at > 60000 || dist(v.lat, v.lng, info.lat, info.lng) > 3000)) pullInfo(v);
         // the running line is filled again while it is empty (the places arrive a little after the start)
         if (now - lastTk > 3000) { lastTk = now; var tk = $('#imTicker span')[0]; if (tk && !tk.textContent) tickerLoad(tk); }
@@ -355,6 +424,7 @@
         on = false;
         cancelAnimationFrame(raf);
         document.body.classList.remove('immersive');
+        glMarkers = {}; glPopup = null;
         if (gl) { try { gl.remove(); } catch (e) { } gl = null; glReady = false; vehMarker = null; }
         $('#imMap, #imSky, #imSkyArt, #imFx, #imTicker, #imCards').remove(); fx = null;
         $gl = null; $cards = null; cards = [];
