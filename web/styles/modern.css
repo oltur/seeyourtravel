@@ -632,3 +632,6 @@ html.compact .sytPlace span { font-size: 8px; }
 
 /* text for search engines and screen readers only */
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* phones in portrait: the map credit keeps the OpenStreetMap part only, so it does not run under the "Photos" button */
+@media (max-width: 600px) { .leaflet-control-attribution > a:first-child, .leaflet-control-attribution > span[aria-hidden] { display: none; } .leaflet-control-attribution { font-size: 10px; } }
