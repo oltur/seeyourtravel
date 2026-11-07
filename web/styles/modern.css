@@ -330,7 +330,7 @@ html.compact .wxLabel img { width: 17px; height: 17px; }
 html.compact .flyCard { width: 112px; padding: 3px 3px 0; border-radius: 10px; }
 html.compact .flyCard img { width: 106px; height: 72px; border-radius: 8px; }
 html.compact .flyCard span { font-size: 9.5px; -webkit-line-clamp: 1; line-clamp: 1; padding-top: 2px; }
-html.compact #imageDiv0 { height: 105px; }
+html.compact #imageDiv0 { height: 76px; }   /* phones: a slimmer photo strip, fewer photos on screen */
 html.compact .photoBadge { font-size: 10px; padding: 2px 4px; left: 4px; bottom: 4px; }
 html.compact .sideButton { width: 32px; height: 30px; background-size: 20px 20px; background-position-x: 6px; }
 html.compact .leaflet-control-zoom a { width: 34px !important; height: 34px !important; line-height: 34px !important; font-size: 20px !important; }

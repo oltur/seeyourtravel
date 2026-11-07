@@ -15,7 +15,8 @@
         var s = null; try { s = localStorage.getItem('syt_imStyle'); } catch (e) { }
         return STYLES[s] ? s : 'liberty';
     }
-    var PHOTO_LIFE_MS = 8500, SPAWN_MS = 1300, MAX_CARDS = 9, POOL_MAX = 40, PITCH = 68, ZOOM = 16.3;
+    var PHONE = window.matchMedia && matchMedia('(max-width: 700px)').matches;   // fewer flying photos on a phone
+    var PHOTO_LIFE_MS = 8500, SPAWN_MS = PHONE ? 2400 : 1300, MAX_CARDS = PHONE ? 4 : 9, POOL_MAX = 40, PITCH = 68, ZOOM = 16.3;
     var on = false, raf = 0, last = 0, spawnAcc = 0, side = 1, heading = 0, gl = null, glReady = false, vehMarker = null, loading = false;
     var spawned = 0, pool = [], seen = {}, cards = [], $cards = null, $gl = null, routeKey = null;
 
