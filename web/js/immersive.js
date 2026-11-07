@@ -15,7 +15,8 @@
         var s = null; try { s = localStorage.getItem('syt_imStyle'); } catch (e) { }
         return STYLES[s] ? s : 'liberty';
     }
-    var PHOTO_LIFE_MS = 8500, SPAWN_MS = 1300, MAX_CARDS = 9, POOL_MAX = 40, PITCH = 68, ZOOM = 16.3;
+    var PHONE = window.matchMedia && matchMedia('(max-width: 700px)').matches;   // fewer flying photos on a phone
+    var PHOTO_LIFE_MS = 8500, SPAWN_MS = PHONE ? 2400 : 1300, MAX_CARDS = PHONE ? 4 : 9, POOL_MAX = 40, PITCH = 68, ZOOM = 16.3;
     var on = false, raf = 0, last = 0, spawnAcc = 0, side = 1, heading = 0, gl = null, glReady = false, vehMarker = null, loading = false;
     var spawned = 0, pool = [], seen = {}, cards = [], $cards = null, $gl = null, routeKey = null;
 
@@ -238,6 +239,7 @@
             maxPitch: 85, interactive: false, attributionControl: false, fadeDuration: 0
         });
         gl.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+        if (window.matchMedia && matchMedia('(max-width: 700px)').matches) setTimeout(function () { $('#imMap .maplibregl-ctrl-attrib').removeClass('maplibregl-compact-show'); }, 4000);   // phones: only the (i) button stays; tap it for the credit
         // (re)built every time a style has loaded: the route, and 3D buildings for the styles that have none of their own
         var setup = function () {
             // once per style: the route and 3D buildings (for styles with none of their own) are added as soon as the style is usable

@@ -32,4 +32,5 @@
     <button type="button" id="logout" class="mm-row i<%= mmGuest ? " mm-in" : "" %>" data-i18n="[title]Logout;Logout" title="Logout" onclick="window.location = 'Logout.aspx?ReturnURL='+window.location.href">Logout</button>
     <div class="mm-sep"></div>
     <button type="button" id="corporateSite" class="mm-row i" data-i18n="[title]AboutSeeYourTravel;AboutSeeYourTravel" title="About SeeYourTravel" onclick="window.open('./corporate','_blank')">About SeeYourTravel</button>
+    <div id="mmLegal" class="mm-legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/imprint/">Imprint</a></div>
 </nav>
