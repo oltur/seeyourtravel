@@ -35,7 +35,7 @@ body.immersive #sytLegal { bottom: 34px; }
 @keyframes imDrift { from { translate: 0 0; } to { translate: 170vw 0; } }
 .imFog { position: absolute; left: 0; right: 0; bottom: 0; height: 70%; background: linear-gradient(rgba(225,230,234,0), rgba(225,230,234,.95)); }
 /* running line */
-#imTicker { position: fixed; left: 0; right: 0; top: 0; height: 26px; z-index: 530; overflow: hidden; pointer-events: none; border-radius: 0; background: rgba(10,22,44,.5); color: #fff; font: 600 13px/26px sans-serif; white-space: nowrap; }
+#imTicker { position: fixed; left: 0; right: 0; top: 38px; height: 26px; z-index: 1000; overflow: hidden; pointer-events: none; border-radius: 0; background: rgba(10,22,44,.5); color: #fff; font: 600 13px/26px sans-serif; white-space: nowrap; }
 #imTicker span { position: absolute; left: 0; top: 0; padding-left: 100%; animation: imScroll linear infinite; }
 @keyframes imScroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 @media (prefers-reduced-motion: reduce) { .imCloud { animation-duration: 600s !important; } }
@@ -46,3 +46,5 @@ body.immersive #sytLegal { bottom: 34px; }
 @media (max-width: 600px) { body.immersive #sytLegal { bottom: 58px; } }
 /* the credit wraps instead of running under the chat button */
 @media (max-width: 700px) { #imMap .maplibregl-ctrl-bottom-left { max-width: calc(100% - 64px); } #imMap .maplibregl-ctrl-attrib.maplibregl-compact { max-width: 100%; } }
+/* phones in portrait: menu row, track title, slider, then the running line */
+@media (max-width: 700px) { #imTicker { top: 94px; } }
