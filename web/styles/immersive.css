@@ -44,3 +44,5 @@ body.immersive #sytLegal { bottom: 34px; }
 #imMap .maplibregl-popup-content { font: 13px/1.4 sans-serif; padding: 10px 12px; border-radius: 10px; }
 #imMap .maplibregl-popup-content img { max-width: 100%; height: auto; }
 @media (max-width: 600px) { body.immersive #sytLegal { bottom: 58px; } }
+/* the credit wraps instead of running under the chat button */
+@media (max-width: 700px) { #imMap .maplibregl-ctrl-bottom-left { max-width: calc(100% - 64px); } #imMap .maplibregl-ctrl-attrib.maplibregl-compact { max-width: 100%; } }
