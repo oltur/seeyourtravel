@@ -303,7 +303,7 @@
             }
             // the vehicle sits in the lower part of the picture: the camera is behind it
             var h = $gl[0].clientHeight;
-            gl.jumpTo({ center: [v.lng, v.lat], bearing: heading, pitch: PITCH, zoom: ZOOM, padding: { top: Math.round(h * 0.5), bottom: 0, left: 0, right: 0 } });
+            gl.jumpTo({ center: [v.lng, v.lat], bearing: heading, pitch: PITCH, zoom: ZOOM, padding: { top: Math.round(h * 0.6), bottom: 0, left: 0, right: 0 } });
             if (vehMarker) vehMarker.setLngLat([v.lng, v.lat]);
         }
         // the photos around the vehicle (own and public ones) keep the walls supplied, also at places the strip is not updated for
