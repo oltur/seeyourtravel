@@ -238,6 +238,7 @@
             maxPitch: 85, interactive: false, attributionControl: false, fadeDuration: 0
         });
         gl.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+        if (window.matchMedia && matchMedia('(max-width: 700px)').matches) setTimeout(function () { $('#imMap .maplibregl-ctrl-attrib').removeClass('maplibregl-compact-show'); }, 4000);   // phones: only the (i) button stays; tap it for the credit
         // (re)built every time a style has loaded: the route, and 3D buildings for the styles that have none of their own
         var setup = function () {
             // once per style: the route and 3D buildings (for styles with none of their own) are added as soon as the style is usable

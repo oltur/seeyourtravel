@@ -635,3 +635,9 @@ html.compact .sytPlace span { font-size: 8px; }
 
 /* phones in portrait: the map credit keeps the OpenStreetMap part only, so it does not run under the "Photos" button */
 @media (max-width: 600px) { .leaflet-control-attribution > a:first-child, .leaflet-control-attribution > span[aria-hidden] { display: none; } .leaflet-control-attribution { font-size: 10px; } }
+
+/* legal links inside the main menu (on phones they replace the floating strip) */
+#menuPanel .mm-legal { display: flex; justify-content: center; gap: 16px; padding: 10px 12px 12px; font-size: 13px; }
+#menuPanel .mm-legal a { color: #225EAC; text-decoration: none; }
+/* phones in portrait: less clutter - the full track name under the list is not repeated */
+@media (max-width: 600px) { #trackNameFull { display: none !important; } }

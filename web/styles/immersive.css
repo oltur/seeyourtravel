@@ -43,15 +43,14 @@ body.immersive #sytLegal { bottom: 34px; }
 .imLabel { position: absolute; left: 100%; top: 4px; margin-left: 4px; padding: 1px 7px; border-radius: 6px; background: rgba(255,255,255,.92); color: #12305c; font: 600 12px/1.4 sans-serif; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.3); pointer-events: none; }
 #imMap .maplibregl-popup-content { font: 13px/1.4 sans-serif; padding: 10px 12px; border-radius: 10px; }
 #imMap .maplibregl-popup-content img { max-width: 100%; height: auto; }
-@media (max-width: 600px) { body.immersive #sytLegal { bottom: 58px; } }
 /* the credit wraps instead of running under the chat button */
-@media (max-width: 700px) { #imMap .maplibregl-ctrl-bottom-left { max-width: calc(100% - 64px); } #imMap .maplibregl-ctrl-attrib.maplibregl-compact { max-width: 100%; } }
+@media (max-width: 700px) { #imMap .maplibregl-ctrl-bottom-left { bottom: 34px; max-width: calc(100% - 64px); } #imMap .maplibregl-ctrl-attrib.maplibregl-compact { max-width: 100%; } }
 /* phones in portrait: menu row, track title, slider, then the running line */
-@media (max-width: 700px) { #imTicker { top: 94px; } }
+@media (max-width: 700px) { #imTicker { top: 38px; height: 22px; font: 600 11px/22px sans-serif; } }
 
 /* scale buttons (same look as the zoom buttons of the normal map) */
 #imZoom { position: fixed; right: 14px; bottom: 110px; z-index: 1001; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(20,40,80,.35); }
 #imZoom button { width: 40px; height: 40px; border: 0; background: #fff; color: #12305c; font: 600 22px/1 sans-serif; cursor: pointer; }
 #imZoom button + button { border-top: 1px solid #d5deea; }
 #imZoom button:hover { background: #eef4fb; }
-@media (max-width: 700px) { #imZoom { bottom: 150px; right: 10px; } }
+@media (max-width: 700px) { #imZoom { bottom: 76px; right: 10px; } #imZoom button { width: 36px; height: 36px; } }
