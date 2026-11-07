@@ -16,7 +16,7 @@
         return STYLES[s] ? s : 'liberty';
     }
     var PHONE = window.matchMedia && matchMedia('(max-width: 700px)').matches;   // fewer flying photos on a phone
-    var PHOTO_LIFE_MS = 8500, SPAWN_MS = PHONE ? 2400 : 1300, MAX_CARDS = PHONE ? 4 : 9, POOL_MAX = 40, PITCH = 68, ZOOM = 16.3;
+    var PHOTO_LIFE_MS = PHONE ? 10500 : 8500, SPAWN_MS = PHONE ? 2300 : 1300, MAX_CARDS = PHONE ? 5 : 9, POOL_MAX = 40, PITCH = 68, ZOOM = 16.3;
     var on = false, raf = 0, last = 0, spawnAcc = 0, side = 1, heading = 0, gl = null, glReady = false, vehMarker = null, loading = false;
     var spawned = 0, pool = [], seen = {}, cards = [], $cards = null, $gl = null, routeKey = null;
 
@@ -224,10 +224,10 @@
     function layout(c, W, H) {
         // perspective walls: a fixed distance from the road, coming toward the viewer; large, so they overlap and fill the sides
         // phones: the photos stay further out, stop growing sooner and fade earlier, so they never cover the vehicle
-        var t = c.t, z = PHONE ? -2200 + t * 2100 : -2200 + t * 3000;
-        var x = c.side * W * (PHONE ? 0.36 : 0.30), y = -H * (0.0 + c.lift);
+        var t = c.t, z = PHONE ? -2200 + t * 2550 : -2200 + t * 3000;
+        var x = c.side * W * (PHONE ? 0.34 : 0.30), y = -H * (0.0 + c.lift);
         var a = c.side * -22;                                   // turned toward the road
-        var fo = PHONE ? .62 : .84;
+        var fo = PHONE ? .74 : .84;
         var fade = t < .10 ? t / .10 : (t > fo ? Math.max(0, (1 - t) / (1 - fo)) : 1);
         c.el.style.opacity = fade.toFixed(3);
         c.el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,' + z.toFixed(1) + 'px) rotateY(' + a + 'deg)';
