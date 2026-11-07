@@ -320,8 +320,12 @@
         }
         el.addEventListener('click', function (e) {
             e.stopPropagation();
-            var pc = m.getPopup && m.getPopup(); if (!pc || !gl) return;
+            var pc = m.getPopup && m.getPopup();
+            // markers without a popup have their own click action on the normal map (e.g. a photo pin opens the large photo): run it
+            if (!pc) { try { m.fire('click', { latlng: m.getLatLng() }); } catch (err) { } return; }
+            if (!gl) return;
             var cc = pc.getContent(), node;
+            if (typeof cc === 'function') { try { cc = cc(m); } catch (err) { return; } }   // e.g. the places build their popup when it is opened
             if (typeof cc === 'string') { node = document.createElement('div'); node.innerHTML = cc; }
             else if (cc && cc.nodeType) { node = cc.cloneNode(true); node.onclick = cc.onclick; }
             else return;
