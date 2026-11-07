@@ -481,12 +481,7 @@
             pinch = d; e.preventDefault();
         }, { passive: false });
         document.addEventListener('touchend', function () { pinch = null; }, { passive: true });
-        // Esc first closes whatever is open on top (a large photo, the menu, the settings) and stays in the 3D view; only
-        // when nothing is open does it leave the mode. Capture phase: we look before the other handlers close their window.
-        document.addEventListener('keydown', function (e) {
-            if (e.key !== 'Escape' || !on) return;
-            if ($('#photoViewer').is(':visible') || $('#menuPanel').is(':visible') || $('#settingsPanel').is(':visible') || $('#helpPanel').is(':visible')) return;
-            leave();
-        }, true);
+        // Esc never leaves the 3D mode (the 3D button does): it only closes what is open on top (photo, menu, settings), which the other handlers do themselves
+
     });
 })();
