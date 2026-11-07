@@ -359,7 +359,9 @@
         Object.keys(glMarkers).forEach(function (id) { if (!want[id]) { glMarkers[id].gm.remove(); delete glMarkers[id]; } });
     }
 
-    var lastCam = 0, lastFeed = 0, setupDone = false;
+    var lastCam = 0, lastFeed = 0, setupDone = false, zoomOff = 0, zoomCur = 0;
+    function clampZoom(z) { return Math.max(13, Math.min(18, z)); }
+    function zoomBy(d) { zoomOff = clampZoom(ZOOM + zoomOff + d) - ZOOM; }
     function frame(now) {
         raf = requestAnimationFrame(frame);
         var dt = Math.min(100, now - (last || now)); last = now;
@@ -372,7 +374,8 @@
             }
             // the vehicle sits in the lower part of the picture: the camera is behind it
             var h = $gl[0].clientHeight;
-            gl.jumpTo({ center: [v.lng, v.lat], bearing: heading, pitch: PITCH, zoom: ZOOM, padding: { top: Math.round(h * 0.6), bottom: 0, left: 0, right: 0 } });
+            zoomCur += (zoomOff - zoomCur) * (1 - Math.exp(-dt / 140));   // eases over about a third of a second, independent of the frame rate
+            gl.jumpTo({ center: [v.lng, v.lat], bearing: heading, pitch: PITCH, zoom: ZOOM + zoomCur, padding: { top: Math.round(h * 0.6), bottom: 0, left: 0, right: 0 } });
             if (vehMarker) vehMarker.setLngLat([v.lng, v.lat]);
         }
         // the photos around the vehicle (own and public ones) keep the walls supplied, also at places the strip is not updated for
@@ -410,6 +413,10 @@
             $('<div id="imSkyArt"></div>').appendTo('body');
             fx = $('<canvas id="imFx"></canvas>').appendTo('body')[0];
             $('<div id="imTicker"><span></span></div>').appendTo('body');
+            zoomOff = 0; zoomCur = 0;
+            var $z = $('<div id="imZoom"><button type="button" class="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="out" aria-label="Zoom out" title="Zoom out">\u2212</button></div>').appendTo('body');
+            $z.find('.in').on('click', function () { zoomBy(1); });
+            $z.find('.out').on('click', function () { zoomBy(-1); });
             lastWx = -1e9; lastTk = 0; wx = wx || null;
             buildGl();
             $cards = $('<div id="imCards"></div>').appendTo('body');
@@ -427,7 +434,7 @@
         document.body.classList.remove('immersive');
         glMarkers = {}; glPopup = null; setupDone = false; glReady = false; vehMarker = null; heading = heading;   // a new 3D session starts from scratch
         if (gl) { try { gl.remove(); } catch (e) { } gl = null; glReady = false; vehMarker = null; }
-        $('#imMap, #imSky, #imSkyArt, #imFx, #imTicker, #imCards').remove(); fx = null;
+        $('#imMap, #imSky, #imSkyArt, #imFx, #imTicker, #imCards, #imZoom').remove(); fx = null;
         $gl = null; $cards = null; cards = [];
         $('#immersiveButton').removeClass('on');
         writeHash();
@@ -438,7 +445,7 @@
         try { localStorage.setItem('syt_imStyle', name); } catch (e) { }
         if (on && gl) { glReady = false; setupDone = false; gl.setStyle(BASE + name); writeHash(); }
     }
-    window.sytImmersive = { gl: function () { return gl; }, setStyle: setStyle, stats: function () { var s = {}; pool.forEach(function (p) { var k = p.source || '?'; s[k] = (s[k] || 0) + 1; }); return { pool: pool.length, bySource: s }; }, toggle: function () { on ? leave() : enter(); }, isOn: function () { return on; } };
+    window.sytImmersive = { zoomTarget: function () { return ZOOM + zoomOff; }, gl: function () { return gl; }, setStyle: setStyle, stats: function () { var s = {}; pool.forEach(function (p) { var k = p.source || '?'; s[k] = (s[k] || 0) + 1; }); return { pool: pool.length, bySource: s }; }, toggle: function () { on ? leave() : enter(); }, isOn: function () { return on; } };
 
     $(function () {
         $('#imStyle').val(styleName()).on('change', function () { setStyle(this.value); });
@@ -459,6 +466,21 @@
                 if (window.isTrackLoaded && window.animatedMarker) { clearInterval(wait); enter(); }
             }, 500);
         }
+        // mouse wheel and two-finger pinch change the scale (the camera keeps following the vehicle)
+        document.addEventListener('wheel', function (e) {
+            if (!on || !$(e.target).closest('#imMap, #imCards, #imSky, #imSkyArt, #imFx').length) return;
+            e.preventDefault();
+            zoomBy(-e.deltaY * 0.0025);
+        }, { passive: false });
+        var pinch = null;
+        document.addEventListener('touchstart', function (e) { if (on && e.touches.length === 2) pinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }, { passive: true });
+        document.addEventListener('touchmove', function (e) {
+            if (!on || pinch === null || e.touches.length !== 2) return;
+            var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            if (pinch > 0 && d > 0) zoomBy(Math.log2(d / pinch));
+            pinch = d; e.preventDefault();
+        }, { passive: false });
+        document.addEventListener('touchend', function () { pinch = null; }, { passive: true });
         // Esc first closes whatever is open on top (a large photo, the menu, the settings) and stays in the 3D view; only
         // when nothing is open does it leave the mode. Capture phase: we look before the other handlers close their window.
         document.addEventListener('keydown', function (e) {

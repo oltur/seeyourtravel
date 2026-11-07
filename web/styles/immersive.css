@@ -48,3 +48,10 @@ body.immersive #sytLegal { bottom: 34px; }
 @media (max-width: 700px) { #imMap .maplibregl-ctrl-bottom-left { max-width: calc(100% - 64px); } #imMap .maplibregl-ctrl-attrib.maplibregl-compact { max-width: 100%; } }
 /* phones in portrait: menu row, track title, slider, then the running line */
 @media (max-width: 700px) { #imTicker { top: 94px; } }
+
+/* scale buttons (same look as the zoom buttons of the normal map) */
+#imZoom { position: fixed; right: 14px; bottom: 110px; z-index: 1001; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(20,40,80,.35); }
+#imZoom button { width: 40px; height: 40px; border: 0; background: #fff; color: #12305c; font: 600 22px/1 sans-serif; cursor: pointer; }
+#imZoom button + button { border-top: 1px solid #d5deea; }
+#imZoom button:hover { background: #eef4fb; }
+@media (max-width: 700px) { #imZoom { bottom: 150px; right: 10px; } }
