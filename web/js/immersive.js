@@ -232,6 +232,7 @@
     function buildGl() {
         var v = vehicle(); if (!v) return;
         $gl = $('<div id="imMap"></div>').appendTo('body');
+        setupDone = false; glReady = false; vehMarker = null; glMarkers = {};
         gl = new maplibregl.Map({
             container: 'imMap', style: BASE + styleName(), center: [v.lng, v.lat], zoom: ZOOM, pitch: PITCH, bearing: heading,
             maxPitch: 85, interactive: false, attributionControl: false, fadeDuration: 0
@@ -424,7 +425,7 @@
         on = false;
         cancelAnimationFrame(raf);
         document.body.classList.remove('immersive');
-        glMarkers = {}; glPopup = null;
+        glMarkers = {}; glPopup = null; setupDone = false; glReady = false; vehMarker = null; heading = heading;   // a new 3D session starts from scratch
         if (gl) { try { gl.remove(); } catch (e) { } gl = null; glReady = false; vehMarker = null; }
         $('#imMap, #imSky, #imSkyArt, #imFx, #imTicker, #imCards').remove(); fx = null;
         $gl = null; $cards = null; cards = [];
