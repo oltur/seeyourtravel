@@ -63,9 +63,10 @@
             } else $('<div class="imSun">').appendTo($art);
         }
         var nClouds = clear ? 0 : part ? 4 : ic === 'cloudy' ? 9 : ic === 'rain' ? 10 : ic === 'snow' ? 8 : ic === 'fog' ? 3 : 0;
+        if (PHONE) nClouds = Math.round(nClouds * 1.4);
         var cc = (ic === 'rain') ? '#59616b' : (ic === 'cloudy') ? '#aeb6bf' : night ? '#4a5878' : '#ffffff';
         for (var k = 0; k < nClouds; k++) {
-            var sc = .7 + Math.random() * 1.1;
+            var sc = PHONE ? .3 + Math.random() * .32 : .7 + Math.random() * 1.1;   // smaller on a phone, so they still look like clouds
             $('<div class="imCloud">').css({ '--cc': cc, top: (2 + Math.random() * 30) + '%', transform: 'scale(' + sc.toFixed(2) + ')', animationDuration: (90 + Math.random() * 120).toFixed(0) + 's', animationDelay: '-' + (Math.random() * 200).toFixed(0) + 's', opacity: (ic === 'cloudy' || ic === 'rain') ? .95 : .85 }).appendTo($art);
         }
         if (ic === 'fog') $('<div class="imFog">').appendTo($art);
@@ -222,10 +223,12 @@
 
     function layout(c, W, H) {
         // perspective walls: a fixed distance from the road, coming toward the viewer; large, so they overlap and fill the sides
-        var t = c.t, z = -2200 + t * 3000;
-        var x = c.side * W * 0.30, y = -H * (0.0 + c.lift);
+        // phones: the photos stay further out, stop growing sooner and fade earlier, so they never cover the vehicle
+        var t = c.t, z = PHONE ? -2200 + t * 2100 : -2200 + t * 3000;
+        var x = c.side * W * (PHONE ? 0.36 : 0.30), y = -H * (0.0 + c.lift);
         var a = c.side * -22;                                   // turned toward the road
-        var fade = t < .10 ? t / .10 : (t > .84 ? Math.max(0, (1 - t) / .16) : 1);
+        var fo = PHONE ? .62 : .84;
+        var fade = t < .10 ? t / .10 : (t > fo ? Math.max(0, (1 - t) / (1 - fo)) : 1);
         c.el.style.opacity = fade.toFixed(3);
         c.el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,' + z.toFixed(1) + 'px) rotateY(' + a + 'deg)';
     }
@@ -406,6 +409,7 @@
     function enter() {
         if (on || typeof map === 'undefined' || typeof animatedMarker === 'undefined') return;
         on = true;
+        if (PHONE && fsCan() && !fsOn()) { fsAuto = true; fsEnter(); }   // the 3D button click allows it
         document.body.classList.add('immersive');
         $('#immersiveButton').addClass('on');
         writeHash();
@@ -432,6 +436,7 @@
     function leave() {
         if (!on) return;
         on = false;
+        if (fsAuto && fsOn()) fsLeave(); fsAuto = false;
         cancelAnimationFrame(raf);
         document.body.classList.remove('immersive');
         glMarkers = {}; glPopup = null; setupDone = false; glReady = false; vehMarker = null; heading = heading;   // a new 3D session starts from scratch
@@ -447,9 +452,17 @@
         try { localStorage.setItem('syt_imStyle', name); } catch (e) { }
         if (on && gl) { glReady = false; setupDone = false; gl.setStyle(BASE + name); writeHash(); }
     }
+    // ---- fullscreen (where the browser allows it: Android, desktop; iPhone only as an installed web app) ----
+    var fsEl = document.documentElement, fsAuto = false;
+    function fsOn() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+    function fsCan() { return !!(fsEl.requestFullscreen || fsEl.webkitRequestFullscreen); }
+    function fsEnter() { try { var p = (fsEl.requestFullscreen || fsEl.webkitRequestFullscreen).call(fsEl); if (p && p.catch) p.catch(function () { }); } catch (e) { } }
+    function fsLeave() { try { var p = (document.exitFullscreen || document.webkitExitFullscreen).call(document); if (p && p.catch) p.catch(function () { }); } catch (e) { } }
+    window.sytFullscreen = { toggle: function () { fsAuto = false; fsOn() ? fsLeave() : fsEnter(); }, can: fsCan };
     window.sytImmersive = { zoomTarget: function () { return ZOOM + zoomOff; }, gl: function () { return gl; }, setStyle: setStyle, stats: function () { var s = {}; pool.forEach(function (p) { var k = p.source || '?'; s[k] = (s[k] || 0) + 1; }); return { pool: pool.length, bySource: s }; }, toggle: function () { on ? leave() : enter(); }, isOn: function () { return on; } };
 
     $(function () {
+        if (!fsCan()) $('#fsButton').hide();
         $('#imStyle').val(styleName()).on('change', function () { setStyle(this.value); });
         $('#imTickerCheck').prop('checked', pref('Ticker')).on('change', function () { try { localStorage.setItem('syt_imTicker', this.checked ? '1' : '0'); } catch (e) { } var s = $('#imTicker span')[0]; if (s) tickerLoad(s); });
         $('#imTerrainCheck').prop('checked', pref('Terrain')).on('change', function () { try { localStorage.setItem('syt_imTerrain', this.checked ? '1' : '0'); } catch (e) { } applyTerrain(); });

@@ -1,0 +1,33 @@
+{
+  "name": "SeeYourTravel",
+  "short_name": "SeeYourTravel",
+  "description": "Replay your journey on the map",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "any",
+  "theme_color": "#225EAC",
+  "background_color": "#12305c",
+  "icons": [
+    {
+      "src": "img/syt-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/syt-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "img/syt-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
