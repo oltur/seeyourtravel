@@ -54,3 +54,5 @@ body.immersive #sytLegal { bottom: 34px; }
 #imZoom button + button { border-top: 1px solid #d5deea; }
 #imZoom button:hover { background: #eef4fb; }
 @media (max-width: 700px) { #imZoom { bottom: 76px; right: 10px; } #imZoom button { width: 36px; height: 36px; } }
+
+.imOccluded { visibility: hidden !important; }
