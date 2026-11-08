@@ -348,7 +348,7 @@
             var ll = m.getLatLng();
             if (!ll || Math.abs(ll.lat) > 90 || m === window.animatedMarker || m === window.markerWhereIAm) return;
             var d = dist(v.lat, v.lng, ll.lat, ll.lng);
-            if (d < 12000 || m === window.markerStart || m === window.markerFinish) near.push({ m: m, d: d });
+            if (d < 7000 || m === window.markerStart || m === window.markerFinish) near.push({ m: m, d: d });
         });
         near.sort(function (a, b) { return a.d - b.d; });
         near.slice(0, 200).forEach(function (x) {
@@ -364,7 +364,7 @@
         Object.keys(glMarkers).forEach(function (id) { if (!want[id]) { glMarkers[id].gm.remove(); delete glMarkers[id]; } });
     }
 
-    var lastCam = 0, lastFeed = 0, setupDone = false, zoomOff = 0, zoomCur = 0;
+    var lastCam = 0, lastFeed = 0, lastOcc = 0, setupDone = false, zoomOff = 0, zoomCur = 0;
     function clampZoom(z) { return Math.max(13, Math.min(18, z)); }
     function zoomBy(d) { zoomOff = clampZoom(ZOOM + zoomOff + d) - ZOOM; }
     function frame(now) {
@@ -389,6 +389,11 @@
             try { photoSearch.get(track, { lat: v.lat, lng: v.lng }).then(function (r) { if (on && r) feed(r.photos); }); } catch (e) { }
         }
         fxStep(dt);
+        // markers behind a mountain are drawn faint by the map (opacity 0.2) and would hang in the sky: hide them completely
+        if (now - lastOcc > 250) {
+            lastOcc = now;
+            Object.keys(glMarkers).forEach(function (id) { var e = glMarkers[id].gm.getElement(), op = parseFloat(e.style.opacity); e.classList.toggle('imOccluded', op === op && op < 0.5); });
+        }
         if (v && now - lastSync > 1500) { lastSync = now; try { syncMarkers(v); } catch (e) { console.log('markers: ' + e); } }
         if (v && pref('Ticker') && (Date.now() - info.at > 60000 || dist(v.lat, v.lng, info.lat, info.lng) > 3000)) pullInfo(v);
         // the running line is filled again while it is empty (the places arrive a little after the start)
