@@ -459,7 +459,7 @@
     function fsEnter() { try { var p = (fsEl.requestFullscreen || fsEl.webkitRequestFullscreen).call(fsEl); if (p && p.catch) p.catch(function () { }); } catch (e) { } }
     function fsLeave() { try { var p = (document.exitFullscreen || document.webkitExitFullscreen).call(document); if (p && p.catch) p.catch(function () { }); } catch (e) { } }
     window.sytFullscreen = { toggle: function () { fsAuto = false; fsOn() ? fsLeave() : fsEnter(); }, can: fsCan };
-    window.sytImmersive = { zoomTarget: function () { return ZOOM + zoomOff; }, gl: function () { return gl; }, setStyle: setStyle, stats: function () { var s = {}; pool.forEach(function (p) { var k = p.source || '?'; s[k] = (s[k] || 0) + 1; }); return { pool: pool.length, bySource: s }; }, toggle: function () { on ? leave() : enter(); }, isOn: function () { return on; } };
+    window.sytImmersive = { refreshHash: writeHash, zoomTarget: function () { return ZOOM + zoomOff; }, gl: function () { return gl; }, setStyle: setStyle, stats: function () { var s = {}; pool.forEach(function (p) { var k = p.source || '?'; s[k] = (s[k] || 0) + 1; }); return { pool: pool.length, bySource: s }; }, toggle: function () { on ? leave() : enter(); }, isOn: function () { return on; } };
 
     $(function () {
         if (!fsCan()) $('#fsButton').hide();

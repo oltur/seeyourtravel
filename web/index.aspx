@@ -241,6 +241,8 @@
                 <button type="button" id="immersiveButton" class="sideButton" title="Immersive flight" aria-label="Immersive flight" style="padding-left: 0; background-image: url(img/immersive.svg);" onclick="sytImmersive.toggle();"></button>
                 <br />
                 <button type="button" id="fsButton" class="sideButton" title="Fullscreen" aria-label="Fullscreen" style="padding-left: 0; background-image: url(img/fullscreen.svg);" onclick="sytFullscreen.toggle();"></button>
+                <br />
+                <button type="button" id="helpButton" class="sideButton" title="Help" aria-label="Help" style="padding-left: 0; background-image: url(img/help.svg);" onclick="sytHelp.open();"></button>
             </div>
 
 
@@ -248,6 +250,8 @@
             <script src="<%=Tools.V("js/immersive.js")%>"></script>
             <link rel="stylesheet" href="<%=Tools.V("styles/seek.css")%>" />
             <script src="<%=Tools.V("js/seek.js")%>"></script>
+            <link rel="stylesheet" href="<%=Tools.V("styles/help.css")%>" />
+            <script src="<%=Tools.V("js/help.js")%>"></script>
             <!--Map-->
             <div id="map"></div>
             <div id="map2"></div>

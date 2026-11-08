@@ -25,6 +25,9 @@
     <a id="menuPhotos" href="UserPhotos.aspx" <%= mmCur("userphotos") %> data-i18n="MyPhotos">My photos</a>
     <a id="menuPlaces" href="UserPlaces.aspx" <%= mmCur("userplaces") %> data-i18n="MyPlaces">My places</a>
 <% } %>
+<% if (mmMap) { %>
+    <button type="button" id="menuHelp" class="mm-row" onclick="clickMenu(); sytHelp.open()">Help</button>
+<% } %>
     <div class="mm-h i" data-i18n="Settings">Settings</div>
     <button type="button" id="settingsCheckBox" class="mm-row i" data-i18n="[title]Settings;Settings" title="Settings" onclick="clickSettings()" aria-haspopup="true">Settings</button>
     <div class="mm-h i" data-i18n="MenuAccount">Account</div>

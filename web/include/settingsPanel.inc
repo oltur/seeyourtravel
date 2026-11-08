@@ -57,6 +57,7 @@
             <br />
             <div id="imStyleRow" class="imOnly">
                 <label for="imStyle" class="i" data-i18n="ImmersiveStyle">3D map style</label>
+                <button type="button" class="hContext" title="?" aria-label="?" onclick="sytHelp.open('3d')">?</button>
                 <select id="imStyle" class="graySelect">
                     <option value="liberty" class="i" data-i18n="ImStyleStreets">Streets</option>
                     <option value="bright" class="i" data-i18n="ImStyleBright">Bright</option>
