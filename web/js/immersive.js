@@ -268,6 +268,7 @@
             if (gl.getLayer('route-line') || gl.getLayer('building-3d-added')) return;
             setupDone = true;
             glReady = true;
+            $('#imLoading').remove();
             applySky();
             try {
                 var has = gl.getStyle().layers.some(function (l) { return l.type === 'fill-extrusion'; });
@@ -417,7 +418,7 @@
             lastOcc = now;
             Object.keys(glMarkers).forEach(function (id) { var e = glMarkers[id].gm.getElement(), op = parseFloat(e.style.opacity); e.classList.toggle('imOccluded', op === op && op < 0.5); });
         }
-        if (v && now - lastSync > 1500) { lastSync = now; try { syncMarkers(v); } catch (e) { console.log('markers: ' + e); } }
+        if (v && now - lastSync > 3000) { lastSync = now; try { syncMarkers(v); } catch (e) { console.log('markers: ' + e); } }
         if (v && pref('Ticker') && (Date.now() - info.at > 60000 || dist(v.lat, v.lng, info.lat, info.lng) > 3000)) pullInfo(v);
         // the running line is filled again while it is empty (the places arrive a little after the start)
         if (now - lastTk > 3000) { lastTk = now; var tk = $('#imTicker span')[0]; if (tk && !tk.textContent) tickerLoad(tk); }
@@ -452,6 +453,7 @@
             $z.find('.in').on('click', function () { zoomBy(1); });
             $z.find('.out').on('click', function () { zoomBy(-1); });
             lastWx = -1e9; lastTk = 0; wx = wx || null;
+            $('<div id="imLoading" role="status"></div>').text(tr('ImLoading', 'Loading 3D\u2026')).appendTo('body');
             buildGl();
             $cards = $('<div id="imCards"></div>').appendTo('body');
             if (window.lastStripArgs) feed(window.lastStripArgs.photos);   // photos already found are the first ones to fly in
@@ -469,7 +471,7 @@
         document.body.classList.remove('immersive');
         glMarkers = {}; glPopup = null; setupDone = false; glReady = false; vehMarker = null; skyKey = ''; camKey = ''; fxCtx = null; fxW = fxH = 0; seen = {}; pool = []; lowered = false;   // a new 3D session starts from scratch
         if (gl) { try { gl.remove(); } catch (e) { } gl = null; glReady = false; vehMarker = null; }
-        $('#imMap, #imSky, #imSkyArt, #imFx, #imTicker, #imCards, #imZoom').remove(); fx = null;
+        $('#imLoading, #imMap, #imSky, #imSkyArt, #imFx, #imTicker, #imCards, #imZoom').remove(); fx = null;
         $gl = null; $cards = null; cards = [];
         $('#immersiveButton').removeClass('on');
         writeHash();
