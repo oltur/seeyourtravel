@@ -62,6 +62,8 @@
         var n = (navigator.language || 'en').slice(0, 2).toLowerCase(); if (n === 'iw') n = 'he';
         return LANGS[n] ? n : 'en';
     }
+    var TOUR = {"en": {}, "de": {"restart": "Route von vorn starten", "d3": "3D-Flug: durch die Route fliegen, mit Gebäuden, Hügeln, Fotos und Wetter", "fs": "Vollbild an und aus", "help": "Hilfe: kurze Antworten und dieser Rundgang", "seek": "Ziehen, um zu einer beliebigen Stelle der Route zu springen"}, "uk": {"restart": "Почати маршрут спочатку", "d3": "3D-політ: пролетіть маршрутом з будівлями, пагорбами, фото та погодою", "fs": "Повноекранний режим увімк./вимк.", "help": "Довідка: короткі відповіді та ця екскурсія", "seek": "Перетягніть, щоб перейти до будь-якого місця маршруту"}, "he": {"restart": "התחלת המסלול מחדש", "d3": "טיסת תלת־ממד: טוסו לאורך המסלול עם מבנים, גבעות, תמונות ומזג אוויר", "fs": "מסך מלא פעיל/כבוי", "help": "עזרה: תשובות קצרות והסיור הזה", "seek": "גררו כדי לקפוץ לכל נקודה במסלול"}};
+    window.sytTourMsg = function (k, en) { var t = TOUR[lang()]; return (t && t[k]) || en; };
     var $ov = null, lastFocus = null;
     function build(l, topic) {
         var L = LANGS[l], $o = $('<div id="sytHelp" role="dialog" aria-modal="true"></div>').attr({ lang: l, dir: l === 'he' ? 'rtl' : 'ltr', 'aria-label': L.title });
