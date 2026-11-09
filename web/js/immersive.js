@@ -42,7 +42,7 @@
         'rain': ['#363f4b', '#566070', '#868f9a'], 'snow': ['#8896a5', '#bcc6d0', '#eef1f4'], 'fog': ['#98a1aa', '#c1c7cd', '#e6e9ec'],
         'clear-night': ['#04060e', '#0f1a33', '#26365a'], 'partly-cloudy-night': ['#070b16', '#18233f', '#2d3b5d']
     };
-    var wx = null, fx = null, fxParts = [], fxKind = '';
+    var wx = null, fx = null, fxParts = [], fxKind = '', skyKey = '', fxCtx = null, fxW = 0, fxH = 0, fxClear = true;
     function isNight() { return (wx && /night$/.test(wx.icon)) || styleName() === 'dark'; }
     function skyIcon() {
         var ic = wx ? wx.icon : 'clear-day';
@@ -51,6 +51,10 @@
     }
     function applySky() {
         var $s = $('#imSky'); if (!$s.length) return;
+        // unchanged weather and style: keep the sky as it is (rebuilding restarts the clouds and makes them jump)
+        var key = styleName() + '|' + pref('Wx') + '|' + (wx ? wx.icon : '');
+        if (key === skyKey) return;
+        skyKey = key;
         var $art = $('#imSkyArt').empty();
         if (!pref('Wx') || !wx) { $s.css('background', STYLES[styleName()].sky); fxKind = ''; return; }
         var ic = skyIcon(), pal = PAL[ic] || PAL['clear-day'];
@@ -79,21 +83,30 @@
     }
     function fxStep(dt) {
         if (!fx) return;
-        var c = fx.getContext('2d'), w = fx.width = fx.clientWidth, h = fx.height = fx.clientHeight;
-        c.clearRect(0, 0, w, h);
-        if (!fxKind) return;
-        c.strokeStyle = 'rgba(190,210,235,.55)'; c.fillStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.2;
-        for (var i = 0; i < fxParts.length; i++) {
-            var p = fxParts[i];
-            if (fxKind === 'rain') {
+        if (!fxKind) { if (!fxClear && fxCtx) { fxCtx.clearRect(0, 0, fx.width, fx.height); fxClear = true; } return; }   // nothing falls: nothing is drawn
+        if (!moving()) return;                                                                                          // paused: the drops stand still
+        var q = PHONE ? 0.6 : 1, w = Math.round(fx.clientWidth * q), h = Math.round(fx.clientHeight * q);
+        if (!fxCtx) fxCtx = fx.getContext('2d');
+        if (w !== fxW || h !== fxH) { fx.width = fxW = w; fx.height = fxH = h; }   // resizing clears and reallocates the canvas: only when the size changed
+        var c = fxCtx; c.clearRect(0, 0, w, h); fxClear = false;
+        if (fxKind === 'rain') {
+            c.strokeStyle = 'rgba(190,210,235,.55)'; c.lineWidth = 1.2 * q; c.beginPath();
+            for (var i = 0; i < fxParts.length; i++) {
+                var p = fxParts[i];
                 p.y += dt * 0.0013 * (1.4 + p.s); p.x -= dt * 0.00018;
                 if (p.y > 1) { p.y = -0.05; p.x = Math.random(); } if (p.x < 0) p.x = 1;
-                c.beginPath(); c.moveTo(p.x * w, p.y * h); c.lineTo(p.x * w - 3, p.y * h + 14 * p.s); c.stroke();
-            } else {
-                p.y += dt * 0.00014 * (.8 + p.s); p.d += dt * 0.0012; p.x += Math.sin(p.d) * 0.0004;
-                if (p.y > 1) { p.y = -0.03; p.x = Math.random(); }
-                c.beginPath(); c.arc(p.x * w, p.y * h, 1.4 + p.s * 1.6, 0, 6.28); c.fill();
+                c.moveTo(p.x * w, p.y * h); c.lineTo(p.x * w - 3 * q, p.y * h + 14 * p.s * q);
             }
+            c.stroke();                                                                                                  // one path for all drops
+        } else {
+            c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath();
+            for (var j = 0; j < fxParts.length; j++) {
+                var f = fxParts[j];
+                f.y += dt * 0.00014 * (.8 + f.s); f.d += dt * 0.0012; f.x += Math.sin(f.d) * 0.0004;
+                if (f.y > 1) { f.y = -0.03; f.x = Math.random(); }
+                var r = (1.4 + f.s * 1.6) * q; c.moveTo(f.x * w + r, f.y * h); c.arc(f.x * w, f.y * h, r, 0, 6.28);
+            }
+            c.fill();
         }
     }
     var lastWx = -1e9, lastTk = 0;
@@ -239,7 +252,8 @@
         setupDone = false; glReady = false; vehMarker = null; glMarkers = {};
         gl = new maplibregl.Map({
             container: 'imMap', style: BASE + styleName(), center: [v.lng, v.lat], zoom: ZOOM, pitch: PITCH, bearing: heading,
-            maxPitch: 85, interactive: false, attributionControl: false, fadeDuration: 0
+            maxPitch: 85, interactive: false, attributionControl: false, fadeDuration: 0,
+            pixelRatio: Math.min(window.devicePixelRatio || 1, PHONE ? 1.5 : 2), antialias: !PHONE   // a 3x screen would draw 9x the pixels
         });
         gl.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
         if (window.matchMedia && matchMedia('(max-width: 700px)').matches) setTimeout(function () { $('#imMap .maplibregl-ctrl-attrib').removeClass('maplibregl-compact-show'); }, 4000);   // phones: only the (i) button stays; tap it for the credit
@@ -277,6 +291,9 @@
                 vehMarker = new maplibregl.Marker({ element: el, anchor: 'bottom', pitchAlignment: 'viewport', rotationAlignment: 'viewport' }).setLngLat([v.lng, v.lat]).addTo(gl);
             }
         };
+        // the map could not be loaded (tile server unreachable): say so and go back to the normal map
+        var guard = gl;
+        setTimeout(function () { if (on && gl === guard && !glReady) { if (window.toastr) toastr.error('3D map could not be loaded'); leave(); } }, 25000);
         gl.on('styledata', setup);
         gl.on('idle', setup);          // safety net: a style that was swapped has finished drawing
     }
@@ -364,12 +381,14 @@
         Object.keys(glMarkers).forEach(function (id) { if (!want[id]) { glMarkers[id].gm.remove(); delete glMarkers[id]; } });
     }
 
-    var lastCam = 0, lastFeed = 0, lastOcc = 0, setupDone = false, zoomOff = 0, zoomCur = 0;
+    var camKey = '', slow = 0, slowN = 0, lowered = false, lastCam = 0, lastFeed = 0, lastOcc = 0, setupDone = false, zoomOff = 0, zoomCur = 0;
     function clampZoom(z) { return Math.max(13, Math.min(18, z)); }
     function zoomBy(d) { zoomOff = clampZoom(ZOOM + zoomOff + d) - ZOOM; }
     function frame(now) {
         raf = requestAnimationFrame(frame);
         var dt = Math.min(100, now - (last || now)); last = now;
+        // a slow device: after three seconds of frames longer than 40 ms the map is drawn at a lower resolution
+        if (moving() && dt > 0) { slow += dt; slowN++; if (slowN >= 120) { if (!lowered && slow / slowN > 40 && gl && gl.setPixelRatio) { lowered = true; try { gl.setPixelRatio(1); } catch (e) { } } slow = 0; slowN = 0; } }
         var v = vehicle();
         if (v && gl && glReady && now - lastCam > 30) {
             lastCam = now;
@@ -378,13 +397,17 @@
                 heading = (heading + d * 0.06 + 360) % 360;
             }
             // the vehicle sits in the lower part of the picture: the camera is behind it
-            var h = $gl[0].clientHeight;
+            var h = window.innerHeight;                                   // (no layout read every frame)
             zoomCur += (zoomOff - zoomCur) * (1 - Math.exp(-dt / 140));   // eases over about a third of a second, independent of the frame rate
-            gl.jumpTo({ center: [v.lng, v.lat], bearing: heading, pitch: PITCH, zoom: ZOOM + zoomCur, padding: { top: Math.round(h * 0.6), bottom: 0, left: 0, right: 0 } });
+            var ck = v.lat + '|' + v.lng + '|' + heading.toFixed(2) + '|' + zoomCur.toFixed(3) + '|' + h;
+            if (ck !== camKey) {                                          // paused and still: the camera is not touched
+                camKey = ck;
+                gl.jumpTo({ center: [v.lng, v.lat], bearing: heading, pitch: PITCH, zoom: ZOOM + zoomCur, padding: { top: Math.round(h * 0.6), bottom: 0, left: 0, right: 0 } });
+            }
             if (vehMarker) vehMarker.setLngLat([v.lng, v.lat]);
         }
         // the photos around the vehicle (own and public ones) keep the walls supplied, also at places the strip is not updated for
-        if (v && now - lastFeed > 4000 && window.photoSearch && window.track) {
+        if (v && now - lastFeed > 8000 && window.photoSearch && window.track) {
             lastFeed = now;
             try { photoSearch.get(track, { lat: v.lat, lng: v.lng }).then(function (r) { if (on && r) feed(r.photos); }); } catch (e) { }
         }
@@ -444,12 +467,13 @@
         if (fsAuto && fsOn()) fsLeave(); fsAuto = false;
         cancelAnimationFrame(raf);
         document.body.classList.remove('immersive');
-        glMarkers = {}; glPopup = null; setupDone = false; glReady = false; vehMarker = null; heading = heading;   // a new 3D session starts from scratch
+        glMarkers = {}; glPopup = null; setupDone = false; glReady = false; vehMarker = null; skyKey = ''; camKey = ''; fxCtx = null; fxW = fxH = 0; seen = {}; pool = []; lowered = false;   // a new 3D session starts from scratch
         if (gl) { try { gl.remove(); } catch (e) { } gl = null; glReady = false; vehMarker = null; }
         $('#imMap, #imSky, #imSkyArt, #imFx, #imTicker, #imCards, #imZoom').remove(); fx = null;
         $gl = null; $cards = null; cards = [];
         $('#immersiveButton').removeClass('on');
         writeHash();
+        try { map.setView(animatedMarker.getLatLng(), map.getZoom(), { animate: false }); } catch (e) { }   // the normal map was not followed meanwhile: pick up the vehicle
     }
 
     function setStyle(name) {

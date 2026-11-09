@@ -1377,7 +1377,7 @@ function init(filename, handler) {
                         var currentDate = new Date();
                         if ((currentDate.getTime() - lastUpdateTime.getTime()) / 1000 > updateIntervalSeconds) {
 
-                            if (followsTrack()) map.setView([p.lat, p.lng], map.getZoom());
+                            if (followsTrack() && !(window.sytImmersive && sytImmersive.isOn())) map.setView([p.lat, p.lng], map.getZoom());   // the hidden 2D map is not moved in 3D mode
                             showPhotos(track, p);
                             //                    animatedMarker.bindPopup("".concat(p.lat, ",", p.lng)).openPopup();
 
