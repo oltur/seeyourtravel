@@ -2158,6 +2158,41 @@ var tourSteps = [{
 }
     ,
 {
+    get msg() { return window.sytTourMsg ? sytTourMsg('restart', "Restart the route from the beginning") : "Restart the route from the beginning"; },
+    "actionName": false,
+    "selector": "#restartButton",
+    "position": "left",
+}
+    ,
+{
+    get msg() { return window.sytTourMsg ? sytTourMsg('d3', "3D flight: fly through the route with buildings, hills, photos and weather") : "3D flight: fly through the route with buildings, hills, photos and weather"; },
+    "actionName": false,
+    "selector": "#immersiveButton",
+    "position": "left",
+}
+    ,
+{
+    get msg() { return window.sytTourMsg ? sytTourMsg('fs', "Fullscreen on and off") : "Fullscreen on and off"; },
+    "actionName": false,
+    "selector": "#fsButton",
+    "position": "left",
+}
+    ,
+{
+    get msg() { return window.sytTourMsg ? sytTourMsg('help', "Help: short answers and this tour again") : "Help: short answers and this tour again"; },
+    "actionName": false,
+    "selector": "#helpButton",
+    "position": "left",
+}
+    ,
+{
+    get msg() { return window.sytTourMsg ? sytTourMsg('seek', "Drag to jump to any place on the route") : "Drag to jump to any place on the route"; },
+    "actionName": false,
+    "selector": "#sytSeek",
+    "position": "top",
+}
+    ,
+{
     "msg": "Here you can choose the language for the site", // tour bubble / dialog text
     "actionName": false, // name of Mixpanel event used for funnel analysis - spaces are fine, use friendly names. You'll need to setup MP yourself however and include the libs.
     "selector": "#langList", // selector for highlighted feature. Comma seperated list = (dialog target, additional items to pop above mask). Don't forget your '.' or '#'
