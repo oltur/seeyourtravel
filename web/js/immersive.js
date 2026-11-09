@@ -49,6 +49,22 @@
         if (styleName() === 'dark' && !/night$/.test(ic) && (ic === 'clear-day' || ic === 'partly-cloudy-day')) ic = ic.replace('day', 'night');
         return ic;
     }
+    // the moon as it really is tonight: age from the date (synodic month 29.53 days), lit side mirrored in the southern hemisphere
+    var MOON_NAMES = {
+        en: ['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'],
+        de: ['Neumond', 'Zunehmende Sichel', 'Erstes Viertel', 'Zunehmender Mond', 'Vollmond', 'Abnehmender Mond', 'Letztes Viertel', 'Abnehmende Sichel'],
+        uk: ['Новий місяць', 'Молодий місяць', 'Перша чверть', 'Зростаючий місяць', 'Повний місяць', 'Спадаючий місяць', 'Остання чверть', 'Старий місяць'],
+        he: ['מולד הירח', 'סהר גדל', 'רבע ראשון', 'ירח גדל', 'ירח מלא', 'ירח קטֵן', 'רבע אחרון', 'סהר קטן']
+    };
+    function moonPhase(d) { var jd = (d || new Date()).getTime() / 86400000 + 2440587.5, p = ((jd - 2451550.1) / 29.530588853) % 1; return p < 0 ? p + 1 : p; }   // 0 new, 0.5 full
+    function moonEl() {
+        var p = moonPhase(), c = Math.cos(p * 2 * Math.PI), v = vehicle(), south = v && v.lat < 0, flip = (p > 0.5) !== !!south;
+        var rx = (Math.abs(c) * 32).toFixed(1), sweep = c < 0 ? 1 : 0;
+        var lit = 'M32 0A32 32 0 0 1 32 64A' + rx + ' 32 0 0 ' + sweep + ' 32 0Z';
+        var $m = $('<div class="imMoon"></div>').attr('title', MOON_NAMES[wikiLang()][Math.round(p * 8) % 8] + ' (' + Math.round((1 - c) / 2 * 100) + '%)');
+        $m.html('<svg viewBox="0 0 64 64" width="64" height="64"' + (flip ? ' style="transform:scaleX(-1)"' : '') + '><circle cx="32" cy="32" r="32" fill="#1b2438"/><path d="' + lit + '" fill="#f4f1e2"/></svg>');
+        return $m;
+    }
     function applySky() {
         var $s = $('#imSky'); if (!$s.length) return;
         // unchanged weather and style: keep the sky as it is (rebuilding restarts the clouds and makes them jump)
@@ -63,7 +79,7 @@
         if (clear || part) {
             if (night) {
                 for (var i = 0; i < 40; i++) $('<i class="imStar">').css({ left: Math.random() * 100 + '%', top: Math.random() * 34 + '%', opacity: .4 + Math.random() * .6, width: (1 + Math.random() * 2) + 'px', height: (1 + Math.random() * 2) + 'px' }).appendTo($art);
-                $('<div class="imMoon">').appendTo($art);
+                moonEl().appendTo($art);
             } else $('<div class="imSun">').appendTo($art);
         }
         var nClouds = clear ? 0 : part ? 4 : ic === 'cloudy' ? 9 : ic === 'rain' ? 10 : ic === 'snow' ? 8 : ic === 'fog' ? 3 : 0;
