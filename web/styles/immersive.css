@@ -6,12 +6,14 @@ body.immersive .leaflet-control-container, body.immersive #imageDiv0, body.immer
 #imSky { position: fixed; inset: 0; z-index: 500; background: linear-gradient(#1c4f93 0%, #6aa5df 38%, #d6e8f8 62%); }
 #imMap { position: fixed; inset: 0; z-index: 510; }   /* full height: mountains rise into the sky instead of being cut at a line */
 #imMap .maplibregl-canvas { outline: 0; }
-.maplibregl-ctrl-attrib { font-size: 10px; }
+#imMap .maplibregl-ctrl-attrib { font-size: 10px; }
 .imVehicle img { width: 54px; height: 54px; display: block; filter: drop-shadow(0 3px 4px rgba(0,0,0,.45)); }
 #imCards { position: fixed; left: 0; right: 0; top: 0; height: 100vh; z-index: 520; perspective: 700px; perspective-origin: 50% 36%; pointer-events: none; overflow: hidden; }
 .imCard { position: absolute; left: 50%; top: 36%; width: min(46vw, 620px); height: min(30vw, 410px); margin: calc(min(15vw, 205px) * -1) 0 0 calc(min(23vw, 310px) * -1);
     border-radius: 10px; overflow: hidden; pointer-events: auto; cursor: pointer; box-shadow: 0 14px 40px rgba(0,0,0,.5); border: 4px solid #fff; background: #223; will-change: transform, opacity; opacity: 0; }
 .imCard img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 700px) { .imCard { box-shadow: 0 4px 10px rgba(0,0,0,.45); } }   /* big blurred shadows are costly to repaint on phones */
+@media (prefers-reduced-motion: reduce) { #imFx { display: none; } }
 @media (max-width: 600px) { .imCard { width: 66vw; height: 44vw; margin: -22vw 0 0 -33vw; } }
 
 .imCredit { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 10px 6px; font: 13px/1.3 sans-serif; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7);

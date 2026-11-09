@@ -71,6 +71,7 @@
     }
 
     setInterval(function () {
+        if (document.hidden) return;
         if (!window.isTrackLoaded || !window.animatedMarker) { if ($bar) $bar.hide(); return; }
         if (!lengths()) return;
         build(); $bar.show();
